@@ -1,10 +1,14 @@
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { Menu, Search } from 'lucide-react';
 import paw from '../../assets/paw.svg'
 
-export const SidebarHeader: FC = () => {
+interface SidebarHeaderProps {
+  activeFilter: string;
+  onFilterChange: (filter: string) => void;
+}
+
+export const SidebarHeader: FC<SidebarHeaderProps> = ({ activeFilter, onFilterChange }) => {
   const filters = ['전체', '잃어버렸개', '발견했개', 'My'];
-  const [activeFilter, setActiveFilter] = useState('전체');
 
   return (
     <div className="p-4 border-b bg-green-600 text-white">
@@ -27,16 +31,22 @@ export const SidebarHeader: FC = () => {
           <Search className="absolute right-3 text-gray-400 w-5 h-5" />
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-12 gap-3">
         {filters.map((filter) => (
           <button
             key={filter}
-            onClick={() => setActiveFilter(filter)}
-            className={`px-2 py-1.5 rounded-lg text-sm font-medium transition-colors
-              ${activeFilter === filter 
-                ? 'bg-white text-green-600' 
-                : 'bg-white/10 hover:bg-white/20'
-              }`}
+            onClick={() => {
+              onFilterChange(filter);
+            }}
+            className={`px-1 rounded-lg text-sm font-medium focus:outline-none ${
+              activeFilter === filter 
+                ? 'bg-green-700 text-white' 
+                : "bg-green-600 text-white hover:bg-green-500 focus:outline-none hover:outline-none"
+            } ${
+              filter === '전체' || filter === 'My'
+                ? 'col-span-2'
+                : 'col-span-4'
+            }`}
           >
             {filter}
           </button>
