@@ -17,15 +17,19 @@ export function AppSidebar() {
   };
 
   return (
-    <>
-      {/* 헤더 - 항상 고정되어 보임 */}
-      <Sidebar className="bg-white border-r w-full md:w-[380px]">
+    <Sidebar className="bg-white border-r w-full md:w-[380px]">
+      {/* 헤더 영역 */}
+      <div className="sticky top-0 z-50 bg-white">
         <SidebarHeader 
           activeFilter={activeFilter}
           onFilterChange={handleFilterChange}
-        />        
-          <SidebarMainContent />
-        </Sidebar>
-    </>
+        />
+      </div>
+
+      {/* 컨텐츠 영역 */}
+      <div className="md:mt-0">
+        <SidebarMainContent />
+      </div>
+    </Sidebar>
   )
 }

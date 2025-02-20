@@ -3,7 +3,7 @@ import { SidebarGroup } from "@/components/ui/sidebar"
 
 export function SidebarMainContent() {
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
       <SidebarGroup className="space-y-2 p-4">
         <Link to="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
           홈
