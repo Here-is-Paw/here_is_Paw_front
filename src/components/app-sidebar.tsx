@@ -19,7 +19,7 @@ export function AppSidebar() {
   return (
     <Sidebar className="bg-white border-r w-full md:w-[380px]">
       {/* 헤더 영역 */}
-      <div className="sticky top-0 z-50 bg-white">
+      <div id='sidebarHeader' className="sticky top-0 z-50 bg-white">
         <SidebarHeader 
           activeFilter={activeFilter}
           onFilterChange={handleFilterChange}
