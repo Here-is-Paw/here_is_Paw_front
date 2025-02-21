@@ -1,31 +1,53 @@
-import { Link } from 'react-router-dom'
 import { SidebarGroup } from "@/components/ui/sidebar"
+import { PetList } from "@/components/petCard/PetList"
+
+import petSampleImage from "@/assets/petSample.jpg"
+
+
+// 임시 데이터
+const tempPets = [
+  {
+    id: "1",
+    imageUrl: petSampleImage,
+    date: "2025-02-18",
+    breed: "믹스견",
+    features: "하기싫어함",
+    location: "멋쟁이사자처럼 11층"
+  },
+  {
+    id: "2",
+    imageUrl: petSampleImage,
+    date: "2025-02-18",
+    breed: "믹스견",
+    features: "하기싫어함",
+    location: "멋쟁이사자처럼 11층"
+  },
+  {
+    id: "3",
+    imageUrl: petSampleImage,
+    date: "2025-02-18",
+    breed: "믹스견",
+    features: "하기싫어함",
+    location: "멋쟁이사자처럼 11층"
+  }
+]
 
 export function SidebarMainContent() {
   return (
     <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
-      <SidebarGroup className="space-y-2 p-4">
-        <Link to="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-          홈
-        </Link>
-        <Link to="/adoption" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-          입양하기
-        </Link>
-        <Link to="/lost" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-          실종신고
-        </Link>
-      </SidebarGroup>
-      <SidebarGroup className="space-y-2 p-4">
-        <Link to="/mypage" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-          마이페이지
-        </Link>
-        <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-          설정
-        </Link>
-      </SidebarGroup>
-      <div className="p-4 mt-auto text-center text-gray-500">
-        <div>© 2024 Here Is Paw</div>
-      </div>
+    <SidebarGroup className="p-4">
+      <h1 className="text-2xl font-bold mb-6">잃어버렸개</h1>
+      <PetList pets={tempPets} />
+    </SidebarGroup>
+    
+    <SidebarGroup className="p-4">
+      <h1 className="text-2xl font-bold mb-6">발견했개</h1>
+      <PetList pets={tempPets} />
+    </SidebarGroup>
+  
+    <div className="p-4 mt-auto text-center text-gray-500">
+      <div>© 2025 Here Is Paw</div>
     </div>
+  </div>
   )
 }
