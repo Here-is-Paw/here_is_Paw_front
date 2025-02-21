@@ -1,0 +1,29 @@
+.swiper {
+  width: 100%;
+  height: auto !important; /* 높이를 자동으로 조정 */
+  padding-bottom: 15px !important; /* 하단 여백 축소 */
+  margin-bottom: -10px !important; /* 네거티브 마진으로 추가 여백 제거 */
+}
+
+.swiper-slide {
+  height: auto !important; /* 슬라이드 높이 자동 조정 */
+}
+
+.swiper-pagination {
+  bottom: 0px !important; /* 페이지네이션 위치 상향 조정 */
+  position: absolute !important;
+  margin-bottom: - 5px !important; /* 페이지네이션을 아래로 이동 */
+}
+
+.swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: #e0e0e0 !important; /* 비활성 상태 색상 */
+  opacity: 1 !important;
+  margin: 0 4px; /* 페이지네이션 점 사이 간격 */
+}
+
+.swiper-pagination-bullet-active {
+  background: #4CAF50 !important; /* 활성 상태 색상 (초록색) */
+  opacity: 1 !important;
+}

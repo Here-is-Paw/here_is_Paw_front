@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { NavBar } from "@/components/navBar/navBar"
 
 declare global {
   interface Window {
@@ -57,12 +58,15 @@ const NcpMap = () => {
   }, []);
 
   return (
-    <div 
-      id="map"
-      ref={mapElement}
-      className="w-full h-full"
-      style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
-    />
+    <div className="relative w-full h-full">
+      <div 
+        id="map"
+        ref={mapElement}
+        className="w-full h-full"
+        style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
+      />
+      
+    </div>
   );
 };
 
