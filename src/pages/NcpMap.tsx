@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -31,7 +31,10 @@ const NcpMap = () => {
           tileDuration: 300,
         };
 
-        mapInstance.current = new window.naver.maps.Map(mapElement.current, mapOptions);
+        mapInstance.current = new window.naver.maps.Map(
+          mapElement.current,
+          mapOptions
+        );
         isInitialized.current = true; // 초기화 완료 표시
         console.log("Map initialized successfully");
       } catch (error) {
@@ -42,8 +45,9 @@ const NcpMap = () => {
     if (window.naver && window.naver.maps) {
       initializeMap();
     } else {
-      const script = document.createElement('script');
-      script.src = 'https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5';
+      const script = document.createElement("script");
+      script.src =
+        "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
       script.onload = initializeMap;
       document.head.appendChild(script);
     }
@@ -57,11 +61,10 @@ const NcpMap = () => {
   }, []);
 
   return (
-    <div 
+    <div
       id="map"
       ref={mapElement}
-      className="w-full h-full"
-      style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
+      style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
     />
   );
 };
