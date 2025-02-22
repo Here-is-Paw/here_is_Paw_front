@@ -13,9 +13,9 @@ interface NcpMapProps {
 }
 
 const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
-  const mapElement = useRef(null);
-  const mapInstance = useRef(null);
-  const isInitialized = useRef(false);
+  const mapElement = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<naver.maps.Map | null>(null);
+  const isInitialized = useRef<boolean>(false);
 
   const getPawMarkerIcon = (isLost: boolean) => {
     const color = isLost ? '#EF4444' : '#22C55E'; // red-500 : green-500
@@ -58,7 +58,8 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
           tileDuration: 300,
         };
 
-        mapInstance.current = new window.naver.maps.Map(mapElement.current, mapOptions);
+        const map = new naver.maps.Map(mapElement.current, mapOptions);
+        mapInstance.current = map;
 
         // // 현재 위치 마커
         // if (currentLocation.coordinates) {
@@ -76,7 +77,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         lostPets.forEach(pet => {
           const marker = new window.naver.maps.Marker({
             position: new window.naver.maps.LatLng(pet.lat, pet.lang),
-            map: mapInstance.current,
+            map: map,
             title: `[실종] ${pet.breed}`,
             icon: {
               content: getPawMarkerIcon(true),
@@ -93,7 +94,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         findPets.forEach(pet => {
           const marker = new window.naver.maps.Marker({
             position: new window.naver.maps.LatLng(pet.lat, pet.lang), // findPets는 lng 사용
-            map: mapInstance.current,
+            map: map,
             title: `[발견] ${pet.breed}`,
             icon: {
               content: getPawMarkerIcon(false),

@@ -13,11 +13,8 @@ import {
   DrawerHeader,
   DrawerPortal,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
 import petsData from '../../../mocks/data/pets.json';
-import MainPage from '@/pages/MainPage.tsx';
 
 export default function RootLayout({
   children,
