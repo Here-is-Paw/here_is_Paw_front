@@ -59,7 +59,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         };
 
         mapInstance.current = new window.naver.maps.Map(mapElement.current, mapOptions);
-        
+
         // // 현재 위치 마커
         // if (currentLocation.coordinates) {
         //   new window.naver.maps.Marker({
@@ -116,8 +116,9 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
     if (window.naver && window.naver.maps) {
       initializeMap();
     } else {
-      const script = document.createElement('script');
-      script.src = 'https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5';
+      const script = document.createElement("script");
+      script.src =
+        "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
       script.onload = initializeMap;
       document.head.appendChild(script);
     }
@@ -131,15 +132,11 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   }, [currentLocation, lostPets, findPets]);
 
   return (
-    <div className="relative w-full h-full">
-      <div 
-        id="map"
-        ref={mapElement}
-        className="w-full h-full"
-        style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
-      />
-      
-    </div>
+    <div
+      id="map"
+      ref={mapElement}
+      style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
+    />
   );
 };
 

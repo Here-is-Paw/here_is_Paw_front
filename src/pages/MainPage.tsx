@@ -13,7 +13,7 @@ interface MainPageProps {
 export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) {
   const isMobile = useIsMobile()
   const location = useGeolocation()
-  
+
   // MainPage에서 props 수신 확인
   useEffect(() => {
     console.log('MainPage received:', {
@@ -39,8 +39,8 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
     <div>
       <NavBar buttonStates={buttonStates} toggleButton={toggleButton} />
       <div className={`fixed ${isMobile ? 'inset-0 top-[120px]' : 'inset-0'}`}>
-        <NcpMap 
-          currentLocation={location} 
+        <NcpMap
+          currentLocation={location}
           lostPets={mockLostPets}
           findPets={mockFindPets}
         />
