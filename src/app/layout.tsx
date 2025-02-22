@@ -1,10 +1,16 @@
+import React from 'react'
 import { AppSidebar } from "@/components/app-sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { SidebarHeader } from "@/components/sidebar/SidebarHeader"
 import { SidebarMainContent } from "@/components/sidebar/SidebarContent"
+import petsData from '../../../mocks/data/pets.json'
+import MainPage from '@/pages/MainPage.tsx'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile()
+
+  // pets 데이터 확인
+  console.log('Layout의 petsData:', petsData);
 
   if (isMobile) {
     return (
@@ -16,33 +22,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         </div>
         <div className="w-full">
-          {children}
+          <MainPage 
+            mockLostPets={petsData.lostPets}
+            mockFindPets={petsData.findPets}
+          />
         </div>
         <div className="mt-4">
-          <SidebarMainContent />
+          <SidebarMainContent 
+            lostPets={petsData.lostPets}
+            findPets={petsData.findPets}
+          />
         </div>
       </div>
     )
   }
 
   return (
-    // <div className="min-h-screen bg-white relative">
-    //   <div className="fixed inset-y-0 left-0 w-[320px] z-50">
-    //     <AppSidebar />
-    //   </div>
-    //   <div className="ml-[320px] w-full">
-    //     {children}
-    //   </div>
-    // </div>
     <div className="min-h-screen bg-white relative">
-    {/* 사이드바 너비를 380px로 증가 */}
-    <div className="fixed inset-y-0 left-0 w-[380px] z-50">
-      <AppSidebar />
+      <div className="fixed inset-y-0 left-0 w-[380px] z-50">
+        <AppSidebar 
+          lostPets={petsData.lostPets}
+          findPets={petsData.findPets}
+        />
+      </div>
+      <div className="ml-[380px] w-[calc(100%-380px)]">
+        <MainPage 
+          mockLostPets={petsData.lostPets}
+          mockFindPets={petsData.findPets}
+        />
+      </div>
     </div>
-    {/* 메인 컨텐츠 영역도 그에 맞게 조정 */}
-    <div className="ml-[380px] w-[calc(100%-380px)]">
-      {children}
-    </div>
-  </div>
   )
 }

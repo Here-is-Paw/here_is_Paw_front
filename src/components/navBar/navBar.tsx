@@ -25,7 +25,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             </Button>
           </div>
 
-          <div className="flex items-center gap-3 flex-none pr-4">
+          <div className="flex items-center gap-1 flex-none pr-4">
             <FilterButton buttonStates={buttonStates} toggleButton={toggleButton} />
 
             {isLoggedIn ? (
@@ -47,7 +47,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             ) : (
               <Button 
                 variant="ghost"
-                className="bg-green-600 text-white"
+                className="b"
                 onClick={() => setIsLoggedIn(true)}
               >
                 로그인

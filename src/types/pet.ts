@@ -5,4 +5,6 @@ export interface Pet {
   breed: string;
   features: string;
   location: string;
+  lat: number;
+  lang: number;
 }

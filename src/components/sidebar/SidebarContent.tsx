@@ -10,50 +10,25 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-
-import petSampleImage from "@/assets/petSample.jpg"
-import { Dog } from "lucide-react"
+import { Pet } from "@/types/pet"
 
 
-// 임시 데이터
-const tempPets = [
-  {
-    id: "1",
-    imageUrl: petSampleImage,
-    date: "2025-02-18",
-    breed: "믹스견1",
-    features: "하기싫어함",
-    location: "멋쟁이사자처럼 11층"
-  },
-  {
-    id: "2",
-    imageUrl: petSampleImage,
-    date: "2025-02-18",
-    breed: "믹스견2",
-    features: "하기싫어함",
-    location: "멋쟁이사자처럼 11층"
-  },
-  {
-    id: "3",
-    imageUrl: petSampleImage,
-    date: "2025-02-18",
-    breed: "믹스견3",
-    features: "하기싫어함",
-    location: "멋쟁이사자처럼 11층"
-  }
-]
+interface SidebarMainContentProps {
+  lostPets: Pet[];
+  findPets: Pet[];
+}
 
-export function SidebarMainContent() {
+export function SidebarMainContent({ lostPets, findPets }: SidebarMainContentProps) {
   return (
     <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
       <SidebarGroup className="p-4 pb-0"> {/* 하단 패딩 제거 */}
         <h1 className="text-2xl font-bold mb-1">잃어버렸개</h1> {/* mb-6에서 mb-4로 변경 */}
-        <PetList pets={tempPets} />
+        <PetList pets={lostPets} />
       </SidebarGroup>
       
       <SidebarGroup className="p-4 pt-2"> {/* 상단 패딩 줄임 */}
         <h1 className="text-2xl font-bold mb-1">발견했개</h1> {/* mb-6에서 mb-4로 변경 */}
-        <PetList pets={tempPets} />
+        <PetList pets={findPets} />
       </SidebarGroup>
 
       <SidebarGroup className="p-4 pt-2">
@@ -61,7 +36,7 @@ export function SidebarMainContent() {
           <CardHeader className="ps-3 pb-0">
             <CardTitle className="text-white">
             <div className="flex items-center gap-3">반려동물 등록하기
-            <Dog className="h-4 w-4" />
+            {/* <Dog className="h-4 w-4" /> */}
             </div>
             </CardTitle>
           </CardHeader>
