@@ -14,7 +14,7 @@ import {
   DrawerPortal,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import petsData from '../../../mocks/data/pets.json';
+import petsData from '../../mocks/data/pets.json';
 
 export default function RootLayout({
   children,

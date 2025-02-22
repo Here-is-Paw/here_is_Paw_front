@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import MainPage from './pages/MainPage';
-import petsData from '../../mocks/data/pets.json'; // 경로 확인 필요
+import petsData from '../mocks/data/pets.json'; // 경로 확인 필요
 
 export default function AppRoutes() {
   // petsData 확인
