@@ -1,3 +1,5 @@
+import React from "react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { clsx } from "clsx";
@@ -11,10 +13,8 @@ import {
   DrawerHeader,
   DrawerPortal,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import petsData from '../../mocks/data/pets.json';
 
 export default function RootLayout({
   children,
@@ -66,7 +66,9 @@ export default function RootLayout({
                   "overflow-hidden": snap !== 1,
                 })}
               >
-                <SidebarMainContent />
+                <SidebarMainContent 
+                lostPets={petsData.lostPets}
+                findPets={petsData.findPets}/>
               </div>
             </DrawerContent>
           </DrawerPortal>
@@ -78,7 +80,9 @@ export default function RootLayout({
   return (
     <div className="content-wrapper flex">
       <SidebarProvider className="w-auto">
-        <AppSidebar />
+        <AppSidebar 
+        lostPets={petsData.lostPets}
+        findPets={petsData.findPets}/>
       </SidebarProvider>
       <div className="flex-1">{children}</div>
     </div>

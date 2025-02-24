@@ -2,9 +2,15 @@ import { Sidebar } from "@/components/ui/sidebar"
 import { SidebarHeader } from './sidebar/SidebarHeader'
 import { SidebarMainContent } from './sidebar/SidebarContent'
 import { useState, useEffect } from 'react';
+import { Pet } from '@/types/pet';
 
-export function AppSidebar() {
-  const [activeFilter, setActiveFilter] = useState<string>("전체");
+interface AppSidebarProps {
+  lostPets: Pet[];
+  findPets: Pet[];
+}
+
+export function AppSidebar({ lostPets, findPets }: AppSidebarProps) {
+  const [activeFilter, setActiveFilter] = useState<string>('전체');
 
   // 상태 변경을 감지하는 useEffect 추가
   useEffect(() => {
@@ -24,7 +30,10 @@ export function AppSidebar() {
       />
 
       {/* 컨텐츠 영역 */}
-      <SidebarMainContent />
+      <SidebarMainContent
+        lostPets={lostPets}
+        findPets={findPets}
+      />
     </Sidebar>
   );
 }
