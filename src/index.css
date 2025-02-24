@@ -52,6 +52,20 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+.bgr-white {
+  background-color: #fff;
+}
+
+.btn-size{
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.svg-2{
+  width: 2rem !important;
+  height: 2rem !important;
+}
 /* button:hover {
   border-color: #646cff;
 } */
