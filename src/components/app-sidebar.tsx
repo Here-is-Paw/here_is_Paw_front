@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { Sidebar } from "@/components/ui/sidebar"
 import { SidebarHeader } from './sidebar/SidebarHeader'
 import { SidebarMainContent } from './sidebar/SidebarContent'

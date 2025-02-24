@@ -8,14 +8,19 @@ import {backUrl} from "@/constants.ts";
 
 function App() {
     const fetchAuthData = () => {
-        axios.get(`${backUrl}/api/v1/members/auth`, {withCredentials: true})
+        console.log("apiKey : ", document.cookie)
+        axios.get(`${backUrl}/api/v1/members/me`, { withCredentials: true })
             .then(response => {
                 console.log('응답:', response.data);
             })
             .catch(error => {
-                console.error('에러:', error);
+                if (error.response) {
+                    console.info(error.response.data);
+                } else {
+                    console.error('요청 중 알 수 없는 오류 발생', error);
+                }
             });
-        console.log("요청 보냄")
+        console.log("요청 보냄");
     };
 
     useEffect(() => {
