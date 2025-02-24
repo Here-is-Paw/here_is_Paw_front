@@ -4,11 +4,11 @@ import { SidebarMainContent } from './sidebar/SidebarContent'
 import { useState, useEffect } from 'react';
 
 export function AppSidebar() {
-  const [activeFilter, setActiveFilter] = useState<string>('전체');
+  const [activeFilter, setActiveFilter] = useState<string>("전체");
 
   // 상태 변경을 감지하는 useEffect 추가
   useEffect(() => {
-    console.log('activeFilter 상태 변경됨:', activeFilter);
+    console.log("activeFilter 상태 변경됨:", activeFilter);
   }, [activeFilter]);
 
   const handleFilterChange = (filter: string) => {
@@ -16,19 +16,15 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="bg-white border-r w-full md:w-[380px]">
+    <Sidebar>
       {/* 헤더 영역 */}
-      <div id='sidebarHeader' className="sticky top-0 z-50 bg-white">
-        <SidebarHeader 
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
-      </div>
+      <SidebarHeader
+        activeFilter={activeFilter}
+        onFilterChange={handleFilterChange}
+      />
 
       {/* 컨텐츠 영역 */}
-      <div className="md:mt-0">
-        <SidebarMainContent />
-      </div>
+      <SidebarMainContent />
     </Sidebar>
-  )
+  );
 }
