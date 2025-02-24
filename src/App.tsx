@@ -1,12 +1,14 @@
-import {BrowserRouter} from 'react-router-dom'
-import {SidebarProvider} from "@/components/ui/sidebar"
+import { BrowserRouter } from 'react-router-dom'
+import { SidebarProvider } from "@/components/ui/sidebar"
 import RootLayout from './app/layout'
 import AppRoutes from './routes.tsx'
 import axios from "axios";
-import {useEffect} from "react";
-import {backUrl} from "@/constants.ts";
+import { useEffect } from "react";
+import { backUrl } from "@/constants.ts";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function App() {
+
     const fetchAuthData = () => {
         console.log("apiKey : ", document.cookie)
         axios.get(`${backUrl}/api/v1/members/me`, { withCredentials: true })
@@ -29,11 +31,13 @@ function App() {
 
     return (
         <BrowserRouter>
+            <AuthProvider>
             <SidebarProvider>
                 <RootLayout>
-                    <AppRoutes/>
+                    <AppRoutes />
                 </RootLayout>
             </SidebarProvider>
+            </AuthProvider>
         </BrowserRouter>
     )
 }

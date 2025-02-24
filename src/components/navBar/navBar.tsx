@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Plus, MessageSquare, Bell, LogOut } from "lucide-react"
-import { useState } from "react"
 import { FilterButton } from "./filterButton"
+import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavBarProps {
   buttonStates: {
@@ -13,7 +14,7 @@ interface NavBarProps {
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { isLoggedIn, login, logout } = useAuth();
 
   return (
     <nav className="mt-5 fixed right-0 z-50 w-[calc(95%-320px)]">
@@ -36,22 +37,16 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 <Button variant="ghost" size="icon">
                   <Bell className="h-4 w-4" />
                 </Button>
-                <Button 
+                <Button
                   variant="ghost"
-                  onClick={() => setIsLoggedIn(false)}
+                  // onClick={() => }
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   로그아웃
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="ghost"
-                className="b"
-                onClick={() => setIsLoggedIn(true)}
-              >
-                로그인
-              </Button>
+                <KakaoLoginPopup onLoginSuccess={login} />
             )}
           </div>
         </div>
