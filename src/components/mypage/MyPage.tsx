@@ -39,7 +39,7 @@ export function MyPage() {
 
     // 삭제 확인 대화상자 상태
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [petToDelete, setPetToDelete] = useState<MyPet | null>(null);
+    const [petToDelete, setPetToDelete] = useState<PetData | null>(null);
 
     // 사용자 포인트 조회하기
     const fetchUserPoints = async () => {
@@ -116,7 +116,7 @@ export function MyPage() {
     };
 
     // 삭제 버튼 클릭 핸들러
-    const handleDeleteClick = (pet: MyPet) => {
+    const handleDeleteClick = (pet: PetData) => {
         setPetToDelete(pet);
         setIsDeleteDialogOpen(true);
     };
