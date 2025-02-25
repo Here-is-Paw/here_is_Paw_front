@@ -3,7 +3,9 @@ import MainPage from "./pages/MainPage";
 import SignupForm from "@/pages/SignupForm.tsx";
 import petsData from "../mocks/data/pets.json";
 import {KakaoCallback} from "@/components/kakaoLogin/KakaoCallback.tsx"; // 경로 확인 필요
-
+import {CheckoutPage} from "@/components/payment/Checkout.tsx";
+import {SuccessPage} from "@/components/payment/Success.tsx";
+import {FailPage} from "@/components/payment/Fail.tsx";
 
 export default function AppRoutes() {
   // petsData 확인
@@ -27,6 +29,9 @@ export default function AppRoutes() {
       <Route path="/signup" element={<SignupForm />} />
 
       <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/success" element={<SuccessPage />} />
+      <Route path="/fail" element={<FailPage />} />
     </Routes>
   );
 }

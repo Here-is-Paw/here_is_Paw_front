@@ -26,9 +26,11 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { X } from "lucide-react"
-
+import { useNavigate } from 'react-router-dom';
 
 export function MyPage() {
+    const navigate = useNavigate();
+
     const {isLoggedIn, logout} = useAuth();
     const [isAddPetOpen, setIsAddPetOpen] = useState(false);
     const [userData, setUserData] = useState<User | null>(null);
@@ -161,13 +163,10 @@ export function MyPage() {
 
     const handlePayment = async () => {
         try {
-            const response = await axios.get(`${backUrl}/api/v1/payment/pay`, {
-                withCredentials: true,
-            });
-            window.location.href = response.data;
+            navigate('/checkout');
         } catch (error) {
-            console.error("결제 초기화 실패:", error);
-            alert("결제 초기화에 실패했습니다.");
+            console.error("결제 페이지 이동 실패:", error);
+            alert("결제 페이지로 이동할 수 없습니다.");
         }
     };
 
