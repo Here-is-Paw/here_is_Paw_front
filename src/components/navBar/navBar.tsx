@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Bell, LogOut } from "lucide-react";
-import { useState } from "react";
 import { FilterButton } from "./filterButton";
+import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
+import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
+import { backUrl } from "@/constants";
+import { useState } from "react";
+
 // import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 interface NavBarProps {
@@ -14,7 +19,23 @@ interface NavBarProps {
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isLoggedIn, logout } = useAuth();
+
+  console.log(isLoggedIn);
+
+  const handleLogout = async () => {
+    try {
+      // 백엔드 로그아웃 API 호출 (필요한 경우)
+      await axios.delete(`${backUrl}/api/v1/members/logout`, {
+        withCredentials: true,
+      });
+      logout(); // Context 상태 업데이트
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
+
   const [isResistModalOpen, setIsResistModalOpen] = useState(false);
   const [isFindModalOpen, setIsFindModalOpen] = useState(false);
 
@@ -32,46 +53,44 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [age, setAge] = useState("");
   const [neutered, setNeutered] = useState("");
 
-  
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
 
-  const handleBreed = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreed(e.target.value);
-  }
+  };
 
-  const handleName = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
-  }
+  };
 
-  const handleEtc = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleEtc = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEtc(e.target.value);
-  }
+  };
 
-  const handleColor = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleColor = (e: React.ChangeEvent<HTMLInputElement>) => {
     setColor(e.target.value);
-  }
+  };
 
-  const handleSituation = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleSituation = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSituation(e.target.value);
-  }
+  };
 
-  const handleTitle = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
-  }
+  };
 
-  const handleGender = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleGender = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGender(e.target.value);
-  }
+  };
 
-  const handleAge = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleAge = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAge(e.target.value);
-  }
+  };
 
-  const handleNeutered = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleNeutered = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNeutered(e.target.value);
-  }
-
+  };
 
   // 파일 업로드 핸들러
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +126,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             find_date: "2025-02-20T00:00:00",
             member_id: 1,
             shelter_id: 1,
-            path_url: imagePreview
+            path_url: imagePreview,
           }),
           credentials: "include",
         });
@@ -122,7 +141,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         alert("오류가 발생했습니다.");
       }
     }
-  }
+  };
 
   return (
     <>
@@ -212,15 +231,13 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   <Button variant="ghost" size="icon">
                     <Bell className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" onClick={() => setIsLoggedIn(false)}>
+                  <Button variant="ghost" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     로그아웃
                   </Button>
                 </>
               ) : (
-                <Button variant="ghost" className="b" onClick={() => setIsLoggedIn(true)}>
-                  로그인
-                </Button>
+                <KakaoLoginPopup />
               )}
             </div>
           </div>
@@ -251,7 +268,12 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               <div>
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2">* 제목</label>
-                  <textarea className="border p-2 w-full bg-white resize-none" rows={1} placeholder="게시글의 제목을 입력해주세요." onChange={handleTitle}/>
+                  <textarea
+                    className="border p-2 w-full bg-white resize-none"
+                    rows={1}
+                    placeholder="게시글의 제목을 입력해주세요."
+                    onChange={handleTitle}
+                  />
                 </div>
 
                 {imagePreview ? (
@@ -275,35 +297,40 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2 ">* 발견 상황</label>
-                  <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="발견 당시 상황을 입력해주세요." onChange={handleSituation}/>
+                  <textarea
+                    className="border p-2 w-full bg-white resize-none"
+                    rows={2}
+                    placeholder="발견 당시 상황을 입력해주세요."
+                    onChange={handleSituation}
+                  />
                 </div>
 
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">견종</label>
-                    <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed}/>
+                    <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed} />
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">색상</label>
-                    <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor}/>
+                    <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor} />
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">이름</label>
-                    <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName}/>
+                    <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName} />
                   </div>
                 </div>
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">성별</label>
-                    <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender}/>
+                    <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} />
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">중성화</label>
-                    <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered}/>
+                    <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} />
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">나이</label>
-                    <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge}/>
+                    <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge} />
                   </div>
                 </div>
               </div>
@@ -311,7 +338,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2 ">특이 사항</label>
-                  <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="특징을 설명해주세요." onChange={handleEtc}/>
+                  <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="특징을 설명해주세요." onChange={handleEtc} />
                 </div>
               </div>
             </div>
