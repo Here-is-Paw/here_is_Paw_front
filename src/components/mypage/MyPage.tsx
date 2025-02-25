@@ -159,6 +159,18 @@ export function MyPage() {
         logout();
     };
 
+    const handlePayment = async () => {
+        try {
+            const response = await axios.get(`${backUrl}/api/v1/payment/pay`, {
+                withCredentials: true,
+            });
+            window.location.href = response.data;
+        } catch (error) {
+            console.error("결제 초기화 실패:", error);
+            alert("결제 초기화에 실패했습니다.");
+        }
+    };
+
     if (!isLoggedIn) {
         return (
             <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
@@ -205,6 +217,7 @@ export function MyPage() {
                                 <div className="flex items-center justify-start">
                                 <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
                                     <Button
+                                        onClick={handlePayment}
                                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
                                         충전하기
                                     </Button>
