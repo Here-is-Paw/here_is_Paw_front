@@ -34,10 +34,40 @@ export function MyPage() {
     const [userData, setUserData] = useState<User | null>(null);
     const [userPets, setUserPets] = useState<MyPet[]>([]);
     const [loading, setLoading] = useState(true);
+    const [points, setPoints] = useState<number>(0);
+    
 
     // 삭제 확인 대화상자 상태
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [petToDelete, setPetToDelete] = useState<MyPet | null>(null);
+
+    // 사용자 포인트 조회하기
+    const fetchUserPoints = async () => {
+        try {
+            const response = await axios.get(`${backUrl}/api/v1/payment/points`, {
+                withCredentials: true,
+            });
+            setPoints(response.data);
+            return response.data;
+        } catch (error) {
+            console.error("포인트 정보 가져오기 실패:", error);
+            return 0;
+        }
+    };
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            setLoading(true);
+            if (isLoggedIn) {
+                await fetchUserInfo();
+                await fetchUserPets();
+                await fetchUserPoints(); // 포인트 정보 가져오기 추가
+            }
+            setLoading(false);
+        };
+    
+        loadUserData();
+    }, [isLoggedIn]);
 
     const fetchUserInfo = async () => {
         try {
@@ -173,7 +203,7 @@ export function MyPage() {
                                 <h3 className="font-medium text-lg">{userData?.nickname || '사용자'}</h3>
                                 <p className="text-gray-600 text-sm">내 포인트 : </p>
                                 <div className="flex items-center justify-start">
-                                    <span className="text-xl font-bold text-green-700 ml-2">3,500 P</span>
+                                <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
                                     <Button
                                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
                                         충전하기
