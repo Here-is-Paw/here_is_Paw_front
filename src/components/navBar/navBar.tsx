@@ -20,7 +20,9 @@ interface NavBarProps {
 
 export function NavBar({buttonStates, toggleButton}: NavBarProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const {isLoggedIn, login, logout} = useAuth();
+    const {isLoggedIn, logout} = useAuth();
+
+    console.log(isLoggedIn)
 
     const handleLogout = async () => {
         try {
@@ -138,7 +140,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                     </Button>
                                 </>
                             ) : (
-                                <KakaoLoginPopup onLoginSuccess={login}/>
+                                <KakaoLoginPopup />
                             )}
                         </div>
                     </div>
