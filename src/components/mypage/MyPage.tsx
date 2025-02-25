@@ -9,11 +9,10 @@ import {Button} from "@/components/ui/button"
 import {useAuth} from "@/contexts/AuthContext.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import {useEffect, useState} from "react";
-import {AddPetFormPopup} from "./AddMyPetFormPopup.tsx";
+import {AddPetFormPopup} from "./petForm/AddPetFormPopup.tsx";
 import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import {User} from "@/types/user";
-import {MyPet} from "@/types/mypet.ts";
 import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import {
     AlertDialog,
@@ -26,13 +25,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { X } from "lucide-react"
+import {PetData} from "@/types/pet.ts";
 
 
 export function MyPage() {
     const {isLoggedIn, logout} = useAuth();
     const [isAddPetOpen, setIsAddPetOpen] = useState(false);
     const [userData, setUserData] = useState<User | null>(null);
-    const [userPets, setUserPets] = useState<MyPet[]>([]);
+    const [userPets, setUserPets] = useState<PetData[]>([]);
     const [loading, setLoading] = useState(true);
     const [points, setPoints] = useState<number>(0);
     
@@ -69,6 +69,7 @@ export function MyPage() {
         loadUserData();
     }, [isLoggedIn]);
 
+    // 사용자 정보 가져오기
     const fetchUserInfo = async () => {
         try {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
@@ -83,9 +84,10 @@ export function MyPage() {
         }
     };
 
+    // 사용자 펫 가져오기
     const fetchUserPets = async () => {
         try {
-            const response = await axios.get(`${backUrl}/api/v1/members/mypet`, {
+            const response = await axios.get(`${backUrl}/api/v1/mypets`, {
                 withCredentials: true,
             });
 
@@ -100,7 +102,7 @@ export function MyPage() {
     // 반려동물 삭제 함수
     const deletePet = async (petId: string | number) => {
         try {
-            await axios.delete(`${backUrl}/api/v1/members/mypet/${petId}`, {
+            await axios.delete(`${backUrl}/api/v1/mypets/${petId}`, {
                 withCredentials: true,
             });
 
@@ -233,7 +235,12 @@ export function MyPage() {
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-green-100 h-12 w-12 rounded-full flex items-center justify-center">
-                                        <span className="text-green-600 text-sm">{pet.name?.charAt(0) || '?'}</span>
+                                        <Avatar className="h-16 w-16 rounded-full">
+                                            {pet?.imageUrl && (
+                                                <AvatarImage src={pet.imageUrl} alt={pet.imageUrl || '사용자'} />
+                                            )}
+                                            <AvatarFallback>{userData?.nickname?.charAt(0) || '?'}</AvatarFallback>
+                                        </Avatar>
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-medium">{pet.name || '이름 없음'}</h3>
