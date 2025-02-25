@@ -13,6 +13,8 @@ import {Button} from "@/components/ui/button";
 import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import React, {useState} from "react";
+import {useAuth} from "@/contexts/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
 
 interface AdminLoginPopupProps {
     open: boolean;
@@ -27,18 +29,26 @@ interface LoginRequest {
 export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
 
         const loginData: LoginRequest = { username, password };
 
         try {
             await axios.post(`${backUrl}/api/v1/members/login`, loginData, { withCredentials: true });
-            location.reload();
+            login();
+            onOpenChange(false); // 로그인 팝업 닫기
+            setIsLoading(false);
+            navigate('/'); // 필요한 경우 홈페이지로 이동
         } catch (error) {
             console.error('로그인 오류:', error);
             alert('로그인 실패');
+            setIsLoading(false);
         }
     };
 
@@ -86,8 +96,9 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
                                 <Button
                                     type={"submit"}
                                     className="w-full"
+                                    disabled={isLoading}
                                 >
-                                    로그인
+                                    {isLoading ? '로그인 중...' : '로그인'}
                                 </Button>
                             </div>
                         </form>

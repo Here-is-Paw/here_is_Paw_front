@@ -32,7 +32,7 @@ export const KakaoLoginPopup = () => {
       <>
         <Dialog open={isKakaoOpen} onOpenChange={setIsKakaoOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost">로그인</Button>
+            <Button variant="ghost" className="bg-primary text-white hover:bg-primary/80">로그인</Button>
           </DialogTrigger>
           <DialogContent className="max-w-[470px]">
             <Button
