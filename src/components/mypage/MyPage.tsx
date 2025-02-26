@@ -25,10 +25,13 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { X } from "lucide-react"
+import { useNavigate } from 'react-router-dom';
 import {PetData} from "@/types/pet.ts";
 
 
 export function MyPage() {
+    const navigate = useNavigate();
+
     const {isLoggedIn, logout} = useAuth();
     const [isAddPetOpen, setIsAddPetOpen] = useState(false);
     const [userData, setUserData] = useState<User | null>(null);
@@ -161,6 +164,15 @@ export function MyPage() {
         logout();
     };
 
+    const handlePayment = async () => {
+        try {
+            navigate('/checkout');
+        } catch (error) {
+            console.error("결제 페이지 이동 실패:", error);
+            alert("결제 페이지로 이동할 수 없습니다.");
+        }
+    };
+
     if (!isLoggedIn) {
         return (
             <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
@@ -207,6 +219,7 @@ export function MyPage() {
                                 <div className="flex items-center justify-start">
                                 <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
                                     <Button
+                                        onClick={handlePayment}
                                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
                                         충전하기
                                     </Button>
