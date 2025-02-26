@@ -1,21 +1,3 @@
-import {
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
-
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { X } from "lucide-react"
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -145,8 +127,6 @@ export function MyPage() {
         setPetToDelete(null);
     };
 
-
-
     // Data Loading Effect
     useEffect(() => {
         const loadUserData = async () => {
@@ -163,15 +143,6 @@ export function MyPage() {
 
         loadUserData();
     }, [isLoggedIn]);
-
-    // 반려동물 추가 성공 후 실행될 함수
-    const handlePetAdded = () => {
-        fetchUserPets();
-    };
-
-    const handleLogout = () => {
-        logout();
-    };
 
     const handlePayment = async () => {
         try {
@@ -213,37 +184,7 @@ export function MyPage() {
         <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
             {/* 프로필 섹션 */}
             <SidebarGroup className="p-4">
-                <Card className="mb-4">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">내 프로필</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16 rounded-full">
-                                {userData?.avatar && (
-                                    <AvatarImage src={userData.avatar} alt={userData.nickname || '사용자'} />
-                                )}
-                                <AvatarFallback>{userData?.nickname?.charAt(0) || '?'}</AvatarFallback>
-                            </Avatar>
-                            <div className="justify-start">
-                                <h3 className="font-medium text-lg">{userData?.nickname || '사용자'}</h3>
-                                <p className="text-gray-600 text-sm">내 포인트 : </p>
-                                <div className="flex items-center justify-start">
-                                <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
-                                    <Button
-                                        onClick={handlePayment}
-                                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
-                                        충전하기
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </SidebarGroup>
-
-            <SidebarGroup className="p-4">
-                <ProfileSection userData={userData} points={points} />
+                <ProfileSection userData={userData} points={points} handlePayment={handlePayment}/>
             </SidebarGroup>
 
             {/* 내 반려동물 섹션 */}

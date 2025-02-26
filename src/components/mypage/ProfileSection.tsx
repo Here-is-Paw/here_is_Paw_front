@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef} from 'react';
 import {
     Card,
     CardHeader,
@@ -12,12 +12,12 @@ import {
     DialogTitle,
     DialogDescription
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Wallet, Pencil, ImagePlus, X } from 'lucide-react';
-import { User } from "@/types/user";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Button} from "@/components/ui/button";
+import {Wallet, Pencil, ImagePlus, X} from 'lucide-react';
+import {User} from "@/types/user";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
 
 interface ProfileSectionProps {
     userData: User | null;
@@ -26,12 +26,14 @@ interface ProfileSectionProps {
         nickname?: string,
         profileImage?: File
     }) => Promise<void>;
+    handlePayment?: () => Promise<void>
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({
                                                                   userData,
                                                                   points,
-                                                                  onUpdateProfile
+                                                                  onUpdateProfile,
+                                                                  handlePayment
                                                               }) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editedNickname, setEditedNickname] = useState(userData?.nickname || '');
@@ -111,7 +113,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                         size="icon"
                         onClick={() => setIsEditDialogOpen(true)}
                     >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4"/>
                     </Button>
                 </CardHeader>
                 <CardContent>
@@ -129,11 +131,12 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                         <div className="justify-start">
                             <h3 className="font-medium text-lg">{userData?.nickname || '사용자'}</h3>
                             <div className="flex items-center justify-start space-x-1">
-                                <Wallet className="text-gray-600 w-5 h-5" />
+                                <Wallet className="text-gray-600 w-5 h-5"/>
                                 <span className="text-xl font-bold text-green-700">
                                     {points.toLocaleString()} P
                                 </span>
                                 <Button
+                                    onClick={handlePayment}
                                     className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75"
                                 >
                                     충전하기
@@ -179,7 +182,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                                     className="absolute top-0 right-0 w-8 h-8 rounded-full p-0 flex items-center justify-center"
                                     onClick={handleRemoveImage}
                                 >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-4 h-4"/>
                                 </Button>
                             </div>
                         ) : (
@@ -189,7 +192,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                                 className="flex items-center gap-2"
                                 onClick={handleSelectImageClick}
                             >
-                                <ImagePlus className="w-4 h-4" />
+                                <ImagePlus className="w-4 h-4"/>
                                 프로필 이미지 선택
                             </Button>
                         )}
