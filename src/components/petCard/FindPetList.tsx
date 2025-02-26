@@ -6,16 +6,19 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './swiper.css';
+import { usePetContext } from '@/contexts/findPetContext';
 
 interface FindPetListProps {
   apiUrl: string;
   initialPets?: FindPet[];
+  status: 0;
 }
 
 export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
   const [pets, setPets] = useState<FindPet[]>(initialPets);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { submissionCount } = usePetContext();
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -38,14 +41,14 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
     };
 
     fetchPets();
-  }, [apiUrl]);
+  }, [apiUrl, submissionCount]);
 
   if (loading && pets.length === 0) {
     return <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>;
   }
 
   if (error && pets.length === 0) {
-    return <div className="h-auto p-4 text-center text-red-500">에러: {error}</div>;
+    return <div className="h-auto p-4 text-center text-red-500">데이터가 없습니다.</div>;
   }
 
   return (

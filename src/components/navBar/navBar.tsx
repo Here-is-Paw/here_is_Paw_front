@@ -3,9 +3,10 @@ import { Plus, MessageSquare, Bell, LogOut } from "lucide-react";
 import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePetContext } from '@/contexts/findPetContext';
 import axios from "axios";
 import { backUrl } from "@/constants";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // import { Dialog, DialogContent } from "@/components/ui/dialog"
 
@@ -16,6 +17,7 @@ interface NavBarProps {
     hospital: boolean;
   };
   toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
+  
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
@@ -52,6 +54,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [title, setTitle] = useState("");
   const [age, setAge] = useState("");
   const [neutered, setNeutered] = useState("");
+
+  const { incrementSubmissionCount } = usePetContext();
+
 
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
@@ -93,28 +98,58 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   // 파일 업로드 핸들러
+  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     const imageUrl = URL.createObjectURL(file);
+  //     setImagePreview(imageUrl);
+  //   }
+  // };
+  useEffect(() => {
+    const savedImage = localStorage.getItem("uploadedImage");
+    if (savedImage) {
+      setImagePreview(savedImage);
+    }
+  }, []);
+
+  // 🔹 파일 업로드 핸들러
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImagePreview(imageUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   // 파일 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
+    localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
   };
 
   const handleFindSubmit = async () => {
-    if (true) {
+    if (isLoggedIn) {
+
+      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+        withCredentials: true,
+      });
+
+      const member_id = memberResponse.data.id;
+
       try {
-        const response = await fetch(`http://localhost:8090/find/new`, {
+        const response = await fetch(`${backUrl}/find/new`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            title: title,
+            situation: situation,
             breed: breed,
             geo: 123,
             name: name,
@@ -124,7 +159,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             age: age,
             neutered: neutered,
             find_date: "2025-02-20T00:00:00",
-            member_id: 1,
+            member_id: member_id,
             shelter_id: 1,
             path_url: imagePreview,
           }),
@@ -133,6 +168,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
         if (response.ok) {
           alert("발견 신고가 성공적으로 저장되었습니다!");
+          incrementSubmissionCount();
         } else {
           alert("저장 실패");
         }
@@ -140,6 +176,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         console.error("Error:", error);
         alert("오류가 발생했습니다.");
       }
+    } else {
+      alert("로그인 후 이용 가능한 서비스 입니다!");
+      return;
     }
   };
 
@@ -197,7 +236,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       className="flex items-center justify-start p-4 hover:bg-gray-100 bgr-white h-12"
                       onClick={() => {
                         // 발견 등록하기 로직
-                        setIsFindModalOpen(!isFindModalOpen);
+                        if (!isLoggedIn) {
+                          alert("로그인 후 이용해주세요!");
+                        } else {
+                          setIsFindModalOpen(!isFindModalOpen);
+                        }
                         setIsResistModalOpen(false);
                       }}
                     >
@@ -265,7 +308,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
             <div className="space-between text-[15px]">
               {/* 예: 사진 업로드, 위치, 기타 폼 */}
-              <div>
+              <div className="w-80">
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2">* 제목</label>
                   <textarea

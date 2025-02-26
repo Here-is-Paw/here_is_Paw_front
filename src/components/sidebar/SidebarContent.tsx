@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Pet } from "@/types/pet"
+import { backUrl } from "@/constants";
 
 
 interface SidebarMainContentProps {
@@ -17,6 +18,9 @@ interface SidebarMainContentProps {
 }
 
 export function SidebarMainContent({ lostPets }: SidebarMainContentProps) {
+
+  const getBackUrl = `${backUrl}/find`
+
   return (
     <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
       <SidebarGroup className="p-4 pb-0"> {/* 하단 패딩 제거 */}
@@ -26,7 +30,7 @@ export function SidebarMainContent({ lostPets }: SidebarMainContentProps) {
       
       <SidebarGroup className="p-4 pt-2"> {/* 상단 패딩 줄임 */}
         <h1 className="text-2xl font-bold mb-1">발견했개</h1> {/* mb-6에서 mb-4로 변경 */}
-        <FindPetList apiUrl="http://localhost:8090/find" />
+        <FindPetList apiUrl={getBackUrl} />
       </SidebarGroup>
 
       <SidebarGroup className="p-4 pt-2">

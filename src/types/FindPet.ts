@@ -1,5 +1,5 @@
 export interface FindPet {
-  id: string;
+  id: number;
   path_url: string;
   date: string;
   breed: string;
