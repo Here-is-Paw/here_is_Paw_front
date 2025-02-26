@@ -9,11 +9,10 @@ import {Button} from "@/components/ui/button"
 import {useAuth} from "@/contexts/AuthContext.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import {useEffect, useState} from "react";
-import {AddPetFormPopup} from "./AddMyPetFormPopup.tsx";
+import {AddPetFormPopup} from "./petForm/AddPetFormPopup.tsx";
 import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import {User} from "@/types/user";
-import {MyPet} from "@/types/mypet.ts";
 import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import {
     AlertDialog,
@@ -26,20 +25,24 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { X } from "lucide-react"
+import { useNavigate } from 'react-router-dom';
+import {PetData} from "@/types/pet.ts";
 
 
 export function MyPage() {
+    const navigate = useNavigate();
+
     const {isLoggedIn, logout} = useAuth();
     const [isAddPetOpen, setIsAddPetOpen] = useState(false);
     const [userData, setUserData] = useState<User | null>(null);
-    const [userPets, setUserPets] = useState<MyPet[]>([]);
+    const [userPets, setUserPets] = useState<PetData[]>([]);
     const [loading, setLoading] = useState(true);
     const [points, setPoints] = useState<number>(0);
     
 
     // 삭제 확인 대화상자 상태
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [petToDelete, setPetToDelete] = useState<MyPet | null>(null);
+    const [petToDelete, setPetToDelete] = useState<PetData | null>(null);
 
     // 사용자 포인트 조회하기
     const fetchUserPoints = async () => {
@@ -47,8 +50,8 @@ export function MyPage() {
             const response = await axios.get(`${backUrl}/api/v1/payment/points`, {
                 withCredentials: true,
             });
-            setPoints(response.data);
-            return response.data;
+            setPoints(response.data.data);
+            return response.data.data;
         } catch (error) {
             console.error("포인트 정보 가져오기 실패:", error);
             return 0;
@@ -69,6 +72,7 @@ export function MyPage() {
         loadUserData();
     }, [isLoggedIn]);
 
+    // 사용자 정보 가져오기
     const fetchUserInfo = async () => {
         try {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
@@ -83,9 +87,10 @@ export function MyPage() {
         }
     };
 
+    // 사용자 펫 가져오기
     const fetchUserPets = async () => {
         try {
-            const response = await axios.get(`${backUrl}/api/v1/members/mypet`, {
+            const response = await axios.get(`${backUrl}/api/v1/mypets`, {
                 withCredentials: true,
             });
 
@@ -100,7 +105,7 @@ export function MyPage() {
     // 반려동물 삭제 함수
     const deletePet = async (petId: string | number) => {
         try {
-            await axios.delete(`${backUrl}/api/v1/members/mypet/${petId}`, {
+            await axios.delete(`${backUrl}/api/v1/mypets/${petId}`, {
                 withCredentials: true,
             });
 
@@ -114,7 +119,7 @@ export function MyPage() {
     };
 
     // 삭제 버튼 클릭 핸들러
-    const handleDeleteClick = (pet: MyPet) => {
+    const handleDeleteClick = (pet: PetData) => {
         setPetToDelete(pet);
         setIsDeleteDialogOpen(true);
     };
@@ -157,6 +162,15 @@ export function MyPage() {
 
     const handleLogout = () => {
         logout();
+    };
+
+    const handlePayment = async () => {
+        try {
+            navigate('/checkout');
+        } catch (error) {
+            console.error("결제 페이지 이동 실패:", error);
+            alert("결제 페이지로 이동할 수 없습니다.");
+        }
     };
 
     if (!isLoggedIn) {
@@ -205,6 +219,7 @@ export function MyPage() {
                                 <div className="flex items-center justify-start">
                                 <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
                                     <Button
+                                        onClick={handlePayment}
                                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
                                         충전하기
                                     </Button>
@@ -233,7 +248,12 @@ export function MyPage() {
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-green-100 h-12 w-12 rounded-full flex items-center justify-center">
-                                        <span className="text-green-600 text-sm">{pet.name?.charAt(0) || '?'}</span>
+                                        <Avatar className="h-16 w-16 rounded-full">
+                                            {pet?.imageUrl && (
+                                                <AvatarImage src={pet.imageUrl} alt={pet.imageUrl || '사용자'} />
+                                            )}
+                                            <AvatarFallback>{userData?.nickname?.charAt(0) || '?'}</AvatarFallback>
+                                        </Avatar>
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="font-medium">{pet.name || '이름 없음'}</h3>
