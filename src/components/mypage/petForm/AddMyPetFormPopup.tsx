@@ -4,14 +4,14 @@ import {
     CardTitle,
     CardDescription,
     CardContent,
-} from "@/components/ui/card";
+} from "@/components/ui/card.tsx";
 import {
     Dialog,
     DialogContent,
-} from "@/components/ui/dialog";
-import {Button} from "@/components/ui/button";
+} from "@/components/ui/dialog.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import {backUrl} from "@/constants.ts";
+import { backUrl } from "@/constants.ts";
 
 import {
     Select,
@@ -19,7 +19,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.tsx";
 import {
     Form,
     FormControl,
@@ -28,10 +28,10 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+} from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { Switch } from "@/components/ui/switch.tsx";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 
@@ -63,7 +63,7 @@ const defaultValues: PetFormData = {
     etc: ""
 };
 
-export const AddPetFormPopup = ({open, onOpenChange, onSuccess}: AddPetFormPopupProps) => {
+export const AddPetFormPopup = ({ open, onOpenChange, onSuccess }: AddPetFormPopupProps) => {
     const form = useForm<PetFormData>({
         defaultValues
     });
@@ -83,7 +83,7 @@ export const AddPetFormPopup = ({open, onOpenChange, onSuccess}: AddPetFormPopup
 
     const handleSubmit = async (data: PetFormData) => {
         try {
-            await axios.post(`${backUrl}/api/v1/members/mypet`, data, { withCredentials: true });
+            await axios.post(`${backUrl}/api/v1/mypets`, data, { withCredentials: true });
 
             // 성공 시 폼 초기화 후 팝업 닫기
             form.reset(defaultValues);
