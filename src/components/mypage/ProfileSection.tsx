@@ -22,19 +22,19 @@ import {Label} from "@/components/ui/label";
 interface ProfileSectionProps {
     userData: User | null;
     points: number;
+    handlePayment?: () => Promise<void>;
     onUpdateProfile?: (updatedData: {
         nickname?: string,
         profileImage?: File
     }) => Promise<void>;
-    handlePayment?: () => Promise<void>
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({
                                                                   userData,
                                                                   points,
-                                                                  onUpdateProfile,
-                                                                  handlePayment
-                                                              }) => {
+                                                                  handlePayment,
+                                                                  onUpdateProfile
+}) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editedNickname, setEditedNickname] = useState(userData?.nickname || '');
     const [previewUrl, setPreviewUrl] = useState<string | null>(userData?.avatar || null);
@@ -148,7 +148,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
             </Card>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent>
+                <DialogContent className="bg-white/90 backdrop-blur-sm">
                     <DialogHeader>
                         <DialogTitle>프로필 수정</DialogTitle>
                         <DialogDescription>

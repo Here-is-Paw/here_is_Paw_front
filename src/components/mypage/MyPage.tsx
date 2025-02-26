@@ -39,6 +39,25 @@ export function MyPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [petToDelete, setPetToDelete] = useState<PetData | null>(null);
 
+    // Data Loading Effect
+    useEffect(() => {
+        const loadUserData = async () => {
+            setLoading(true);
+            if (isLoggedIn) {
+                await Promise.all([
+                    fetchUserInfo(),
+                    fetchUserPets(),
+                    fetchUserPoints()
+                ]);
+            }
+            setLoading(false);
+        };
+
+        loadUserData();
+    }, [isLoggedIn]);
+
+
+
     // 사용자 포인트 조회하기
     const fetchUserPoints = async () => {
         try {
@@ -52,20 +71,6 @@ export function MyPage() {
             setPoints(0);
         }
     };
-
-    useEffect(() => {
-        const loadUserData = async () => {
-            setLoading(true);
-            if (isLoggedIn) {
-                await fetchUserInfo();
-                await fetchUserPets();
-                await fetchUserPoints(); // 포인트 정보 가져오기 추가
-            }
-            setLoading(false);
-        };
-    
-        loadUserData();
-    }, [isLoggedIn]);
 
     // 사용자 정보 가져오기
     const fetchUserInfo = async () => {
@@ -90,6 +95,54 @@ export function MyPage() {
         } catch (error) {
             console.error("반려동물 정보 가져오기 실패:", error);
             setUserPets([]);
+        }
+    };
+
+    const updateUserProfile = async (updatedData: {
+        nickname?: string;
+        profileImage?: File;
+    }) => {
+        try {
+            // FormData 생성
+            const formData = new FormData();
+
+            // 닉네임 추가 (변경된 경우)
+            if (updatedData.nickname) {
+                formData.append('nickname', updatedData.nickname);
+            }
+
+            // 프로필 이미지 추가 (변경된 경우)
+            if (updatedData.profileImage) {
+                formData.append('profileImage', updatedData.profileImage);
+            }
+
+            // API 요청
+            const response = await axios.patch(`${backUrl}/api/v1/mypets`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                withCredentials: true
+            });
+
+            // 성공 시 사용자 데이터 업데이트
+            setUserData(response.data);
+
+            // 성공 메시지 표시
+            alert('프로필이 성공적으로 업데이트되었습니다.');
+
+            return response.data;
+        } catch (error) {
+            console.error('프로필 업데이트 실패:', error);
+
+            // 에러 처리
+            if (axios.isAxiosError(error)) {
+                const errorMessage = error.response?.data?.message || '프로필 업데이트에 실패했습니다.';
+                alert(errorMessage);
+            } else {
+                alert('프로필 업데이트 중 알 수 없는 오류가 발생했습니다.');
+            }
+
+            throw error;
         }
     };
 
@@ -126,23 +179,6 @@ export function MyPage() {
         setIsDeleteDialogOpen(false);
         setPetToDelete(null);
     };
-
-    // Data Loading Effect
-    useEffect(() => {
-        const loadUserData = async () => {
-            setLoading(true);
-            if (isLoggedIn) {
-                await Promise.all([
-                    fetchUserInfo(),
-                    fetchUserPets(),
-                    fetchUserPoints()
-                ]);
-            }
-            setLoading(false);
-        };
-
-        loadUserData();
-    }, [isLoggedIn]);
 
     const handlePayment = async () => {
         try {
@@ -184,7 +220,12 @@ export function MyPage() {
         <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
             {/* 프로필 섹션 */}
             <SidebarGroup className="p-4">
-                <ProfileSection userData={userData} points={points} handlePayment={handlePayment}/>
+                <ProfileSection
+                    userData={userData}
+                    points={points}
+                    handlePayment={handlePayment}
+                    onUpdateProfile={updateUserProfile}
+                />
             </SidebarGroup>
 
             {/* 내 반려동물 섹션 */}

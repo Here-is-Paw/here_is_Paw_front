@@ -1,5 +1,16 @@
 import { Control, UseFormSetValue, UseFormWatch} from "react-hook-form";
 
+export interface Pet {
+  id: string;
+  imageUrl: string;
+  date: string;
+  breed: string;
+  features: string;
+  location: string;
+  lat: number;
+  lang: number;
+}
+
 export interface PetData {
   id: number;
   age: number;
