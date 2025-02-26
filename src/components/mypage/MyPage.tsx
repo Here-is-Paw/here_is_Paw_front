@@ -64,8 +64,8 @@ export function MyPage() {
             const response = await axios.get(`${backUrl}/api/v1/payment/points`, {
                 withCredentials: true,
             });
-            setPoints(response.data);
-            return response.data;
+            setPoints(response.data.data);
+            return response.data.data;
         } catch (error) {
             console.error("포인트 정보 가져오기 실패:", error);
             setPoints(0);

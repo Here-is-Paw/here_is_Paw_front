@@ -151,70 +151,59 @@ export const SuccessPage: React.FC = () => {
   }, [searchParams, navigate, isProcessing, responseData, hasAttempted]);
 
   return (
-    <>
-      <div className="box_section" style={{ width: "600px" }}>
-        <img
-          width="100px"
-          src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
-          alt="결제 완료 이미지"
-        />
-        <h2>결제를 완료했어요</h2>
-        <div className="p-grid typography--p" style={{ marginTop: "50px" }}>
-          <div className="p-grid-col text--left">
-            <b>결제금액</b>
+    <div className="payment-container" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="wrapper" style={{ flexDirection: "column" }}>
+        <div className="box_section" style={{ width: "600px", margin: "0 auto", padding: "30px" }}>
+          <img
+            width="100px"
+            src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
+            alt="결제 완료 이미지"
+          />
+          <h2>결제를 완료했어요</h2>
+          <div className="p-grid typography--p" style={{ marginTop: "20px" }}>
+            <div className="p-grid-col text--left">
+              <b>결제금액</b>
+            </div>
+            <div className="p-grid-col text--right" id="amount">
+              {`${Number(searchParams.get("amount")).toLocaleString()}원`}
+            </div>
           </div>
-          <div className="p-grid-col text--right" id="amount">
-            {`${Number(searchParams.get("amount")).toLocaleString()}원`}
+          
+          {/* 나머지 정보 섹션의 간격 수정 */}
+          <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
+            <div className="p-grid-col text--left">
+              <b>주문번호</b>
+            </div>
+            <div className="p-grid-col text--right" id="orderId">
+              {`${searchParams.get("orderId")}`}
+            </div>
+          </div>
+          
+          <div className="p-grid-col" style={{ marginTop: "20px" }}>
+            <Link to="/">
+              <button
+                className="button"
+                style={{ 
+                  backgroundColor: "#3182f6", 
+                  color: "#ffffff", 
+                  width: "100%", 
+                  maxWidth: "300px",
+                  margin: "20px auto 0" 
+                }}
+              >
+                메인 페이지로 이동
+              </button>
+            </Link>
           </div>
         </div>
-        <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
-          <div className="p-grid-col text--left">
-            <b>주문번호</b>
+        
+        <div className="box_section" style={{ width: "600px", margin: "10px auto 0", padding: "30px", textAlign: "left" }}>
+          <b>Response Data:</b>
+          <div id="response" style={{ whiteSpace: "pre-wrap", overflowX: "auto", fontSize: "14px" }}>
+            {responseData && <pre>{JSON.stringify(responseData, null, 2)}</pre>}
           </div>
-          <div className="p-grid-col text--right" id="orderId">
-            {`${searchParams.get("orderId")}`}
-          </div>
-        </div>
-        <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
-          <div className="p-grid-col text--left">
-            <b>paymentKey</b>
-          </div>
-          <div
-            className="p-grid-col text--right"
-            id="paymentKey"
-            style={{ whiteSpace: "initial", width: "250px" }}
-          >
-            {`${searchParams.get("paymentKey")}`}
-          </div>
-        </div>
-        <div className="p-grid-col">
-          <Link to="/">
-            <button
-              className="button p-grid-col5"
-              style={{ backgroundColor: "#3182f6", color: "#ffffff" }}
-            >
-              메인 페이지로 이동
-            </button>
-          </Link>
-          {/* <Link to="https://docs.tosspayments.com/guides/v2/payment-widget/integration">
-            <button className="button p-grid-col5">연동 문서</button>
-          </Link>
-          <Link to="https://discord.gg/A4fRFXQhRu">
-            <button className="button p-grid-col5" style={{ backgroundColor: "#e8f3ff", color: "#1b64da" }}>
-              실시간 문의
-            </button>
-          </Link> */}
         </div>
       </div>
-      <div
-        className="box_section"
-        style={{ width: "600px", textAlign: "left" }}
-      >
-        <b>Response Data :</b>
-        <div id="response" style={{ whiteSpace: "initial" }}>
-          {responseData && <pre>{JSON.stringify(responseData, null, 4)}</pre>}
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
