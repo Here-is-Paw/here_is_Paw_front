@@ -3,7 +3,7 @@ import { Plus, MessageSquare, Bell, LogOut } from "lucide-react";
 import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePetContext } from '@/contexts/findPetContext';
+import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useState, useEffect } from "react";
@@ -17,7 +17,6 @@ interface NavBarProps {
     hospital: boolean;
   };
   toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
-  
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
@@ -56,7 +55,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [neutered, setNeutered] = useState("");
 
   const { incrementSubmissionCount } = usePetContext();
-
 
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
@@ -134,7 +132,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const handleFindSubmit = async () => {
     if (isLoggedIn) {
-
       const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
         withCredentials: true,
       });
@@ -365,11 +362,21 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">성별</label>
-                    <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} />
+                    {/* <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} /> */}
+                    <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                      <option value="미상">미상</option>
+                      <option value="수컷">수컷</option>
+                      <option value="암컷">암컷</option>
+                    </select>
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">중성화</label>
-                    <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} />
+                    {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
+                    <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                      <option value="">미상</option>
+                      <option value="true">중성화 됌</option>
+                      <option value="false">중성화 안됌</option>
+                    </select>
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">나이</label>

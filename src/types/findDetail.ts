@@ -14,4 +14,5 @@ export interface findDetail {
   age: number;
   title: string;
   situation: string;
+  member_id: number;
 }

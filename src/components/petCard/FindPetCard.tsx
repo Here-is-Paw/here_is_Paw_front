@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
 import axios from "axios";
+import { Plus } from "lucide-react";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -15,8 +16,101 @@ interface PetCardProps {
 
 export function FindPetCard({ pet }: PetCardProps) {
   const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
-  // 명시적으로 FindPet[] 타입을 지정합니다
   const [findDetail, setFindDetail] = useState<findDetail | null>(null);
+  const [member, setMember] = useState(null);
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [breed, setBreed] = useState("");
+  const [geo, setGeo] = useState("");
+  const [location, setLocation] = useState("");
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("");
+  const [gender, setGender] = useState("");
+  const [etc, setEtc] = useState("");
+  const [situation, setSituation] = useState("");
+  const [title, setTitle] = useState("");
+  const [age, setAge] = useState("");
+  const [neutered, setNeutered] = useState("");
+
+  //   private Long member_id; // 신고한 회원 id
+  //   private Long shelter_id; // 보호소 id
+
+  const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBreed(e.target.value);
+  };
+
+  const handleName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+
+  const handleEtc = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEtc(e.target.value);
+  };
+
+  const handleColor = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColor(e.target.value);
+  };
+
+  const handleSituation = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSituation(e.target.value);
+  };
+
+  const handleTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+
+  const handleGender = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGender(e.target.value);
+  };
+
+  const handleAge = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAge(e.target.value);
+  };
+
+  const handleNeutered = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNeutered(e.target.value);
+  };
+
+  useEffect(() => {
+    const savedImage = localStorage.getItem("uploadedImage");
+    if (savedImage) {
+      setImagePreview(savedImage);
+    }
+  }, []);
+
+  // 🔹 파일 업로드 핸들러
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 파일 삭제 핸들러
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
+  };
+
+  useEffect(() => {
+    const loginCheck = async () => {
+      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+        withCredentials: true,
+      });
+
+      setMember(memberResponse.data.id);
+    };
+
+    loginCheck();
+    console.log(1234);
+  }, [findDetail]);
 
   const handleFindDetail = async (postId: number) => {
     try {
@@ -70,88 +164,196 @@ export function FindPetCard({ pet }: PetCardProps) {
 
             {/* findDetail 매핑은 모달 컨테이너 안에서 수행 */}
             {findDetail ? (
-              <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50">
-                {/* 모달 헤더 */}
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">반려동물 발견</h2>
-                </div>
+              findDetail.member_id === member ? (
+                <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50">
+                  {/* 모달 헤더 */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">반려동물 발견 등록하기</h2>
+                  </div>
 
-                {/* 모달 내용(이미지, 폼 등) */}
-                <p className="mb-4 text-gray-600">등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.</p>
+                  {/* 모달 내용(이미지, 폼 등) */}
+                  <p className="mb-4 text-gray-600">등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.</p>
 
-                <div className="space-between text-[15px]">
-                  {/* 예: 사진 업로드, 위치, 기타 폼 */}
-                  <div className="w-80">
-                    <div className="mb-4 ">
-                      <label className="block font-medium mb-2">* 제목</label>
-                      <div className="border p-2 w-full bg-white">{findDetail.title}</div>
+                  <div className="space-between text-[15px]">
+                    {/* 예: 사진 업로드, 위치, 기타 폼 */}
+                    <div className="w-80">
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2">* 제목</label>
+                        <textarea
+                          className="border p-2 w-full bg-white resize-none"
+                          rows={1}
+                          placeholder="게시글의 제목을 입력해주세요."
+                          onChange={handleTitle}
+                        />
+                      </div>
+
+                      {imagePreview ? (
+                        <div className="mb-4">
+                          <label className="block font-medium mb-2">반려동물 사진</label>
+                          <div className="mt-2 flex">
+                            <img src={imagePreview} alt="미리보기" className="w-60 h-60 object-cover rounded" />
+                            <div className="mt-[77%]">
+                              <button className=" bg-red-500 h-4 w-4 " onClick={handleRemoveImage}>
+                                <Plus className="text-white rotate-45 absolute top-[54.7%] left-[34%]" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-4">
+                          <label className="block font-medium mb-2">반려동물 사진</label>
+                          <input type="file" className="border p-2 w-full" onChange={handleImageUpload} />
+                        </div>
+                      )}
+
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2 ">* 발견 상황</label>
+                        <textarea
+                          className="border p-2 w-full bg-white resize-none"
+                          rows={2}
+                          placeholder="발견 당시 상황을 입력해주세요."
+                          onChange={handleSituation}
+                        />
+                      </div>
+
+                      <div className="mb-4 flex justify-between">
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">견종</label>
+                          <input className="border p-2 w-full bg-white" placeholder={findDetail.breed} onChange={handleBreed} />
+                        </div>
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">색상</label>
+                          <input className="border p-2 w-full bg-white" placeholder={findDetail.color} onChange={handleColor} />
+                        </div>
+                        <div className="w-20">
+                          <label className="block font-medium mb-2 ">이름</label>
+                          <input className="border p-2 w-full bg-white" placeholder={findDetail.name} onChange={handleName} />
+                        </div>
+                      </div>
+                      <div className="mb-4 flex justify-between">
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">성별</label>
+                          {/* <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} /> */}
+                          <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                            <option value="미상">미상</option>
+                            <option value="수컷">수컷</option>
+                            <option value="암컷">암컷</option>
+                          </select>
+                        </div>
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">중성화</label>
+                          {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
+                          <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                            <option value="">미상</option>
+                            <option value="true">중성화 됌</option>
+                            <option value="false">중성화 안됌</option>
+                          </select>
+                        </div>
+                        <div className="w-20">
+                          <label className="block font-medium mb-2 ">나이</label>
+                          <input className="border p-2 w-full bg-white" placeholder={findDetail.age} onChange={handleAge} />
+                        </div>
+                      </div>
                     </div>
-
-                    <div className="mb-4">
-                      <label className="block font-medium mb-2">반려동물 사진</label>
-                      <div className="mt-2 flex">
-                        <img src={findDetail.path_url || DEFAULT_IMAGE_URL} alt="반려동물 사진" className="w-60 h-60 object-cover rounded" />
-                      </div>
-                    </div>
-
-                    <div className="mb-4 ">
-                      <label className="block font-medium mb-2 ">* 발견 상황</label>
-                      <div className="border p-2 w-full bg-white">{findDetail.situation}</div>
-                    </div>
-
-                    <div className="mb-4 flex justify-between">
-                      <div className="mr-4 w-20">
-                        <label className="block font-medium mb-2 ">견종</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.breed}</div>
-                      </div>
-                      <div className="mr-4 w-20">
-                        <label className="block font-medium mb-2 ">색상</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.color}</div>
-                      </div>
-                      <div className="w-20">
-                        <label className="block font-medium mb-2 ">이름</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.name}</div>
-                      </div>
-                    </div>
-                    <div className="mb-4 flex justify-between">
-                      <div className="mr-4 w-20">
-                        <label className="block font-medium mb-2 ">성별</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.gender}</div>
-                      </div>
-                      <div className="mr-4 w-20">
-                        <label className="block font-medium mb-2 ">중성화</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.neutered ? "했음" : "안함"}</div>
-                      </div>
-                      <div className="w-20">
-                        <label className="block font-medium mb-2 ">나이</label>
-                        <div className="border p-2 w-full bg-white">{findDetail.age}</div>
+                    <div className="w-80">
+                      <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2 ">특이 사항</label>
+                        <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder={findDetail.etc} onChange={handleEtc} />
                       </div>
                     </div>
                   </div>
-                  <div className="w-80">
-                    <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
-                    <div className="mb-4 ">
-                      <label className="block font-medium mb-2 ">특이 사항</label>
-                      <div className="border p-2 w-full bg-white">{findDetail.etc}</div>
-                    </div>
+
+                  <div className="flex justify-end gap-2 h-6">
+                    <button className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => setIsFindDetailModalOpen(false)}>
+                      수정하기
+                    </button>
                   </div>
                 </div>
-                {/* 예: 등록/취소 버튼 */}
-                <div className="flex justify-end gap-2 h-6">
-                  <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindDetailModalOpen(false)}>
-                    취소하기
-                  </button>
-                  <button
-                    className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
-                    onClick={() => {
-                      // 등록 처리 로직
-                      setIsFindDetailModalOpen(false);
-                    }}
-                  >
-                    등록하기
-                  </button>
+              ) : (
+                <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50">
+                  {/* 모달 헤더 */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">반려동물 발견</h2>
+                  </div>
+
+                  {/* 모달 내용(이미지, 폼 등) */}
+                  <p className="mb-4 text-gray-600">등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.</p>
+
+                  <div className="space-between text-[15px]">
+                    {/* 예: 사진 업로드, 위치, 기타 폼 */}
+                    <div className="w-80">
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2">* 제목</label>
+                        <div className="w-full bg-white text-gray-500 text-gray-500">{findDetail.title}</div>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block font-medium mb-2">반려동물 사진</label>
+                        <div className="mt-2 flex">
+                          <img src={findDetail.path_url || DEFAULT_IMAGE_URL} alt="반려동물 사진" className="w-60 h-60 object-cover rounded" />
+                        </div>
+                      </div>
+
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2 ">* 발견 상황</label>
+                        <div className="w-full bg-white text-gray-500">{findDetail.situation}</div>
+                      </div>
+
+                      <div className="mb-4 flex justify-between">
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">견종</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.breed}</div>
+                        </div>
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">색상</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.color}</div>
+                        </div>
+                        <div className="w-20">
+                          <label className="block font-medium mb-2 ">이름</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.name}</div>
+                        </div>
+                      </div>
+                      <div className="mb-4 flex justify-between">
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">성별</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.gender}</div>
+                        </div>
+                        <div className="mr-4 w-20">
+                          <label className="block font-medium mb-2 ">중성화</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.neutered ? "했음" : "안함"}</div>
+                        </div>
+                        <div className="w-20">
+                          <label className="block font-medium mb-2 ">나이</label>
+                          <div className="w-full bg-white text-gray-500">{findDetail.age}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-80">
+                      <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                      <div className="mb-4 ">
+                        <label className="block font-medium mb-2 ">특이 사항</label>
+                        <div className="w-full bg-white text-gray-500">{findDetail.etc}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 h-6">
+                    <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindDetailModalOpen(false)}>
+                      연락하기
+                    </button>
+                    <button
+                      className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
+                      onClick={() => {
+                        // 등록 처리 로직
+                        setIsFindDetailModalOpen(false);
+                      }}
+                    >
+                      닫기
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
               <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50">
                 <p className="text-center py-4">데이터를 불러오는 중입니다...</p>
