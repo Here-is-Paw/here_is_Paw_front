@@ -1,3 +1,22 @@
+import {
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { X } from "lucide-react"
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -24,6 +43,8 @@ import { PetsSection } from './PetsSection';
 import { DeletePetDialog } from './DeletePetDialog';
 
 export function MyPage() {
+    const navigate = useNavigate();
+
     // Authentication and State Management
     const { isLoggedIn, logout } = useAuth();
     const [userData, setUserData] = useState<User | null>(null);
@@ -36,19 +57,35 @@ export function MyPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [petToDelete, setPetToDelete] = useState<PetData | null>(null);
 
-    // Data Fetching Functions
+    // 사용자 포인트 조회하기
     const fetchUserPoints = async () => {
         try {
             const response = await axios.get(`${backUrl}/api/v1/payment/points`, {
                 withCredentials: true,
             });
             setPoints(response.data);
+            return response.data;
         } catch (error) {
             console.error("포인트 정보 가져오기 실패:", error);
             setPoints(0);
         }
     };
 
+    useEffect(() => {
+        const loadUserData = async () => {
+            setLoading(true);
+            if (isLoggedIn) {
+                await fetchUserInfo();
+                await fetchUserPets();
+                await fetchUserPoints(); // 포인트 정보 가져오기 추가
+            }
+            setLoading(false);
+        };
+    
+        loadUserData();
+    }, [isLoggedIn]);
+
+    // 사용자 정보 가져오기
     const fetchUserInfo = async () => {
         try {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
@@ -61,6 +98,7 @@ export function MyPage() {
         }
     };
 
+    // 사용자 펫 가져오기
     const fetchUserPets = async () => {
         try {
             const response = await axios.get(`${backUrl}/api/v1/mypets`, {
@@ -73,12 +111,14 @@ export function MyPage() {
         }
     };
 
-    // Pet Management Functions
+    // 반려동물 삭제 함수
     const deletePet = async (petId: string | number) => {
         try {
             await axios.delete(`${backUrl}/api/v1/mypets/${petId}`, {
                 withCredentials: true,
             });
+
+            // 삭제 성공 시 목록 갱신
             await fetchUserPets();
             return true;
         } catch (error) {
@@ -87,11 +127,13 @@ export function MyPage() {
         }
     };
 
+    // 삭제 버튼 클릭 핸들러
     const handleDeleteClick = (pet: PetData) => {
         setPetToDelete(pet);
         setIsDeleteDialogOpen(true);
     };
 
+    // 삭제 확인 핸들러
     const handleConfirmDelete = async () => {
         if (petToDelete?.id) {
             const success = await deletePet(petToDelete.id);
@@ -121,6 +163,24 @@ export function MyPage() {
 
         loadUserData();
     }, [isLoggedIn]);
+
+    // 반려동물 추가 성공 후 실행될 함수
+    const handlePetAdded = () => {
+        fetchUserPets();
+    };
+
+    const handleLogout = () => {
+        logout();
+    };
+
+    const handlePayment = async () => {
+        try {
+            navigate('/checkout');
+        } catch (error) {
+            console.error("결제 페이지 이동 실패:", error);
+            alert("결제 페이지로 이동할 수 없습니다.");
+        }
+    };
 
     // Render Loading State for Non-Logged In Users
     if (!isLoggedIn) {
@@ -152,6 +212,36 @@ export function MyPage() {
     return (
         <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
             {/* 프로필 섹션 */}
+            <SidebarGroup className="p-4">
+                <Card className="mb-4">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">내 프로필</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-16 w-16 rounded-full">
+                                {userData?.avatar && (
+                                    <AvatarImage src={userData.avatar} alt={userData.nickname || '사용자'} />
+                                )}
+                                <AvatarFallback>{userData?.nickname?.charAt(0) || '?'}</AvatarFallback>
+                            </Avatar>
+                            <div className="justify-start">
+                                <h3 className="font-medium text-lg">{userData?.nickname || '사용자'}</h3>
+                                <p className="text-gray-600 text-sm">내 포인트 : </p>
+                                <div className="flex items-center justify-start">
+                                <span className="text-xl font-bold text-green-700 ml-2">{points.toLocaleString()} P</span>
+                                    <Button
+                                        onClick={handlePayment}
+                                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 scale-75">
+                                        충전하기
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </SidebarGroup>
+
             <SidebarGroup className="p-4">
                 <ProfileSection userData={userData} points={points} />
             </SidebarGroup>
