@@ -7,8 +7,8 @@ import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useState, useEffect } from "react";
-import NcpMap from './findNcpMap'
-import useGeolocation from '@/hooks/Geolocation'
+// import NcpMap from './findNcpMap'
+// import useGeolocation from '@/hooks/Geolocation'
 
 // import { Dialog, DialogContent } from "@/components/ui/dialog"
 
@@ -23,7 +23,7 @@ interface NavBarProps {
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const { isLoggedIn, logout } = useAuth();
-  const findLocation = useGeolocation()
+  // const findLocation = useGeolocation()
 
   console.log(isLoggedIn);
 
@@ -45,8 +45,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [breed, setBreed] = useState("");
-  const [geo, setGeo] = useState("");
-  const [location, setLocation] = useState("");
+  // const [geo, setGeo] = useState("");
+  // const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [gender, setGender] = useState("");
@@ -69,7 +69,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     setName(e.target.value);
   };
 
-  const handleEtc = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEtc = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEtc(e.target.value);
   };
 
@@ -77,15 +77,15 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     setColor(e.target.value);
   };
 
-  const handleSituation = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSituation = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSituation(e.target.value);
   };
 
-  const handleTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTitle(e.target.value);
   };
 
-  const handleGender = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGender = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGender(e.target.value);
   };
 
@@ -93,7 +93,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     setAge(e.target.value);
   };
 
-  const handleNeutered = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNeutered = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNeutered(e.target.value);
   };
 
@@ -377,7 +377,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">중성화</label>
                     {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
-                    <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                    <select className="border p-2 w-full bg-white" onChange={handleNeutered}>
                       <option value="">미상</option>
                       <option value="true">중성화 됌</option>
                       <option value="false">중성화 안됌</option>

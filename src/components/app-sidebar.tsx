@@ -10,7 +10,7 @@ interface AppSidebarProps {
   findPets: Pet[];
 }
 
-export function AppSidebar({ lostPets, findPets }: AppSidebarProps) {
+export function AppSidebar({ lostPets }: AppSidebarProps) {
   const [activeFilter, setActiveFilter] = useState<string>('전체');
 
   // 상태 변경을 감지하는 useEffect 추가
@@ -36,7 +36,6 @@ export function AppSidebar({ lostPets, findPets }: AppSidebarProps) {
         ) : (
             <SidebarMainContent
                 lostPets={lostPets}
-                findPets={findPets}
             />
         )}
     </Sidebar>

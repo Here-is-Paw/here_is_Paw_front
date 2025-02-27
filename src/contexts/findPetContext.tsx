@@ -1,5 +1,5 @@
 // contexts/PetContext.tsx
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import  { createContext, useState, useContext, ReactNode } from 'react';
 
 interface PetContextType {
   submissionCount: number;

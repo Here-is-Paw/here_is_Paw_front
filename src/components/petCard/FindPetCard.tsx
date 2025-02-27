@@ -15,28 +15,28 @@ const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a9
 
 interface PetCardProps {
   pet: FindPet;
-  findDetail: findDetail;
+  // findDetail: findDetail;
 }
 
 export function FindPetCard({ pet }: PetCardProps) {
   const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
   const [findDetail, setFindDetail] = useState<findDetail | null>(null);
   const [member, setMember] = useState(null);
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn } = useAuth();
   const findLocation = useGeolocation();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { incrementSubmissionCount } = usePetContext();
 
   const [breed, setBreed] = useState("");
-  const [geo, setGeo] = useState("");
-  const [location, setLocation] = useState("");
+  // const [geo, setGeo] = useState("");
+  // const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [gender, setGender] = useState("");
   const [etc, setEtc] = useState("");
   const [situation, setSituation] = useState("");
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState<string | "">("");
   const [age, setAge] = useState("");
   const [neutered, setNeutered] = useState("");
 
@@ -51,7 +51,7 @@ export function FindPetCard({ pet }: PetCardProps) {
     setName(e.target.value);
   };
 
-  const handleEtc = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEtc = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEtc(e.target.value);
   };
 
@@ -59,15 +59,15 @@ export function FindPetCard({ pet }: PetCardProps) {
     setColor(e.target.value);
   };
 
-  const handleSituation = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSituation = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSituation(e.target.value);
   };
 
-  const handleTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTitle(e.target.value);
   };
 
-  const handleGender = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGender = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setGender(e.target.value);
   };
 
@@ -75,7 +75,7 @@ export function FindPetCard({ pet }: PetCardProps) {
     setAge(e.target.value);
   };
 
-  const handleNeutered = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNeutered = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNeutered(e.target.value);
   };
 
@@ -305,7 +305,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                         <div className="mr-4 w-20">
                           <label className="block font-medium mb-2 ">중성화</label>
                           {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
-                          <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                          <select className="border p-2 w-full bg-white" onChange={handleNeutered}>
                             <option value="">미상</option>
                             <option value="true">중성화 됌</option>
                             <option value="false">중성화 안됌</option>
@@ -319,7 +319,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                     </div>
                     <div className="w-80">
                       {/* <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div> */}
-                      <NcpMap currentLocation={findLocation}/>
+                      <NcpMap currentLocation={findLocation} findDetail={findDetail}/>
                       <div className="mb-4 ">
                         <label className="block font-medium mb-2 ">특이 사항</label>
                         <textarea
