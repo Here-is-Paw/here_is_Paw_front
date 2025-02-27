@@ -154,12 +154,23 @@ export const SuccessPage: React.FC = () => {
     <div className="payment-container" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="wrapper" style={{ flexDirection: "column" }}>
         <div className="box_section" style={{ width: "600px", margin: "0 auto", padding: "30px" }}>
-          <img
-            width="100px"
-            src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
-            alt="결제 완료 이미지"
-          />
-          <h2>결제를 완료했어요</h2>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "20px" }}>
+            <img
+              width="80px"
+              src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
+              alt="결제 완료 이미지"
+            />
+            <h2 style={{ 
+              fontSize: "2rem", 
+              fontWeight: "600", 
+              margin: "20px 0 0", 
+              lineHeight: "1.3",
+              textAlign: "center",
+              width: "100%",
+              backgroundColor: "white"
+            }}>결제를 완료했어요</h2>
+          </div>
+          
           <div className="p-grid typography--p" style={{ marginTop: "20px" }}>
             <div className="p-grid-col text--left">
               <b>결제금액</b>
