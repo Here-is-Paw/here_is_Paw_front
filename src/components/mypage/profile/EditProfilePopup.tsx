@@ -82,6 +82,8 @@ export const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         fileInputRef.current?.click();
     };
 
+    // EditProfilePopup.tsx 파일에서 handleUpdateProfile 함수 수정
+
     const handleUpdateProfile = async () => {
         try {
             // 닉네임이나 프로필 이미지 중 하나라도 변경되었다면
@@ -93,16 +95,20 @@ export const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 username: userData?.username || ''
             };
 
-
+            // 닉네임이 변경되었는지 확인
             if (editedNickname.trim() !== userData?.nickname) {
                 updateData.nickname = editedNickname;
             }
 
+            // 프로필 이미지가 변경되었는지 확인
             if (profileImage) {
                 updateData.profileImage = profileImage;
             }
 
+            // 업데이트 함수 호출 및 완료 대기
             await onUpdateProfile(updateData);
+
+            // 업데이트 성공 후 다이얼로그 닫기
             onOpenChange(false);
         } catch (error) {
             console.error('프로필 업데이트 실패:', error);

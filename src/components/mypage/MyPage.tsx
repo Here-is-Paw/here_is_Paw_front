@@ -55,7 +55,6 @@ export function MyPage() {
             }
             setLoading(false);
         };
-        console.log(userData?.username)
         loadUserData();
     }, [isLoggedIn]);
 
@@ -100,6 +99,10 @@ export function MyPage() {
         }
     };
 
+// MyPage.tsx 파일에서 updateUserProfile 함수 수정
+
+    // MyPage.tsx 파일에서 updateUserProfile 함수 수정
+
     const updateUserProfile = async (updatedData: {
         username : string;
         nickname?: string;
@@ -129,8 +132,11 @@ export function MyPage() {
                 withCredentials: true
             });
 
-            // 성공 시 사용자 데이터 업데이트
-            setUserData(response.data);
+            // 성공 시 사용자 데이터 업데이트 - 새 객체로 만들어서 확실히 재렌더링 되도록 함
+            setUserData({...response.data});
+
+            // 포인트 정보도 함께 갱신
+            await fetchUserPoints();
 
             // 성공 메시지 표시
             alert('프로필이 성공적으로 업데이트되었습니다.');
@@ -200,6 +206,19 @@ export function MyPage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            // 백엔드 로그아웃 API 호출 (필요한 경우)
+            await axios.delete(`${backUrl}/api/v1/members/logout`, {
+                withCredentials: true,
+            });
+            logout(); // Context 상태 업데이트
+        } catch (error) {
+            console.error("로그아웃 실패:", error);
+        }
+    };
+
+
     // Render Loading State for Non-Logged In Users
     if (!isLoggedIn) {
         return (
@@ -267,7 +286,7 @@ export function MyPage() {
 
             {/* 로그아웃 버튼 */}
             <SidebarGroup className="p-4">
-                <Button className="w-full" variant="ghost" onClick={logout}>
+                <Button className="w-full" variant="ghost" onClick={handleLogout}>
                     로그아웃
                 </Button>
             </SidebarGroup>

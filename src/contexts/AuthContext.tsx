@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             // 백엔드 로그아웃 API가 있다면 호출
             // await axios.post(`${backUrl}/api/v1/members/logout`, {}, { withCredentials: true });
+
             setIsLoggedIn(false);
         } catch (error) {
             console.error('로그아웃 오류:', error);

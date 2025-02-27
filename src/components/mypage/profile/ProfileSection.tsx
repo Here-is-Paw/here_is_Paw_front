@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// ProfileSection.tsx 파일 전체를 수정합니다.
+
+import React from 'react';
 import {
     Card,
     CardHeader,
@@ -28,7 +30,11 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                                                                   handlePayment,
                                                                   onUpdateProfile
                                                               }) => {
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+    // 타임스탬프를 생성하여 이미지 캐시를 방지합니다.
+    const timestamp = Date.now();
+    const avatarSrc = userData?.avatar ? `${userData.avatar}?t=${timestamp}` : undefined;
 
     return (
         <>
@@ -49,7 +55,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                         <Avatar className="h-16 w-16 rounded-full">
                             {userData?.avatar && (
                                 <AvatarImage
-                                    src={userData.avatar}
+                                    src={avatarSrc}
                                     alt={userData.nickname || '사용자'}
                                     className="object-cover w-full h-full"
                                 />
