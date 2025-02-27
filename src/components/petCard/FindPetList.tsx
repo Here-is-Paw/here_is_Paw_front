@@ -11,7 +11,6 @@ import { usePetContext } from '@/contexts/findPetContext';
 interface FindPetListProps {
   apiUrl: string;
   initialPets?: FindPet[];
-  status: 0;
 }
 
 export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
@@ -67,7 +66,7 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
           
           <SwiperSlide key={pet.id}>
             <div className="p-2">
-              <FindPetCard pet={pet} />
+              <FindPetCard pet={pet}/>
             </div>
           </SwiperSlide>
         ))}

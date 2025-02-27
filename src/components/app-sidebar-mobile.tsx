@@ -18,7 +18,7 @@ interface AppSidebarProps {
   findPets: Pet[];
 }
 
-export function AppSidebarMobile({ lostPets, findPets }: AppSidebarProps) {
+export function AppSidebarMobile({ lostPets }: AppSidebarProps) {
   const [activeFilter, setActiveFilter] = useState<string>("전체");
   const [open, setOpen] = useState(true);
   const [snap, setSnap] = useState<number | string | null>("355px");
@@ -76,7 +76,7 @@ export function AppSidebarMobile({ lostPets, findPets }: AppSidebarProps) {
               {activeFilter === "My" ? (
                 <MyPage />
               ) : (
-                <SidebarMainContent lostPets={lostPets} findPets={findPets} />
+                <SidebarMainContent lostPets={lostPets}/>
               )}
             </div>
           </DrawerContent>
