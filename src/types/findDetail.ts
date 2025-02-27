@@ -4,8 +4,7 @@ export interface findDetail {
   breed: string;
   etc: string;
   location: string;
-  lat: number;
-  lang: number;
+  geo: GeoPoint;
   path_url: string;
   name: string;
   color: string;
@@ -15,4 +14,9 @@ export interface findDetail {
   title: string;
   situation: string;
   member_id: number;
+}
+
+export interface GeoPoint {
+  x: number;
+  y: number;
 }

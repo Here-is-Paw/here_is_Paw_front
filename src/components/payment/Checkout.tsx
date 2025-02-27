@@ -1,7 +1,8 @@
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import "./Payment.css"
+import "./Payment.css";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // clientKey, customerKey 세팅
 const clientKey: string = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
@@ -13,6 +14,7 @@ interface Amount {
 }
 
 export const CheckoutPage: React.FC = () => {
+  const isMobile = useIsMobile();
   const [amount, setAmount] = useState<Amount>({ currency: "KRW", value: 0 });
   const [ready, setReady] = useState<boolean>(false);
   const [widgets, setWidgets] = useState<any>(null);
@@ -80,12 +82,31 @@ export const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="payment-container" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-      <div className="wrapper">
-        <div className="box_section" style={{ width: "600px", margin: "0 auto", padding: "30px" }}>
-          <div style={{ marginBottom: "30px" }}>
-            <h2 className="typography--h2">결제 금액 입력</h2>
-            <div className="p-flex" style={{ justifyContent: "center", marginTop: "20px" }}>
+    <div className="payment-container" style={{ 
+      position: "absolute", 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      padding: isMobile ? "10px" : "20px"
+    }}>
+      <div className="wrapper" style={{ 
+        maxWidth: isMobile ? "100%" : "800px"
+      }}>
+        <div className="box_section" style={{ 
+          width: isMobile ? "100%" : "600px", 
+          margin: "0 auto", 
+          padding: isMobile ? "20px 15px" : "30px" 
+        }}>
+          <div style={{ marginBottom: isMobile ? "20px" : "30px" }}>
+            <h2 className="typography--h2" style={{
+              fontSize: isMobile ? "28px" : "48px"
+            }}>결제 금액 입력</h2>
+            <div className="p-flex" style={{ 
+              justifyContent: "center", 
+              marginTop: "20px",
+              flexDirection: isMobile ? "column" : "row"
+            }}>
               <input
                 type="text"
                 value={customAmount}
@@ -93,18 +114,20 @@ export const CheckoutPage: React.FC = () => {
                 placeholder="0"
                 className="typography--p"
                 style={{
-                  width: "200px",
+                  width: isMobile ? "100%" : "200px",
                   padding: "11px 16px",
                   border: "2px solid var(--grey300)",
                   borderRadius: "7px",
                   fontSize: "15px",
                   textAlign: "right",
-                  marginRight: "8px"
+                  marginRight: isMobile ? "0" : "8px",
+                  marginBottom: isMobile ? "10px" : "0"
                 }}
               />
               <span className="typography--p color--grey700" style={{ 
                 display: "flex", 
-                alignItems: "center"
+                alignItems: "center",
+                justifyContent: isMobile ? "flex-end" : "flex-start"
               }}>원</span>
             </div>
           </div>
@@ -114,7 +137,7 @@ export const CheckoutPage: React.FC = () => {
           <div id="agreement" />
           
           {amount.value >= 5000 && (
-            <div style={{ paddingLeft: "24px" }}>
+            <div style={{ paddingLeft: isMobile ? "10px" : "24px" }}>
               <div className="checkable typography--p">
                 <label htmlFor="coupon-box" className="checkable__label typography--regular">
                   <input
@@ -138,12 +161,13 @@ export const CheckoutPage: React.FC = () => {
             </div>
           )}
     
-          {/* 버튼 컨테이너 - 가로 배치 */}
+          {/* 버튼 컨테이너 - 가로/세로 배치 */}
           <div style={{ 
             display: "flex", 
+            flexDirection: isMobile ? "column" : "row",
             justifyContent: "space-between", 
             alignItems: "center", 
-            gap: "10px", 
+            gap: isMobile ? "15px" : "10px", 
             marginTop: "30px" 
           }}>
             {/* 결제하기 버튼 */}
@@ -171,7 +195,8 @@ export const CheckoutPage: React.FC = () => {
               }}
               style={{ 
                 flex: "1",
-                maxWidth: "48%",
+                width: isMobile ? "100%" : "auto",
+                maxWidth: isMobile ? "100%" : "48%",
                 margin: "0",
                 height: "48px"
               }}
@@ -180,7 +205,12 @@ export const CheckoutPage: React.FC = () => {
             </button>
 
             {/* 메인 페이지 버튼 */}
-            <Link to="/" style={{ flex: "1", maxWidth: "48%", display: "flex" }}>
+            <Link to="/" style={{ 
+              flex: "1", 
+              width: isMobile ? "100%" : "auto",
+              maxWidth: isMobile ? "100%" : "48%", 
+              display: "flex" 
+            }}>
               <button
                 className="button"
                 style={{ 

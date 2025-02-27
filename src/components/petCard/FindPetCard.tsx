@@ -6,6 +6,10 @@ import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
 import axios from "axios";
 import { Plus } from "lucide-react";
+import { usePetContext } from "@/contexts/findPetContext";
+import { useAuth } from "@/contexts/AuthContext";
+import NcpMap from "./findNcpMap";
+import useGeolocation from "@/hooks/Geolocation";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -18,8 +22,11 @@ export function FindPetCard({ pet }: PetCardProps) {
   const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
   const [findDetail, setFindDetail] = useState<findDetail | null>(null);
   const [member, setMember] = useState(null);
-
+  const { isLoggedIn, logout } = useAuth();
+  const findLocation = useGeolocation();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const { incrementSubmissionCount } = usePetContext();
 
   const [breed, setBreed] = useState("");
   const [geo, setGeo] = useState("");
@@ -96,7 +103,8 @@ export function FindPetCard({ pet }: PetCardProps) {
   // 파일 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
-    localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
+
+    localStorage.removeItem("uploadedImage"); // localStorage에서도 삭제
   };
 
   useEffect(() => {
@@ -129,6 +137,58 @@ export function FindPetCard({ pet }: PetCardProps) {
     setIsFindDetailModalOpen(true);
   };
 
+  const handleFindUpdateSubmit = async (postId: number) => {
+    if (isLoggedIn) {
+      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+        withCredentials: true,
+      });
+
+      const member_id = memberResponse.data.id;
+
+      try {
+        const response = await fetch(`${backUrl}/find/update/${postId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: title,
+            situation: situation,
+            breed: breed,
+            location: "서울 강남구 어딘가",
+            geo: 123,
+            name: name,
+            color: color,
+            etc: etc,
+            gender: gender,
+            age: age,
+            neutered: neutered,
+            find_date: "2025-02-27T00:00:00",
+            member_id: member_id,
+            shelter_id: 1,
+            path_url: imagePreview,
+          }),
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          alert("발견 신고가 성공적으로 수정 되었습니다!");
+          incrementSubmissionCount();
+          handleRemoveImage();
+        } else {
+          alert("저장 실패");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("오류가 발생했습니다.");
+        handleRemoveImage();
+      }
+    } else {
+      alert("로그인 후 이용 가능한 서비스 입니다!");
+      return;
+    }
+  };
+
   return (
     <>
       <div
@@ -137,7 +197,7 @@ export function FindPetCard({ pet }: PetCardProps) {
           openDetailModal(pet.id);
         }}
       >
-        <img src={pet.path_url ? pet.path_url : DEFAULT_IMAGE_URL} alt={`${pet.breed} 실종동물`} className="w-full h-30 object-cover" />
+        <img src={pet.path_url ? pet.path_url : DEFAULT_IMAGE_URL} alt={`실종동물`} className="w-full h-20 object-cover" />
         <div className="p-3">
           <div className="font-medium mb-3">{pet.breed}</div>
           <div className="space-y-1">
@@ -184,6 +244,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                           rows={1}
                           placeholder="게시글의 제목을 입력해주세요."
                           onChange={handleTitle}
+                          defaultValue={findDetail.title}
                         />
                       </div>
 
@@ -213,21 +274,22 @@ export function FindPetCard({ pet }: PetCardProps) {
                           rows={2}
                           placeholder="발견 당시 상황을 입력해주세요."
                           onChange={handleSituation}
+                          defaultValue={findDetail.situation}
                         />
                       </div>
 
                       <div className="mb-4 flex justify-between">
                         <div className="mr-4 w-20">
                           <label className="block font-medium mb-2 ">견종</label>
-                          <input className="border p-2 w-full bg-white" placeholder={findDetail.breed} onChange={handleBreed} />
+                          <input className="border p-2 w-full bg-white" placeholder="견종" defaultValue={findDetail.breed} onChange={handleBreed} />
                         </div>
                         <div className="mr-4 w-20">
                           <label className="block font-medium mb-2 ">색상</label>
-                          <input className="border p-2 w-full bg-white" placeholder={findDetail.color} onChange={handleColor} />
+                          <input className="border p-2 w-full bg-white" placeholder="색상" defaultValue={findDetail.color} onChange={handleColor} />
                         </div>
                         <div className="w-20">
                           <label className="block font-medium mb-2 ">이름</label>
-                          <input className="border p-2 w-full bg-white" placeholder={findDetail.name} onChange={handleName} />
+                          <input className="border p-2 w-full bg-white" placeholder="이름" defaultValue={findDetail.name} onChange={handleName} />
                         </div>
                       </div>
                       <div className="mb-4 flex justify-between">
@@ -251,21 +313,34 @@ export function FindPetCard({ pet }: PetCardProps) {
                         </div>
                         <div className="w-20">
                           <label className="block font-medium mb-2 ">나이</label>
-                          <input className="border p-2 w-full bg-white" placeholder={findDetail.age} onChange={handleAge} />
+                          <input className="border p-2 w-full bg-white" placeholder="나이" defaultValue={findDetail.age} onChange={handleAge} />
                         </div>
                       </div>
                     </div>
                     <div className="w-80">
-                      <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                      {/* <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div> */}
+                      <NcpMap currentLocation={findLocation}/>
                       <div className="mb-4 ">
                         <label className="block font-medium mb-2 ">특이 사항</label>
-                        <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder={findDetail.etc} onChange={handleEtc} />
+                        <textarea
+                          className="border p-2 w-full bg-white resize-none"
+                          rows={2}
+                          placeholder="특이사항"
+                          defaultValue={findDetail.etc}
+                          onChange={handleEtc}
+                        />
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2 h-6">
-                    <button className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700" onClick={() => setIsFindDetailModalOpen(false)}>
+                    <button
+                      className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
+                      onClick={() => {
+                        handleFindUpdateSubmit(pet.id);
+                        setIsFindDetailModalOpen(false);
+                      }}
+                    >
                       수정하기
                     </button>
                   </div>

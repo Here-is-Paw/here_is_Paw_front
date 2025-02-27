@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import "./Payment.css";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ResponseData {
   mId: string;
@@ -24,7 +25,7 @@ export const SuccessPage: React.FC = () => {
   const [responseData, setResponseData] = useState<ResponseData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);  // 처리 상태를 관리하기 위함
   const [hasAttempted, setHasAttempted] = useState(false); // 결제 시도 여부를 추적
-
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     async function confirm() {
@@ -49,8 +50,6 @@ export const SuccessPage: React.FC = () => {
             code: "INVALID_REQUEST",
           };
         }
-
-        // amount와 setAmount()의 amount 파라미터가 일치하는지 확인해야 함
 
         // 요청 데이터 로깅
         console.log("Request data:", {
@@ -151,56 +150,96 @@ export const SuccessPage: React.FC = () => {
   }, [searchParams, navigate, isProcessing, responseData, hasAttempted]);
 
   return (
-    <div className="payment-container" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-      <div className="wrapper" style={{ flexDirection: "column" }}>
-        <div className="box_section" style={{ width: "600px", margin: "0 auto", padding: "30px" }}>
-          <img
-            width="100px"
-            src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
-            alt="결제 완료 이미지"
-          />
-          <h2>결제를 완료했어요</h2>
-          <div className="p-grid typography--p" style={{ marginTop: "20px" }}>
+    <div className="payment-container" style={{ 
+      position: "absolute", 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      padding: isMobile ? "10px" : "20px",
+      overflow: "hidden" // 스크롤바 방지
+    }}>
+      <div className="wrapper" style={{ 
+        flexDirection: "column",
+        maxWidth: isMobile ? "100%" : "800px",
+        overflow: "hidden" // 스크롤바 방지
+      }}>
+        <div className="box_section" style={{ 
+          width: isMobile ? "100%" : "600px", 
+          margin: "0 auto", 
+          padding: isMobile ? "20px 15px" : "30px",
+          overflow: "hidden" // 스크롤바 방지
+        }}>
+          <div style={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            alignItems: "center", 
+            marginBottom: isMobile ? "15px" : "20px" 
+          }}>
+            <img
+              width={isMobile ? "70px" : "80px"}
+              src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
+              alt="결제 완료 이미지"
+            />
+            <h2 style={{ 
+              fontSize: isMobile ? "1.6rem" : "2rem", 
+              fontWeight: "600", 
+              margin: isMobile ? "15px 0 0" : "20px 0 0", 
+              lineHeight: "1.3",
+              textAlign: "center",
+              width: "100%",
+              backgroundColor: "white"
+            }}>결제를 완료했어요</h2>
+          </div>
+          
+          <div className="p-grid typography--p" style={{ marginTop: isMobile ? "15px" : "20px" }}>
             <div className="p-grid-col text--left">
               <b>결제금액</b>
             </div>
-            <div className="p-grid-col text--right" id="amount">
+            <div className="p-grid-col text--right" 
+              id="amount"
+              style={{ fontSize: isMobile ? "0.95rem" : "1rem" }}
+            >
               {`${Number(searchParams.get("amount")).toLocaleString()}원`}
             </div>
           </div>
           
-          {/* 나머지 정보 섹션의 간격 수정 */}
           <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
             <div className="p-grid-col text--left">
               <b>주문번호</b>
             </div>
-            <div className="p-grid-col text--right" id="orderId">
+            <div className="p-grid-col text--right" 
+              id="orderId"
+              style={{ 
+                fontSize: isMobile ? "0.9rem" : "1rem",
+                wordBreak: "break-all"
+              }}
+            >
               {`${searchParams.get("orderId")}`}
             </div>
           </div>
           
-          <div className="p-grid-col" style={{ marginTop: "20px" }}>
-            <Link to="/">
+          <div className="p-grid-col" style={{ marginTop: isMobile ? "15px" : "20px" }}>
+            <Link to="/" style={{ 
+              width: "100%",
+              display: "flex",
+              justifyContent: "center"
+            }}>
               <button
                 className="button"
                 style={{ 
                   backgroundColor: "#3182f6", 
                   color: "#ffffff", 
                   width: "100%", 
-                  maxWidth: "300px",
-                  margin: "20px auto 0" 
+                  maxWidth: isMobile ? "100%" : "300px",
+                  margin: "20px auto 0",
+                  padding: isMobile ? "10px 16px" : "12px 16px",
+                  fontSize: isMobile ? "14px" : "15px"
                 }}
               >
                 메인 페이지로 이동
               </button>
             </Link>
-          </div>
-        </div>
-        
-        <div className="box_section" style={{ width: "600px", margin: "10px auto 0", padding: "30px", textAlign: "left" }}>
-          <b>Response Data:</b>
-          <div id="response" style={{ whiteSpace: "pre-wrap", overflowX: "auto", fontSize: "14px" }}>
-            {responseData && <pre>{JSON.stringify(responseData, null, 2)}</pre>}
           </div>
         </div>
       </div>
