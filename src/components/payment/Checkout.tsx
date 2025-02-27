@@ -1,6 +1,8 @@
 import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
 import React, { useEffect, useState } from "react";
-import "./Payment.css"
+import { Link } from "react-router-dom";
+import "./Payment.css";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // clientKey, customerKey 세팅
 const clientKey: string = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
@@ -12,6 +14,7 @@ interface Amount {
 }
 
 export const CheckoutPage: React.FC = () => {
+  const isMobile = useIsMobile();
   const [amount, setAmount] = useState<Amount>({ currency: "KRW", value: 0 });
   const [ready, setReady] = useState<boolean>(false);
   const [widgets, setWidgets] = useState<any>(null);
@@ -79,89 +82,150 @@ export const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="wrapper">
-      <div className="box_section" style={{ width: "600px" }}>
-        <div style={{ marginBottom: "30px" }}>
-          <h2 className="typography--h2">결제 금액 입력</h2>
-          <div className="p-flex" style={{ justifyContent: "center", marginTop: "20px" }}>
-            <input
-              type="text"
-              value={customAmount}
-              onChange={handleAmountChange}
-              placeholder="0"
-              className="typography--p"
-              style={{
-                width: "200px",
-                padding: "11px 16px",
-                border: "2px solid var(--grey300)",
-                borderRadius: "7px",
-                fontSize: "15px",
-                textAlign: "right",
-                marginRight: "8px"
-              }}
-            />
-            <span className="typography--p color--grey700" style={{ 
-              display: "flex", 
-              alignItems: "center"
-            }}>원</span>
-          </div>
-        </div>
-  
-        {/* 결제 위젯 영역 */}
-        <div id="payment-method" />
-        <div id="agreement" />
-        
-        {amount.value >= 5000 && (
-          <div style={{ paddingLeft: "24px" }}>
-            <div className="checkable typography--p">
-              <label htmlFor="coupon-box" className="checkable__label typography--regular">
-                <input
-                  id="coupon-box"
-                  className="checkable__input"
-                  type="checkbox"
-                  aria-checked="true"
-                  disabled={!ready || amount.value < 5000}
-                  onChange={async (event) => {
-                    const newValue = event.target.checked ? amount.value - 5000 : amount.value + 5000;
-                    setCustomAmount(newValue.toString());
-                    await updateAmount({
-                      currency: amount.currency,
-                      value: newValue
-                    });
-                  }}
-                />
-                <span className="checkable__label-text">5,000원 쿠폰 적용</span>
-              </label>
+    <div className="payment-container" style={{ 
+      position: "absolute", 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      padding: isMobile ? "10px" : "20px"
+    }}>
+      <div className="wrapper" style={{ 
+        maxWidth: isMobile ? "100%" : "800px"
+      }}>
+        <div className="box_section" style={{ 
+          width: isMobile ? "100%" : "600px", 
+          margin: "0 auto", 
+          padding: isMobile ? "20px 15px" : "30px" 
+        }}>
+          <div style={{ marginBottom: isMobile ? "20px" : "30px" }}>
+            <h2 className="typography--h2" style={{
+              fontSize: isMobile ? "28px" : "48px"
+            }}>결제 금액 입력</h2>
+            <div className="p-flex" style={{ 
+              justifyContent: "center", 
+              marginTop: "20px",
+              flexDirection: isMobile ? "column" : "row"
+            }}>
+              <input
+                type="text"
+                value={customAmount}
+                onChange={handleAmountChange}
+                placeholder="0"
+                className="typography--p"
+                style={{
+                  width: isMobile ? "100%" : "200px",
+                  padding: "11px 16px",
+                  border: "2px solid var(--grey300)",
+                  borderRadius: "7px",
+                  fontSize: "15px",
+                  textAlign: "right",
+                  marginRight: isMobile ? "0" : "8px",
+                  marginBottom: isMobile ? "10px" : "0"
+                }}
+              />
+              <span className="typography--p color--grey700" style={{ 
+                display: "flex", 
+                alignItems: "center",
+                justifyContent: isMobile ? "flex-end" : "flex-start"
+              }}>원</span>
             </div>
           </div>
-        )}
-  
-        {/* 단일 결제하기 버튼 */}
-        <button
-          className="button"
-          disabled={!customAmount || parseInt(customAmount) <= 0}
-          onClick={async () => {
-            if (!widgets) {
-              console.error("Payment widgets not initialized");
-              return;
-            }
-  
-            try {
-              await widgets.requestPayment({
-                orderId: generateRandomString(),
-                orderName: `결제 금액: ${amount.value.toLocaleString()}원`,
-                successUrl: window.location.origin + "/success",
-                failUrl: window.location.origin + "/fail",
-                customerEmail: "customer123@gmail.com",
-                customerName: "김토스",
-              });
-            } catch (error) {
-              console.error(error);
-            }
-          }}
-        >
-          {customAmount ? parseInt(customAmount).toLocaleString() : "0"}원 결제하기
-        </button>
+    
+          {/* 결제 위젯 영역 */}
+          <div id="payment-method" />
+          <div id="agreement" />
+          
+          {amount.value >= 5000 && (
+            <div style={{ paddingLeft: isMobile ? "10px" : "24px" }}>
+              <div className="checkable typography--p">
+                <label htmlFor="coupon-box" className="checkable__label typography--regular">
+                  <input
+                    id="coupon-box"
+                    className="checkable__input"
+                    type="checkbox"
+                    aria-checked="true"
+                    disabled={!ready || amount.value < 5000}
+                    onChange={async (event) => {
+                      const newValue = event.target.checked ? amount.value - 5000 : amount.value + 5000;
+                      setCustomAmount(newValue.toString());
+                      await updateAmount({
+                        currency: amount.currency,
+                        value: newValue
+                      });
+                    }}
+                  />
+                  <span className="checkable__label-text">5,000원 쿠폰 적용</span>
+                </label>
+              </div>
+            </div>
+          )}
+    
+          {/* 버튼 컨테이너 - 가로/세로 배치 */}
+          <div style={{ 
+            display: "flex", 
+            flexDirection: isMobile ? "column" : "row",
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            gap: isMobile ? "15px" : "10px", 
+            marginTop: "30px" 
+          }}>
+            {/* 결제하기 버튼 */}
+            <button
+              className="button"
+              disabled={!customAmount || parseInt(customAmount) <= 0}
+              onClick={async () => {
+                if (!widgets) {
+                  console.error("Payment widgets not initialized");
+                  return;
+                }
+    
+                try {
+                  await widgets.requestPayment({
+                    orderId: generateRandomString(),
+                    orderName: `결제 금액: ${amount.value.toLocaleString()}원`,
+                    successUrl: window.location.origin + "/success",
+                    failUrl: window.location.origin + "/fail",
+                    customerEmail: "customer123@gmail.com",
+                    customerName: "김토스",
+                  });
+                } catch (error) {
+                  console.error(error);
+                }
+              }}
+              style={{ 
+                flex: "1",
+                width: isMobile ? "100%" : "auto",
+                maxWidth: isMobile ? "100%" : "48%",
+                margin: "0",
+                height: "48px"
+              }}
+            >
+              {customAmount ? parseInt(customAmount).toLocaleString() : "0"}원 결제하기
+            </button>
+
+            {/* 메인 페이지 버튼 */}
+            <Link to="/" style={{ 
+              flex: "1", 
+              width: isMobile ? "100%" : "auto",
+              maxWidth: isMobile ? "100%" : "48%", 
+              display: "flex" 
+            }}>
+              <button
+                className="button"
+                style={{ 
+                  backgroundColor: "#e8f3ff", 
+                  color: "#1b64da",
+                  width: "100%",
+                  height: "48px",
+                  margin: "0"
+                }}
+              >
+                메인 페이지로 이동
+              </button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
