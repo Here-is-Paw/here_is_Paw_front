@@ -169,7 +169,6 @@ export const SuccessPage: React.FC = () => {
             </div>
           </div>
           
-          {/* 나머지 정보 섹션의 간격 수정 */}
           <div className="p-grid typography--p" style={{ marginTop: "10px" }}>
             <div className="p-grid-col text--left">
               <b>주문번호</b>
@@ -194,13 +193,6 @@ export const SuccessPage: React.FC = () => {
                 메인 페이지로 이동
               </button>
             </Link>
-          </div>
-        </div>
-        
-        <div className="box_section" style={{ width: "600px", margin: "10px auto 0", padding: "30px", textAlign: "left" }}>
-          <b>Response Data:</b>
-          <div id="response" style={{ whiteSpace: "pre-wrap", overflowX: "auto", fontSize: "14px" }}>
-            {responseData && <pre>{JSON.stringify(responseData, null, 2)}</pre>}
           </div>
         </div>
       </div>
