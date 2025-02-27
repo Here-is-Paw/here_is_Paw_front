@@ -1,43 +1,46 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useState, useEffect} from 'react';
 import axios from 'axios';
 
 // UI Components
-import { SidebarGroup } from "@/components/ui/sidebar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {SidebarGroup} from "@/components/ui/sidebar";
+import {Card, CardContent} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
 
 // Context and Constants
-import { useAuth } from "@/contexts/AuthContext";
-import { backUrl } from "@/constants";
+import {useAuth} from "@/contexts/AuthContext";
+import {backUrl} from "@/constants";
 
 // Types
-import { User } from "@/types/user";
-import { PetData } from "@/types/pet";
+import {User} from "@/types/user";
+import {MyPet} from "@/types/pet";
 
 // Custom Components
-import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup";
-import { AddPetFormPopup } from "./petForm/AddPetFormPopup";
+import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup";
+import {AddPetFormPopup} from "@/components/mypage/pet/petForm/AddPetFormPopup.tsx";
+import {EditPetFormPopup} from "@/components/mypage/pet/petForm/EditPetFormPopup.tsx"; // Import the new component
 
 // Internal Components
-import { ProfileSection } from './ProfileSection';
-import { PetsSection } from './PetsSection';
-import { DeletePetDialog } from './DeletePetDialog';
+import {ProfileSection} from './profile/ProfileSection.tsx';
+import {PetsSection} from './pet/PetsSection.tsx';
+import {DeletePetDialog} from './pet/DeletePetDialog.tsx';
 
 export function MyPage() {
     const navigate = useNavigate();
 
     // Authentication and State Management
-    const { isLoggedIn, logout } = useAuth();
+    const {isLoggedIn, logout} = useAuth();
     const [userData, setUserData] = useState<User | null>(null);
-    const [userPets, setUserPets] = useState<PetData[]>([]);
+    const [userPets, setUserPets] = useState<MyPet[]>([]);
     const [loading, setLoading] = useState(true);
     const [points, setPoints] = useState<number>(0);
 
     // Modal and Interaction States
     const [isAddPetOpen, setIsAddPetOpen] = useState(false);
+    const [isEditPetOpen, setIsEditPetOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [petToDelete, setPetToDelete] = useState<PetData | null>(null);
+    const [petToDelete, setPetToDelete] = useState<MyPet | null>(null);
+    const [petToEdit, setPetToEdit] = useState<MyPet | null>(null);
 
     // Data Loading Effect
     useEffect(() => {
@@ -52,10 +55,9 @@ export function MyPage() {
             }
             setLoading(false);
         };
-
+        console.log(userData?.username)
         loadUserData();
     }, [isLoggedIn]);
-
 
 
     // 사용자 포인트 조회하기
@@ -99,12 +101,15 @@ export function MyPage() {
     };
 
     const updateUserProfile = async (updatedData: {
+        username : string;
         nickname?: string;
         profileImage?: File;
     }) => {
         try {
             // FormData 생성
             const formData = new FormData();
+
+            formData.append("username", userData?.username ?? "");
 
             // 닉네임 추가 (변경된 경우)
             if (updatedData.nickname) {
@@ -117,7 +122,7 @@ export function MyPage() {
             }
 
             // API 요청
-            const response = await axios.patch(`${backUrl}/api/v1/mypets`, formData, {
+            const response = await axios.patch(`${backUrl}/api/v1/members/modify`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
@@ -163,9 +168,15 @@ export function MyPage() {
     };
 
     // 삭제 버튼 클릭 핸들러
-    const handleDeleteClick = (pet: PetData) => {
+    const handleDeleteClick = (pet: MyPet) => {
         setPetToDelete(pet);
         setIsDeleteDialogOpen(true);
+    };
+
+    // 수정 버튼 클릭 핸들러
+    const handleEditClick = (pet: MyPet) => {
+        setPetToEdit(pet);
+        setIsEditPetOpen(true);
     };
 
     // 삭제 확인 핸들러
@@ -198,7 +209,7 @@ export function MyPage() {
                         <CardContent className="p-6 flex flex-col items-center justify-center">
                             <h3 className="font-medium text-lg mb-2">로그인이 필요합니다</h3>
                             <p className="text-gray-500 text-sm mb-4">서비스를 이용하려면 로그인하세요.</p>
-                            <KakaoLoginPopup />
+                            <KakaoLoginPopup/>
                         </CardContent>
                     </Card>
                 </SidebarGroup>
@@ -235,6 +246,7 @@ export function MyPage() {
                     userData={userData}
                     onAddPetClick={() => setIsAddPetOpen(true)}
                     onDeletePet={handleDeleteClick}
+                    onUpdatePet={handleEditClick}
                 />
             </SidebarGroup>
 
@@ -242,6 +254,14 @@ export function MyPage() {
             <AddPetFormPopup
                 open={isAddPetOpen}
                 onOpenChange={setIsAddPetOpen}
+                onSuccess={fetchUserPets}
+            />
+
+            {/* 반려동물 수정 팝업 */}
+            <EditPetFormPopup
+                open={isEditPetOpen}
+                onOpenChange={setIsEditPetOpen}
+                petToEdit={petToEdit}
                 onSuccess={fetchUserPets}
             />
 

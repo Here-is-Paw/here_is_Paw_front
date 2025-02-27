@@ -1,20 +1,17 @@
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-} from "@/components/ui/card";
-import {
-    Dialog,
-    DialogContent,
-} from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
 import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import React, {useState} from "react";
 import {useAuth} from "@/contexts/AuthContext.tsx";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogHeader,
+    AlertDialogOverlay,
+    AlertDialogPortal, AlertDialogTitle,
+} from "@/components/ui/alert-dialog.tsx";
+import {X} from "lucide-react";
 
 interface AdminLoginPopupProps {
     open: boolean;
@@ -29,7 +26,7 @@ interface LoginRequest {
 export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
-    const { login } = useAuth();
+    const {login} = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -37,10 +34,10 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
         e.preventDefault();
         setIsLoading(true);
 
-        const loginData: LoginRequest = { username, password };
+        const loginData: LoginRequest = {username, password};
 
         try {
-            await axios.post(`${backUrl}/api/v1/members/login`, loginData, { withCredentials: true });
+            await axios.post(`${backUrl}/api/v1/members/login`, loginData, {withCredentials: true});
             login();
             onOpenChange(false); // 로그인 팝업 닫기
             setIsLoading(false);
@@ -53,26 +50,30 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[470px]">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-4 top-4"
-                    onClick={() => onOpenChange(false)}
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
+            <AlertDialogPortal>
+                <AlertDialogOverlay className="bg-black/50"/>
+                <AlertDialogContent
+                    className="max-w-[400px] p-0 rounded-xl bg-white shadow-lg"
                 >
-                    <span className="sr-only">Close</span>
-                </Button>
-                <Card className="border-none shadow-none">
-                    <CardHeader className="space-y-2 text-center">
-                        <CardTitle className="text-2xl font-bold text-primary">
-                            관리자 로그인
-                        </CardTitle>
-                        <CardDescription>
-                            관리자 계정으로 로그인하세요
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center gap-4">
+                    <AlertDialogCancel asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-4 right-4 z-50"
+                        >
+                            <X className="h-6 w-6 text-gray-500"/>
+                        </Button>
+                    </AlertDialogCancel>
+
+                    <div className="p-6 text-center">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>관리자 로그인</AlertDialogTitle>
+                            <AlertDialogDescription className="pb-5">
+                                관리자 계정으로 로그인하세요
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="w-full space-y-4">
                                 <input
@@ -83,6 +84,7 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
                                     required
                                     placeholder="아이디"
                                     className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary"
+                                    autoComplete="current-username"
                                 />
                                 <input
                                     type="password"
@@ -92,6 +94,7 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
                                     required
                                     placeholder="비밀번호"
                                     className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary"
+                                    autoComplete="current-password"
                                 />
                                 <Button
                                     type={"submit"}
@@ -102,9 +105,11 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
                                 </Button>
                             </div>
                         </form>
-                    </CardContent>
-                </Card>
-            </DialogContent>
-        </Dialog>
+                    </div>
+
+                </AlertDialogContent>
+            </AlertDialogPortal>
+        </AlertDialog>
+
     );
 };

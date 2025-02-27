@@ -1,6 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
 import "./Payment.css";
-import axios from "axios";
 
 export const FailPage: React.FC = () => {
   const [searchParams] = useSearchParams();

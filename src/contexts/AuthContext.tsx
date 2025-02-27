@@ -20,8 +20,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
                 withCredentials: true,
             });
-
+            
             const isAuthenticated = !!response.data;
+
             setIsLoggedIn(isAuthenticated);
             return isAuthenticated;
         } catch (error) {

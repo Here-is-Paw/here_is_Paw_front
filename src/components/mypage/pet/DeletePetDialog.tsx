@@ -8,12 +8,12 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { PetData } from "@/types/pet";
+} from "@/components/ui/alert-dialog.tsx";
+import { MyPet } from "@/types/pet.ts";
 
 interface DeletePetDialogProps {
     isOpen: boolean;
-    petToDelete: PetData | null;
+    petToDelete: MyPet | null;
     onOpenChange: (open: boolean) => void;
     onConfirmDelete: () => void;
 }
