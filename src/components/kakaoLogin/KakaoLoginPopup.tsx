@@ -1,87 +1,95 @@
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { backUrl, frontUrl, kakaoUrl } from "@/constants.ts";
-import { useState } from "react";
-import { AdminLoginPopup } from "../admin/AdminLoginPopup";
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogPortal,
+    AlertDialogOverlay,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import {Button} from "@/components/ui/button";
+import {X} from "lucide-react";
+import {backUrl, frontUrl, kakaoUrl} from "@/constants";
+import {AdminLoginPopup} from "@/components/admin/AdminLoginPopup.tsx";
+import {useState} from "react";
 
 export const KakaoLoginPopup = () => {
-  const [isKakaoOpen, setIsKakaoOpen] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+    const [isKakaoOpen, setIsKakaoOpen] = useState(false);
+    const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-  const handleKakaoLogin = () => {
-    window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${frontUrl}`;
-  };
+    const handleKakaoLogin = () => {
+        window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${frontUrl}`;
+    };
 
-  const handleAdminLoginClick = () => {
-    setIsKakaoOpen(false);
-    setShowAdminLogin(true);
-  };
+    const handleAdminLoginClick = () => {
+        setIsKakaoOpen(false);
+        setShowAdminLogin(true);
+    };
 
-  return (
-      <>
-        <Dialog open={isKakaoOpen} onOpenChange={setIsKakaoOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" className="bg-primary text-white hover:bg-primary/80">로그인</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[470px]">
-            <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-4 top-4"
-                onClick={() => setIsKakaoOpen(false)}
-            >
-              <span className="sr-only">Close</span>
-            </Button>
-            <Card className="border-none shadow-none">
-              <CardHeader className="space-y-2 text-center">
-                <CardTitle className="text-2xl font-bold text-primary">
-                  환영합니다
-                </CardTitle>
-                <CardDescription>
-                  카카오 계정으로 간편하게 로그인하세요
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center">
-                <button
-                    onClick={handleKakaoLogin}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#FEE500] hover:bg-[#FDD800] transition-colors text-[#191919] font-medium"
-                >
-                  <img
-                      src="../assets/login/kakao_login_large_wide 1.svg"
-                      alt="카카오 로그인"
-                      className="w-full h-full object-cover"
-                  />
-                </button>
+    return (
+        <>
+            <AlertDialog open={isKakaoOpen} onOpenChange={setIsKakaoOpen}>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" className="bg-primary text-white hover:bg-primary/80">
+                        로그인
+                    </Button>
+                </AlertDialogTrigger>
 
-                <p className="mt-6 text-sm text-muted-foreground text-center">
-                  로그인 시 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.
-                </p>
+                <AlertDialogPortal>
+                    <AlertDialogOverlay className="bg-black/50"/>
+                    <AlertDialogContent
+                        className="max-w-[400px] p-0 rounded-xl bg-white shadow-lg"
+                    >
+                        <AlertDialogCancel asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-4 right-4 z-50"
+                            >
+                                <X className="h-6 w-6 text-gray-500"/>
+                            </Button>
+                        </AlertDialogCancel>
 
-                <div className="w-full mt-4 flex justify-end">
-                  <button
-                      onClick={handleAdminLoginClick}
-                      className="text-xs text-muted-foreground hover:text-primary hover:underline"
-                  >
-                    관리자 로그인
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          </DialogContent>
-        </Dialog>
+                        <div className="p-6 text-center">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>환영합니다</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    카카오 계정으로 간편하게 로그인하세요
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
 
-        <AdminLoginPopup open={showAdminLogin} onOpenChange={setShowAdminLogin} />
-      </>
-  );
+                            <button
+                                onClick={handleKakaoLogin}
+                                className="w-full h-12 bg-[#FEE500] text-[#191919] font-medium rounded-lg
+                         flex items-center justify-center hover:bg-[#FDD800]
+                         transition-colors my-4"
+                            >
+                                <img
+                                    src="/assets/login/kakao_login_large_wide.svg"
+                                    alt="카카오 로그인"
+                                    className="w-full max-w-[300px]"
+                                />
+                            </button>
+
+                            <p className="text-xs text-gray-500 text-center px-4">
+                                로그인 시 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.
+                            </p>
+                            <div className="w-full mt-4 flex justify-end">
+                                <button
+                                    onClick={handleAdminLoginClick}
+                                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                                >
+                                    관리자 로그인
+                                </button>
+                            </div>
+                        </div>
+
+                    </AlertDialogContent>
+                </AlertDialogPortal>
+            </AlertDialog>
+            <AdminLoginPopup open={showAdminLogin} onOpenChange={setShowAdminLogin}/>
+        </>
+    );
 };

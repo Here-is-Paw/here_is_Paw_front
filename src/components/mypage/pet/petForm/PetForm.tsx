@@ -1,22 +1,23 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import {
     Form,
-} from "@/components/ui/form";
+} from "@/components/ui/form.tsx";
 
-import { PetBasicInfoForm } from './PetBasicInfoForm';
-import { PetDetailsForm } from './PetDetailsForm';
-import { PetAdditionalInfoForm } from './PetAdditionalInfoForm';
-import { PetImageUploader } from './PetImageUploader';
+import { PetBasicInfoForm } from './PetBasicInfoForm.tsx';
+import { PetDetailsForm } from './PetDetailsForm.tsx';
+import { PetAdditionalInfoForm } from './PetAdditionalInfoForm.tsx';
+import { PetImageUploader } from './PetImageUploader.tsx';
 import { PetFormData } from '@/types/pet.ts';
 
 interface PetFormProps {
     form: any;
     onSubmit: (data: PetFormData) => Promise<void>;
     onClose: () => void;
+    isEditing?: boolean;
 }
 
-export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose }) => {
+export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose, isEditing = false }) => {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -38,7 +39,7 @@ export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose }) => 
                     >
                         취소
                     </Button>
-                    <Button type="submit">등록하기</Button>
+                    <Button type="submit">{isEditing ? '수정하기' : '등록하기'}</Button>
                 </div>
             </form>
         </Form>
