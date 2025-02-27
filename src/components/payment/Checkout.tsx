@@ -1,3 +1,4 @@
+// import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";

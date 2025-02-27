@@ -76,7 +76,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         // 잃어버린 반려동물 마커 (빨간색)
         lostPets.forEach(pet => {
           const marker = new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(pet.lat, pet.lang),
+            position: new window.naver.maps.LatLng(pet.lang, pet.lat),
             map: map,
             title: `[실종] ${pet.breed}`,
             icon: {
@@ -93,7 +93,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         // 발견된 반려동물 마커 (초록색)
         findPets.forEach(pet => {
           const marker = new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(pet.lat, pet.lang), // findPets는 lng 사용
+            position: new window.naver.maps.LatLng(pet.lang, pet.lat), // findPets는 lng 사용
             map: map,
             title: `[발견] ${pet.breed}`,
             icon: {
