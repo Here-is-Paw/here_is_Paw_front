@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import axios from "axios";
-import { useForm } from "react-hook-form";
-import { backUrl } from "@/constants.ts";
+import {useForm} from "react-hook-form";
+import {backUrl} from "@/constants.ts";
 
 import {
     Card,
@@ -9,15 +9,19 @@ import {
     CardTitle,
     CardDescription,
     CardContent,
-} from "@/components/ui/card";
+} from "@/components/ui/card.tsx";
 import {
-    Dialog,
-    DialogContent,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogCancel,
+    AlertDialogPortal,
+    AlertDialogOverlay, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
+} from "@/components/ui/alert-dialog.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {X} from "lucide-react";
 
-import { PetForm } from './PetForm';
-import { PetFormData, defaultValues } from '@/types/pet.ts';
+import {PetForm} from './PetForm.tsx';
+import {PetFormData, defaultValues} from '@/types/pet.ts';
 
 interface AddPetFormPopupProps {
     open: boolean;
@@ -94,7 +98,7 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
     };
 
     return (
-        <Dialog
+        <AlertDialog
             open={open}
             onOpenChange={(newOpen) => {
                 if (!newOpen) {
@@ -104,29 +108,40 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
                 onOpenChange(newOpen);
             }}
         >
-            <DialogContent className="max-w-[500px]">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-4 top-4"
-                    onClick={handleClose}
-                >
-                    <span className="sr-only">Close</span>
-                </Button>
-                <Card className="border-none shadow-none">
-                    <CardHeader className="space-y-2 text-center">
-                        <CardTitle className="text-2xl font-bold text-primary">
-                            반려동물 등록
-                        </CardTitle>
-                        <CardDescription>
-                            반려동물 정보를 입력해주세요
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <PetForm form={form} onSubmit={handleSubmit} onClose={handleClose} />
-                    </CardContent>
-                </Card>
-            </DialogContent>
-        </Dialog>
+            <AlertDialogPortal>
+                <AlertDialogOverlay className="bg-black/50"/>
+                <AlertDialogHeader>
+                    <AlertDialogTitle></AlertDialogTitle>
+                    <AlertDialogDescription></AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogContent className="max-w-[500px] p-6 rounded-xl bg-white shadow-lg">
+                    <AlertDialogCancel asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-4 top-4"
+                            onClick={handleClose}
+                        >
+                            <X className="h-4 w-4"/>
+                            <span className="sr-only">Close</span>
+                        </Button>
+                    </AlertDialogCancel>
+
+                    <Card className="border-none shadow-none">
+                        <CardHeader className="space-y-2 text-center px-0 pt-0">
+                            <CardTitle className="text-2xl font-bold text-primary">
+                                반려동물 등록
+                            </CardTitle>
+                            <CardDescription>
+                                반려동물 정보를 입력해주세요
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="px-0">
+                            <PetForm form={form} onSubmit={handleSubmit} onClose={handleClose}/>
+                        </CardContent>
+                    </Card>
+                </AlertDialogContent>
+            </AlertDialogPortal>
+        </AlertDialog>
     );
 };

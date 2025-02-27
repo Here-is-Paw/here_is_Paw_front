@@ -11,7 +11,24 @@ export interface Pet {
   lang: number;
 }
 
-export interface PetData {
+export enum PetGender {
+  Unknown = 0,
+  Male = 1,
+  Female = 2
+}
+
+export interface Pet {
+  id: string;
+  imageUrl: string;
+  date: string;
+  breed: string;
+  features: string;
+  location: string;
+  lat: number;
+  lang: number;
+}
+
+export interface MyPet {
   id: number;
   age: number;
   breed: string;
@@ -32,7 +49,7 @@ export interface PetFormData {
   breed: string;
   color?: string;
   serialNumber?: string;
-  gender?: number;
+  gender: number;
   neutered?: boolean;
   age?: number;
   etc?: string;

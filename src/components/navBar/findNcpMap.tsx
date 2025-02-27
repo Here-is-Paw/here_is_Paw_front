@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { PetData } from "@/types/pet"
+import { MyPet } from "@/types/pet"
 
 
 interface NcpMapProps {
@@ -8,7 +8,7 @@ interface NcpMapProps {
     coordinates?: { lat: number; lng: number };
     error?: { code: number; message: string };
   };
-  findPets: PetData[];
+  findPets: MyPet[];
 }
 
 const NcpMap = ({ currentLocation, findPets }: NcpMapProps) => {
