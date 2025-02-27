@@ -52,6 +52,25 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+.bgr-white {
+  background-color: #fff;
+}
+
+.btn-size{
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.svg-2{
+  width: 2rem !important;
+  height: 2rem !important;
+}
+
+.space-between {
+  display: flex;
+  justify-content: space-between;
+}
 /* button:hover {
   border-color: #646cff;
 } */
@@ -148,6 +167,17 @@ button:focus-visible {
 @layer base {
   * {
     @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;

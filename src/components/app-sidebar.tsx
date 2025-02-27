@@ -2,11 +2,12 @@ import { Sidebar } from "@/components/ui/sidebar"
 import { SidebarHeader } from './sidebar/SidebarHeader'
 import { SidebarMainContent } from './sidebar/SidebarContent'
 import { useState, useEffect } from 'react';
-import { Pet } from '@/types/pet';
+import { PetData } from '@/types/pet';
+import {MyPage} from "@/components/mypage/MyPage.tsx";
 
 interface AppSidebarProps {
-  lostPets: Pet[];
-  findPets: Pet[];
+  lostPets: PetData[];
+  findPets: PetData[];
 }
 
 export function AppSidebar({ lostPets, findPets }: AppSidebarProps) {
@@ -30,10 +31,14 @@ export function AppSidebar({ lostPets, findPets }: AppSidebarProps) {
       />
 
       {/* 컨텐츠 영역 */}
-      <SidebarMainContent 
-        lostPets={lostPets}
-        findPets={findPets}
-      />
+        {activeFilter === 'My' ? (
+            <MyPage />
+        ) : (
+            <SidebarMainContent
+                lostPets={lostPets}
+                findPets={findPets}
+            />
+        )}
     </Sidebar>
   );
 }
