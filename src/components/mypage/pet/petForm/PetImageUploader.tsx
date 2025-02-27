@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ImagePlus, X } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import { FormProps } from '@/types/pet.ts';
 
 export const PetImageUploader: React.FC<FormProps> = ({ form }) => {
@@ -58,16 +58,18 @@ export const PetImageUploader: React.FC<FormProps> = ({ form }) => {
 
             {previewUrl ? (
                 <div className="relative">
-                    <img
-                        src={previewUrl}
-                        alt="반려동물 프로필"
-                        className="w-40 h-40 object-cover rounded-lg"
-                    />
+                    <div className="w-40 h-40 rounded-full overflow-hidden">
+                        <img
+                            src={previewUrl}
+                            alt="반려동물 프로필"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                     <Button
                         type="button"
                         variant="destructive"
                         size="icon"
-                        className="absolute top-0 right-0 w-8 h-8 rounded-full"
+                        className="absolute top-0 right-0 w-8 h-8 rounded-full p-0 flex items-center justify-center"
                         onClick={handleRemoveImage}
                     >
                         <X className="w-4 h-4" />
