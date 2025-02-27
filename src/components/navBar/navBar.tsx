@@ -7,6 +7,8 @@ import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useState, useEffect } from "react";
+import NcpMap from './findNcpMap'
+import useGeolocation from '@/hooks/Geolocation'
 
 // import { Dialog, DialogContent } from "@/components/ui/dialog"
 
@@ -20,8 +22,8 @@ interface NavBarProps {
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
+  const findLocation = useGeolocation()
 
   console.log(isLoggedIn);
 
@@ -148,7 +150,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             title: title,
             situation: situation,
             breed: breed,
-            geo: 123,
+            location: "서울 강남구 어딘가",
+            geo: { x: 12, y: 12},
             name: name,
             color: color,
             etc: etc,
@@ -166,12 +169,14 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         if (response.ok) {
           alert("발견 신고가 성공적으로 저장되었습니다!");
           incrementSubmissionCount();
+          handleRemoveImage();
         } else {
           alert("저장 실패");
         }
       } catch (error) {
         console.error("Error:", error);
         alert("오류가 발생했습니다.");
+        handleRemoveImage();
       }
     } else {
       alert("로그인 후 이용 가능한 서비스 입니다!");
@@ -386,6 +391,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               </div>
               <div className="w-80">
                 <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                {/* <NcpMap
+          currentLocation={findLocation}
+        /> */}
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2 ">특이 사항</label>
                   <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="특징을 설명해주세요." onChange={handleEtc} />
