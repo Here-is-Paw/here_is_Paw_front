@@ -1,4 +1,15 @@
-import { Control, UseFormSetValue, UseFormWatch} from "react-hook-form";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+
+export interface Pet {
+  id: string;
+  imageUrl: string;
+  date: string;
+  breed: string;
+  features: string;
+  location: string;
+  lat: number;
+  lang: number;
+}
 
 export enum PetGender {
   Unknown = 0,
@@ -24,12 +35,14 @@ export interface MyPet {
   color: string;
   etc: string;
   gender: number;
-  name : string;
+  name: string;
   neutered: boolean;
   serialNumber: string;
-  imageUrl : string;
+  imageUrl: string;
+  location: string;
+  geo: GeoPoint;
+  find_date: string;
 }
-
 
 export interface PetFormData {
   name: string;
@@ -61,5 +74,10 @@ export const defaultValues: PetFormData = {
   neutered: false,
   age: undefined,
   etc: "",
-  profileImage: null // 기본값 추가
+  profileImage: null, // 기본값 추가
 };
+
+export interface GeoPoint {
+  x: number;
+  y: number;
+}
