@@ -6,7 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { ChatRoomList } from "@/components/chat/ChatRoomList";
+import { ChatModal } from "@/components/chat/ChatModal";
 // import NcpMap from './findNcpMap'
 // import useGeolocation from '@/hooks/Geolocation'
 
@@ -19,6 +21,23 @@ interface NavBarProps {
     hospital: boolean;
   };
   toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
+}
+
+// ChatRoom 인터페이스 추가
+interface ChatRoom {
+  id: number;
+  chatUserNickname: string;
+  targetUserNickname: string;
+  targetUserId: number;
+  targetUserImageUrl: string;
+  chatMessages: ChatMessage[];
+  modifiedDate: string;
+}
+
+interface ChatMessage {
+  id: number;
+  content: string;
+  createDate: string;
 }
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
@@ -55,6 +74,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [title, setTitle] = useState("");
   const [age, setAge] = useState("");
   const [neutered, setNeutered] = useState("");
+  const [me_id, setMe_id] = useState(0);
 
   const { incrementSubmissionCount } = usePetContext();
 
@@ -132,6 +152,22 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
   };
 
+  // 유저 정보 가져오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+          withCredentials: true,
+        });
+        setMe_id(memberResponse.data.id);
+      } catch (error) {
+        console.error('유저 정보 가져오기 실패:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []); // 빈 배열을 넣어 한 번만 실행되도록 설정
+
   const handleFindSubmit = async () => {
     if (isLoggedIn) {
       const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
@@ -139,6 +175,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       });
 
       const member_id = memberResponse.data.id;
+      setMe_id(member_id);
 
       try {
         const response = await fetch(`${backUrl}/find/new`, {
@@ -182,6 +219,37 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       alert("로그인 후 이용 가능한 서비스 입니다!");
       return;
     }
+  };
+
+  const [isChatListOpen, setIsChatListOpen] = useState(false);
+  const chatListRef = useRef<HTMLDivElement>(null);
+  
+  // 외부 클릭 시 채팅 목록 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (chatListRef.current && !chatListRef.current.contains(event.target as Node)) {
+        setIsChatListOpen(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // 채팅 아이콘 클릭 핸들러
+  const handleChatIconClick = () => {
+    setIsChatListOpen(!isChatListOpen); // 채팅 목록만 토글
+  };
+
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [currentChatRoom, setCurrentChatRoom] = useState<ChatRoom | null>(null);
+
+  // 채팅방 입장 핸들러
+  const handleEnterChatRoom = (room: ChatRoom) => {
+    setCurrentChatRoom(room);
+    setIsChatModalOpen(true);
   };
 
   return (
@@ -270,9 +338,21 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
               {isLoggedIn ? (
                 <>
-                  <Button variant="ghost" size="icon">
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
+                  <div ref={chatListRef}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={handleChatIconClick}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                    <ChatRoomList 
+                      isOpen={isChatListOpen} 
+                      onClose={() => setIsChatListOpen(false)}
+                      onEnterRoom={handleEnterChatRoom}
+                      me_id={me_id}
+                    />
+                  </div>
                   <Button variant="ghost" size="icon">
                     <Bell className="h-4 w-4" />
                   </Button>
@@ -418,6 +498,21 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 채팅 모달 */}
+      {isChatModalOpen && currentChatRoom && (
+        <ChatModal 
+          isOpen={isChatModalOpen}
+          onClose={() => setIsChatModalOpen(false)}
+          targetUserImageUrl={currentChatRoom.targetUserImageUrl}
+          targetUserNickname={currentChatRoom.targetUserNickname}
+          defaultImageUrl="/default-profile.png"
+          chatRoomId={currentChatRoom.id}
+          initialMessages={currentChatRoom.chatMessages}
+          targetUserId={currentChatRoom.targetUserId}
+          preventAutoClose={true}
+        />
       )}
     </>
   );

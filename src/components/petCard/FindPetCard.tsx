@@ -5,11 +5,13 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
 import axios from "axios";
-import { Plus } from "lucide-react";
+import { Plus, X, Send } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NcpMap from "./findNcpMap";
 import useGeolocation from "@/hooks/Geolocation";
+import { ChatModal } from "@/components/chat/ChatModal";
+import { ChatMessage } from "@/types/chat";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -39,6 +41,12 @@ export function FindPetCard({ pet }: PetCardProps) {
   const [title, setTitle] = useState<string | "">("");
   const [age, setAge] = useState("");
   const [neutered, setNeutered] = useState("");
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [currentChatRoomId, setCurrentChatRoomId] = useState<number | null>(null);
+  const [initialMessages, setInitialMessages] = useState<ChatMessage[]>([]);
+
+  const [targetUserImageUrl, setTargetUserImageUrl] = useState<string | null>(null);
+  const [targetUserNickname, setTargetUserNickname] = useState<string | null>(null);
 
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
@@ -414,13 +422,48 @@ export function FindPetCard({ pet }: PetCardProps) {
                   </div>
 
                   <div className="flex justify-end gap-2 h-6">
-                    <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindDetailModalOpen(false)}>
+                    <button 
+                      className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300" 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        
+                        if (!isLoggedIn) {
+                          alert("로그인이 필요한 서비스입니다.");
+                          window.location.href = "/login"; // 로그인 페이지로 이동
+                          return;
+                        }
+                        
+                        try {
+                          const response = await axios.post(`${backUrl}/api/v1/chat/rooms`, 
+                            { targetUserId: findDetail.member_id },
+                            { withCredentials: true }
+                          );
+                          console.log("채팅방 생성/조회 응답:", response.data);
+                          // 생성된 채팅방 ID 확인
+                          console.log("생성된 채팅방 ID:", response.data.data.id);
+
+                          // 타켓 유저 프로필 사진
+                          setTargetUserImageUrl(response.data.data.targetUserImageUrl);
+                          // 타켓 유저 닉네임
+                          setTargetUserNickname(response.data.data.targetUserNickname);
+                          
+                          const chatRoomId = response.data.data.id;
+                          setCurrentChatRoomId(chatRoomId);
+                          setIsChatModalOpen(true);
+                          setIsFindDetailModalOpen(false);
+                          setInitialMessages(response.data.data.chatMessages);
+
+                        } catch (err: any) {
+                          console.error("채팅방 생성 오류:", err);
+                          alert("채팅방을 생성하는 중 오류가 발생했습니다.");
+                        }
+                      }}
+                    >
                       연락하기
                     </button>
                     <button
                       className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
                       onClick={() => {
-                        // 등록 처리 로직
                         setIsFindDetailModalOpen(false);
                       }}
                     >
@@ -437,6 +480,19 @@ export function FindPetCard({ pet }: PetCardProps) {
           </div>,
           document.body
         )}
+      {/* 채팅 모달 컴포넌트 사용 */}
+      <ChatModal 
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        petImage={findDetail?.path_url || ""}
+        petBreed={findDetail?.breed || ""}
+        targetUserImageUrl={targetUserImageUrl}
+        targetUserNickname={targetUserNickname}
+        petLocation={findDetail?.location || ""}
+        defaultImageUrl={DEFAULT_IMAGE_URL}
+        chatRoomId={currentChatRoomId}
+        targetUserId={findDetail?.member_id}
+      />
     </>
   );
 }
