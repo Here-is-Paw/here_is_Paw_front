@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {Button} from "@/components/ui/button";
 import {X} from "lucide-react";
-import {backUrl, frontUrl, kakaoUrl} from "@/constants";
+import {backUrl, kakaoUrl} from "@/constants";
 import {AdminLoginPopup} from "@/components/admin/AdminLoginPopup.tsx";
 import {useState} from "react";
 
