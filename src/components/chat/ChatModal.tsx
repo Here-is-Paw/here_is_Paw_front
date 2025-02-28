@@ -88,26 +88,30 @@ export function ChatModal({
         { withCredentials: true }
       );
 
-      // API 응답 구조 확인을 위한 로그
-      console.log("채팅방 ID:", response.data);
-      // console.log("이전 메시지 응답:", response.data);
-      // console.log("메시지 배열:", response.data.data);
+      // 응답 데이터가 유효한지 확인
+      if (response.data && Array.isArray(response.data.data)) {
+        // 서버에서 받은 메시지를 UI에 맞게 변환
+        const messages = response.data.data
+          .filter((msg: any) => msg && msg.content) // 유효한 메시지만 필터링
+          .map((msg: any) => ({
+            id: msg.id,
+            sender: msg.senderId === targetUserId ? "other" : "me",
+            message: msg.content || "",
+            time: new Date(msg.createDate).toLocaleTimeString('ko-KR', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          }));
 
-      // 서버에서 받은 메시지를 UI에 맞게 변환
-      const messages = response.data.data.map((msg: any) => ({
-        id: msg.id,
-        sender: msg.senderId === targetUserId ? "other" : "me",
-        message: msg.content,
-        time: new Date(msg.createDate).toLocaleTimeString('ko-KR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }));
-
-      console.log("변환된 메시지:", messages);
-      setChatMessages(messages);
+        console.log("변환된 메시지:", messages);
+        setChatMessages(messages);
+      } else {
+        console.error("잘못된 메시지 데이터 형식:", response.data);
+        setChatMessages([]);
+      }
     } catch (error) {
       console.error("이전 메시지 로딩 오류:", error);
+      setChatMessages([]);
     }
   };
 
@@ -451,47 +455,51 @@ export function ChatModal({
             </div>
           ) : (
             <>
-              {chatMessages.map((msg, index) => (
-                <div className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} mb-2`}>
-                  {msg.sender !== 'me' && (
-                    <Avatar className="h-8 w-8 mr-2 ring-2 ring-white shadow-sm">
-                      <img
-                        src={getProfileImage()}
-                        alt="프로필"
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.src = defaultImageUrl;
-                        }}
-                      />
-                    </Avatar>
-                  )}
-                  <div className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
+              {chatMessages.map((msg, index) => {
+                if (!msg || !msg.message) return null; // 메시지가 유효하지 않으면 건너뜁니다
+                
+                return (
+                  <div key={msg.id || index} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} mb-2`}>
                     {msg.sender !== 'me' && (
-                      <span className="text-xs text-gray-600 mb-1">{targetUserNickname}</span>
+                      <Avatar className="h-8 w-8 mr-2 ring-2 ring-white shadow-sm">
+                        <img
+                          src={getProfileImage()}
+                          alt="프로필"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = defaultImageUrl;
+                          }}
+                        />
+                      </Avatar>
                     )}
-                    <div className="flex flex-row items-end">
-                      {msg.sender === 'me' && (
-                        <span className="text-[10px] text-gray-400 mr-2 shrink-0">{msg.time}</span>
-                      )}
-                      <div
-                        className={`rounded-lg px-3 py-2 ${
-                          msg.message.length <= 12 ? 'whitespace-nowrap w-fit' : 'whitespace-pre-wrap break-all'
-                        } ${
-                          msg.sender === 'me'
-                            ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        {msg.message}
-                      </div>
+                    <div className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
                       {msg.sender !== 'me' && (
-                        <span className="text-[10px] text-gray-400 ml-2 shrink-0">{msg.time}</span>
+                        <span className="text-xs text-gray-600 mb-1">{targetUserNickname}</span>
                       )}
+                      <div className="flex flex-row items-end">
+                        {msg.sender === 'me' && (
+                          <span className="text-[10px] text-gray-400 mr-2 shrink-0">{msg.time}</span>
+                        )}
+                        <div
+                          className={`rounded-lg px-3 py-2 ${
+                            (msg.message?.length || 0) <= 12 ? 'whitespace-nowrap w-fit' : 'whitespace-pre-wrap break-all'
+                          } ${
+                            msg.sender === 'me'
+                              ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}
+                        >
+                          {msg.message}
+                        </div>
+                        {msg.sender !== 'me' && (
+                          <span className="text-[10px] text-gray-400 ml-2 shrink-0">{msg.time}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </>
           )}
