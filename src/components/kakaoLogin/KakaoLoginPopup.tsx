@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {Button} from "@/components/ui/button";
 import {X} from "lucide-react";
-import {backUrl, kakaoUrl} from "@/constants";
+import {backUrl, frontUrl, kakaoUrl} from "@/constants";
 import {AdminLoginPopup} from "@/components/admin/AdminLoginPopup.tsx";
 import {useState} from "react";
 
@@ -20,7 +20,7 @@ export const KakaoLoginPopup = () => {
     const [showAdminLogin, setShowAdminLogin] = useState(false);
 
     const handleKakaoLogin = () => {
-        window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${backUrl}`;
+        window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${frontUrl}`;
     };
 
     const handleAdminLoginClick = () => {
