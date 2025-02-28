@@ -5,6 +5,8 @@ import { backUrl } from "@/constants";
 import { X } from "lucide-react";
 import { ChatModal } from "./ChatModal";
 
+const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+
 interface ChatRoom {
   id: number;
   chatUserNickname: string;
@@ -44,11 +46,24 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
       const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list`, {
         withCredentials: true
       });
-      console.log("채팅방 목록 응답:", response.data);
-      // 각 채팅방의 ID 확인
+      console.log("=== 채팅방 목록 전체 데이터 ===");
+      console.log(response.data.data);
+      
+      // 각 채팅방의 상세 정보 확인
       response.data.data.forEach((room: ChatRoom) => {
-        console.log("채팅방 ID:", room.id, "상대방:", room.targetUserNickname);
+        console.log(`=== 채팅방 ${room.id} 상세 정보 ===`);
+        console.log("채팅 시작한 사용자:", {
+          id: room.chatUserId,
+          nickname: room.chatUserNickname,
+          imageUrl: room.chatUserImageUrl
+        });
+        console.log("채팅 대상 사용자:", {
+          id: room.targetUserId,
+          nickname: room.targetUserNickname,
+          imageUrl: room.targetUserImageUrl
+        });
       });
+      
       setChatRooms(response.data.data);
     } catch (err) {
       console.error("채팅방 목록 조회 오류:", err);
@@ -125,31 +140,46 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
 
   // 채팅 상대방 정보를 가져오는 함수
   const getOtherUserInfo = (room: ChatRoom) => {
-    console.log("me_id:", me_id);
-    console.log("room.chatUserId:", room.chatUserId);
-    console.log("room.targetUserId:", room.targetUserId);
+    console.log("=== 채팅방 정보 ===");
+    console.log("내 ID:", me_id);
+    console.log("채팅 시작한 사용자 ID:", room.chatUserId);
+    console.log("채팅 대상 사용자 ID:", room.targetUserId);
+    console.log("채팅 시작한 사용자 이미지:", room.chatUserImageUrl);
+    console.log("채팅 대상 사용자 이미지:", room.targetUserImageUrl);
 
+    const isKakaoDefaultProfile = (url: string) => {
+      return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+    };
+
+    const getValidImageUrl = (imageUrl: string | undefined) => {
+      if (!imageUrl || imageUrl === 'profile' || isKakaoDefaultProfile(imageUrl)) {
+        return DEFAULT_IMAGE_URL;
+      }
+      return imageUrl;
+    };
+
+    // 내가 채팅을 시작한 경우
     if (me_id === room.chatUserId) {
       return {
         nickname: room.targetUserNickname,
-        imageUrl: room.targetUserImageUrl,
+        imageUrl: getValidImageUrl(room.targetUserImageUrl),
         userId: room.targetUserId
       };
-    } else {
-      return {
-        nickname: room.chatUserNickname,
-        imageUrl: room.chatUserImageUrl,
-        userId: room.chatUserId
-      };
-    }
+    } 
+    // 상대방이 채팅을 시작한 경우
+    return {
+      nickname: room.chatUserNickname,
+      imageUrl: getValidImageUrl(room.chatUserImageUrl),
+      userId: room.chatUserId
+    };
   };
 
   return (
-    <div className="absolute top-12 right-16 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-[100]">
-      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="font-semibold text-lg">채팅</h3>
+    <div className="absolute top-12 right-16 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-[100] border border-gray-100">
+      <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-emerald-500 to-green-500">
+        <h3 className="font-semibold text-lg text-white">채팅</h3>
         <button 
-          className="text-gray-500 hover:text-gray-700"
+          className="bg-gradient-to-r from-emerald-600 to-green-600 text-white p-1.5 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-sm"
           onClick={onClose}
         >
           <X size={16} />
@@ -158,15 +188,19 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
       
       {loading ? (
         <div className="p-4 text-center text-gray-500">
-          채팅방 목록을 불러오는 중...
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-8 w-8 bg-gray-200 rounded-full mb-2"></div>
+            <div className="h-4 w-32 bg-gray-200 rounded"></div>
+          </div>
         </div>
       ) : error ? (
         <div className="p-4 text-center text-red-500">
           {error}
         </div>
       ) : chatRooms.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
-          채팅방이 없습니다.
+        <div className="p-8 text-center">
+          <div className="text-emerald-600 font-medium mb-2">채팅방이 없습니다</div>
+          <p className="text-xs text-gray-400">새로운 대화를 시작해보세요!</p>
         </div>
       ) : (
         <div className="max-h-96 overflow-y-auto">
@@ -175,7 +209,7 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
             return (
               <div
                 key={room.id}
-                className="flex items-center p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 relative"
+                className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 relative group transition-colors"
                 onClick={() => handleEnterRoom({
                   ...room,
                   targetUserNickname: otherUser.nickname,
@@ -183,38 +217,40 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
                   targetUserId: otherUser.userId
                 })}
               >
-                <Avatar className="h-10 w-10 mr-3 bg-gray-200">
-                  {otherUser.imageUrl ? (
-                    <img 
-                      src={otherUser.imageUrl} 
-                      alt="프로필" 
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-xs">프로필</div>
-                  )}
+                <Avatar className="h-10 w-10 mr-3 bg-gray-200 ring-2 ring-emerald-100">
+                  <img 
+                    src={otherUser.imageUrl || DEFAULT_IMAGE_URL} 
+                    alt="프로필" 
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.src = DEFAULT_IMAGE_URL;
+                    }}
+                  />
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium truncate">
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="text-sm font-medium truncate text-gray-900">
                       {otherUser.nickname || "상대방"}
                     </p>
-                    <span className="text-xs text-gray-500">
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <p className="text-xs text-gray-500 truncate flex-1 mr-4">
+                      {formatLastMessage(room)}
+                    </p>
+                    <span className="text-[10px] text-gray-400 flex-shrink-0">
                       {formatTime(room.modifiedDate)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 truncate">
-                    {formatLastMessage(room)}
-                  </p>
                 </div>
                 
                 {/* 나가기 버튼 */}
-                <button 
-                  className="absolute right-2 top-2 text-gray-400 hover:text-red-500 p-1"
+                <button
+                  className="absolute right-2 top-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white p-1.5 rounded-full hover:from-emerald-600 hover:to-green-600 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
                   onClick={(e) => handleLeaveRoom(room.id, e)}
                   title="채팅방 나가기"
                 >
-                  <X size={14} />
+                  <X size={12} />
                 </button>
               </div>
             );

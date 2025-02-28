@@ -507,7 +507,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           onClose={() => setIsChatModalOpen(false)}
           targetUserImageUrl={currentChatRoom.targetUserImageUrl}
           targetUserNickname={currentChatRoom.targetUserNickname}
-          defaultImageUrl="/default-profile.png"
+          defaultImageUrl="https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg"
           chatRoomId={currentChatRoom.id}
           initialMessages={currentChatRoom.chatMessages}
           targetUserId={currentChatRoom.targetUserId}

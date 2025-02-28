@@ -15,6 +15,17 @@ import { ChatMessage } from "@/types/chat";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
+const isKakaoDefaultProfile = (url: string) => {
+  return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+};
+
+const getValidImageUrl = (imageUrl: string | undefined) => {
+  if (!imageUrl || imageUrl === 'profile' || isKakaoDefaultProfile(imageUrl)) {
+    return DEFAULT_IMAGE_URL;
+  }
+  return imageUrl;
+};
+
 interface PetCardProps {
   pet: FindPet;
   // findDetail: findDetail;
@@ -442,8 +453,10 @@ export function FindPetCard({ pet }: PetCardProps) {
                           // 생성된 채팅방 ID 확인
                           console.log("생성된 채팅방 ID:", response.data.data.id);
 
-                          // 타켓 유저 프로필 사진
-                          setTargetUserImageUrl(response.data.data.targetUserImageUrl);
+                          // 타켓 유저 프로필 사진 처리
+                          const validImageUrl = getValidImageUrl(response.data.data.targetUserImageUrl);
+                          setTargetUserImageUrl(validImageUrl);
+                          
                           // 타켓 유저 닉네임
                           setTargetUserNickname(response.data.data.targetUserNickname);
                           

@@ -4,12 +4,22 @@ import { X, Send } from "lucide-react";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
+import * as StompJs from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import { Avatar } from "@/components/ui/avatar";
 
 interface ChatMessage {
   id?: number;
   sender: string;
   message: string;
   time: string;
+}
+
+interface WebSocketMessage {
+  id: number;
+  senderId: number;
+  content: string;
+  createDate: string;
 }
 
 interface ChatModalProps {
@@ -41,6 +51,7 @@ export function ChatModal({
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const client = useRef<StompJs.Client | null>(null);
   
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false);
@@ -126,6 +137,91 @@ export function ChatModal({
       }
     };
   }, [isOpen, chatRoomId]);
+
+  // WebSocket 연결 설정
+  useEffect(() => {
+    if (isVisible && chatRoomId) {
+      const stompClient = new StompJs.Client({
+        brokerURL: 'ws://localhost:8090/ws',
+        connectHeaders: {},
+        debug: function (str) {
+          console.log('STOMP Debug:', str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+        webSocketFactory: () => {
+          const ws = new WebSocket('ws://localhost:8090/ws');
+          ws.onerror = (err) => {
+            console.error('WebSocket 에러:', err);
+          };
+          return ws;
+        }
+      });
+
+      client.current = stompClient;
+
+      let subscription: StompJs.StompSubscription | null = null;
+
+      stompClient.onConnect = (frame) => {
+        console.log('STOMP Connected:', frame);
+
+        const topic = `/topic/api/v1/chat/${chatRoomId}/messages`;
+        console.log(`Subscribing to topic: ${topic}`);
+
+        try {
+          subscription = stompClient.subscribe(topic, (message) => {
+            console.log('Raw message received:', message);
+            try {
+              const receivedMessage = JSON.parse(message.body) as WebSocketMessage;
+              console.log('Parsed message:', receivedMessage);
+              
+              const newMessage: ChatMessage = {
+                id: receivedMessage.id,
+                sender: receivedMessage.senderId === targetUserId ? "other" : "me",
+                message: receivedMessage.content,
+                time: new Date(receivedMessage.createDate).toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+              };
+              
+              setChatMessages(prev => [...prev, newMessage]);
+            } catch (error) {
+              console.error('메시지 파싱 오류:', error);
+            }
+          });
+        } catch (error) {
+          console.error('구독 오류:', error);
+        }
+      };
+
+      stompClient.onStompError = (frame) => {
+        console.error('STOMP Error:', frame);
+      };
+
+      stompClient.onWebSocketError = (event) => {
+        console.error('WebSocket Error:', event);
+      };
+
+      console.log('Attempting to connect to WebSocket...');
+      stompClient.activate();
+
+      return () => {
+        console.log('Cleaning up WebSocket connection...');
+        if (subscription) {
+          try {
+            subscription.unsubscribe();
+          } catch (error) {
+            console.error('구독 해제 오류:', error);
+          }
+        }
+        if (stompClient.active) {
+          stompClient.deactivate();
+        }
+      };
+    }
+  }, [isVisible, chatRoomId, targetUserId]);
 
   // 마우스 이벤트 리스너
   useEffect(() => {
@@ -228,51 +324,27 @@ export function ChatModal({
       time: timeString
     };
     
-    setChatMessages([...chatMessages, newMessage]);
+    // 낙관적 업데이트는 하지 않음 (WebSocket을 통해 받을 예정)
     setChatMessage("");
     setIsSending(true);
     
     try {
-      // 백엔드 API를 통해 메시지 전송 (인증 없이)
+      // 백엔드 API를 통해 메시지 전송
       const response = await axios.post(
         `${backUrl}/api/v1/chat/${chatRoomId}/messages`, 
-    
         {
           content: chatMessage,
-          chatMessageId: null // 새 메시지이므로 null
+          chatMessageId: null
         },
-         {
-          withCredentials: true // 쿠키 기반 인증 사용
+        {
+          withCredentials: true
         }
       );
 
-      console.log(response.data);
+      console.log("메시지 전송 응답:", response.data);
       
-      // if (response.data.success) {
-      //   // 서버에서 반환된 실제 메시지로 업데이트
-      //   const serverMessage = response.data.data;
-        
-      //   setChatMessages(prev => 
-      //     prev.map(msg => 
-      //       msg.id === tempId 
-      //         ? { 
-      //             id: serverMessage.id,
-      //             sender: "me",
-      //             message: serverMessage.content,
-      //             time: timeString
-      //           } 
-      //         : msg
-      //     )
-      //   );
-      // } else {
-      //   // 메시지 전송 실패 시 UI에서 제거
-      //   setChatMessages(prev => prev.filter(msg => msg.id !== tempId));
-      //   alert("메시지 전송에 실패했습니다.");
-      // }
     } catch (error) {
       console.error("메시지 전송 오류:", error);
-      // 메시지 전송 실패 시 UI에서 제거
-      setChatMessages(prev => prev.filter(msg => msg.id !== tempId));
       alert("메시지 전송 중 오류가 발생했습니다.");
     } finally {
       setIsSending(false);
@@ -287,6 +359,15 @@ export function ChatModal({
     }
     onClose();
   };
+
+  // 프로필 이미지 가져오는 함수
+  const getProfileImage = useCallback(() => {
+    // targetUserImageUrl이 'profile'이거나 없을 때 defaultImageUrl 사용
+    if (!targetUserImageUrl || targetUserImageUrl === 'profile') {
+      return defaultImageUrl;
+    }
+    return targetUserImageUrl;
+  }, [targetUserImageUrl, defaultImageUrl]);
 
   if (!isVisible) return null;
 
@@ -304,7 +385,8 @@ export function ChatModal({
         className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative"
         style={{ 
           width: `${size.width}px`,
-          height: `${size.height}px`
+          height: `${size.height}px`,
+          border: '1px solid #e5e7eb'
         }}
       >
         {/* 리사이징 핸들 - 왼쪽 상단으로 이동 */}
@@ -327,32 +409,36 @@ export function ChatModal({
               height: '0',
               borderStyle: 'solid',
               borderWidth: '15px 15px 0 0',
-              borderColor: '#22C55E transparent transparent transparent'
+              borderColor: '#10B981 transparent transparent transparent'
             }}
           />
         </div>
 
         {/* 채팅 헤더 */}
         <div 
-          className="flex justify-between items-center p-4 border-b bg-white chat-header"
+          className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-emerald-500 to-green-500 chat-header"
           onMouseDown={handleMouseDown}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
           <div className="flex items-center">
             <img 
-              src={targetUserImageUrl || defaultImageUrl} 
+              src={getProfileImage()}
               alt="프로필" 
-              className="w-10 h-10 rounded-full object-cover mr-3 select-none" 
+              className="w-10 h-10 rounded-full object-cover mr-3 select-none border-2 border-white shadow-md"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.src = defaultImageUrl;
+              }}
             />
             <div>
-              <h3 className="font-medium select-none">{targetUserNickname || "사용자"}</h3>
+              <h3 className="font-medium select-none text-white">{targetUserNickname || "사용자"}</h3>
             </div>
           </div>
           <button 
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
+            className="bg-gradient-to-r from-emerald-600 to-green-600 text-white p-1.5 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-sm"
             onClick={handleClose}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
         
@@ -360,37 +446,49 @@ export function ChatModal({
         <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
           {chatMessages.length === 0 ? (
             <div className="text-center text-gray-500 py-4">
-              <p>채팅을 시작해보세요!</p>
-              <p className="text-xs mt-2">반려동물에 대한 정보를 물어볼 수 있습니다.</p>
+              <p className="text-emerald-600 font-medium">채팅을 시작해보세요!</p>
+              <p className="text-xs mt-2 text-gray-400">반려동물에 대한 정보를 물어볼 수 있습니다.</p>
             </div>
           ) : (
             <>
               {chatMessages.map((msg, index) => (
-                <div 
-                  key={index} 
-                  className={`mb-3 flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                >
+                <div className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} mb-2`}>
                   {msg.sender !== 'me' && (
-                    <img 
-                      src={targetUserImageUrl || defaultImageUrl} 
-                      alt="프로필" 
-                      className="w-8 h-8 rounded-full object-cover mr-2 self-end" 
-                    />
+                    <Avatar className="h-8 w-8 mr-2 ring-2 ring-white shadow-sm">
+                      <img
+                        src={getProfileImage()}
+                        alt="프로필"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.src = defaultImageUrl;
+                        }}
+                      />
+                    </Avatar>
                   )}
-                  <div className="flex flex-col">
-                    <span className={`text-xs mb-1 ${msg.sender === 'me' ? 'text-right' : 'text-left'}`}>
-                      {msg.sender === 'me' ? '나' : targetUserNickname || '상대방'}
-                    </span>
-                    <div 
-                      className={`rounded-lg px-3 py-2 max-w-[70%] ${
-                        msg.sender === 'me' 
-                          ? 'bg-green-500 text-white self-end' 
-                          : 'bg-white border self-start'
-                      }`}
-                    >
-                      {msg.message}
+                  <div className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
+                    {msg.sender !== 'me' && (
+                      <span className="text-xs text-gray-600 mb-1">{targetUserNickname}</span>
+                    )}
+                    <div className="flex flex-row items-end">
+                      {msg.sender === 'me' && (
+                        <span className="text-[10px] text-gray-400 mr-2 shrink-0">{msg.time}</span>
+                      )}
+                      <div
+                        className={`rounded-lg px-3 py-2 ${
+                          msg.message.length <= 12 ? 'whitespace-nowrap w-fit' : 'whitespace-pre-wrap break-all'
+                        } ${
+                          msg.sender === 'me'
+                            ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        {msg.message}
+                      </div>
+                      {msg.sender !== 'me' && (
+                        <span className="text-[10px] text-gray-400 ml-2 shrink-0">{msg.time}</span>
+                      )}
                     </div>
-                    <span className="text-xs text-gray-500 mt-1">{msg.time}</span>
                   </div>
                 </div>
               ))}
@@ -403,7 +501,7 @@ export function ChatModal({
         <div className="p-3 border-t flex items-center bg-white">
           <input
             type="text"
-            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
+            className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50"
             placeholder="메시지를 입력하세요..."
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
@@ -411,7 +509,11 @@ export function ChatModal({
             disabled={isSending || !chatRoomId}
           />
           <button 
-            className={`ml-2 ${isSending || !chatRoomId ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'} text-white rounded-full p-2`}
+            className={`ml-2 ${
+              isSending || !chatRoomId 
+                ? 'bg-gray-400' 
+                : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
+            } text-white rounded-full p-2.5 shadow-sm transition-all duration-200`}
             onClick={handleSendMessage}
             disabled={isSending || !chatRoomId}
           >
