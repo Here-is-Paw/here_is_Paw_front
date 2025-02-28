@@ -20,7 +20,7 @@ export const KakaoLoginPopup = () => {
     const [showAdminLogin, setShowAdminLogin] = useState(false);
 
     const handleKakaoLogin = () => {
-        window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${frontUrl}`;
+        window.location.href = `${backUrl}${kakaoUrl}?redirectUrl=${backUrl}`;
     };
 
     const handleAdminLoginClick = () => {
