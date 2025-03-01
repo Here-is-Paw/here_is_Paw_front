@@ -40,6 +40,10 @@ interface ChatMessage {
   createDate: string;
 }
 
+interface OpenChatRoom extends ChatRoom {
+  isOpen: boolean;
+}
+
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const { isLoggedIn, logout } = useAuth();
   // const findLocation = useGeolocation()
@@ -223,33 +227,35 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
+  const [openChatRooms, setOpenChatRooms] = useState<OpenChatRoom[]>([]);
   
-  // 외부 클릭 시 채팅 목록 닫기
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (chatListRef.current && !chatListRef.current.contains(event.target as Node)) {
-        setIsChatListOpen(false);
-      }
-    }
-    
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   // 채팅 아이콘 클릭 핸들러
   const handleChatIconClick = () => {
-    setIsChatListOpen(!isChatListOpen); // 채팅 목록만 토글
+    setIsChatListOpen(!isChatListOpen);
   };
-
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [currentChatRoom, setCurrentChatRoom] = useState<ChatRoom | null>(null);
 
   // 채팅방 입장 핸들러
   const handleEnterChatRoom = (room: ChatRoom) => {
-    setCurrentChatRoom(room);
-    setIsChatModalOpen(true);
+    setOpenChatRooms(prev => {
+      // 이미 열려있는 채팅방인지 확인
+      const existingRoomIndex = prev.findIndex(r => r.id === room.id);
+      
+      if (existingRoomIndex >= 0) {
+        // 이미 열려있는 채팅방이면 해당 채팅방만 활성화
+        return prev.map((r, index) => ({
+          ...r,
+          isOpen: index === existingRoomIndex
+        }));
+      } else {
+        // 새로운 채팅방이면 추가
+        return [...prev, { ...room, isOpen: true }];
+      }
+    });
+  };
+
+  // 채팅방 닫기 핸들러
+  const handleCloseChatRoom = (roomId: number) => {
+    setOpenChatRooms(prev => prev.filter(room => room.id !== roomId));
   };
 
   return (
@@ -500,20 +506,19 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         </div>
       )}
 
-      {/* 채팅 모달 */}
-      {isChatModalOpen && currentChatRoom && (
-        <ChatModal 
-          isOpen={isChatModalOpen}
-          onClose={() => setIsChatModalOpen(false)}
-          targetUserImageUrl={currentChatRoom.targetUserImageUrl}
-          targetUserNickname={currentChatRoom.targetUserNickname}
+      {/* 열려있는 모든 채팅방 렌더링 */}
+      {openChatRooms.map((room) => (
+        <ChatModal
+          key={room.id}
+          isOpen={room.isOpen}
+          onClose={() => handleCloseChatRoom(room.id)}
           defaultImageUrl="https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg"
-          chatRoomId={currentChatRoom.id}
-          initialMessages={currentChatRoom.chatMessages}
-          targetUserId={currentChatRoom.targetUserId}
-          preventAutoClose={true}
+          chatRoomId={room.id}
+          targetUserId={room.targetUserId}
+          targetUserImageUrl={room.targetUserImageUrl}
+          targetUserNickname={room.targetUserNickname}
         />
-      )}
+      ))}
     </>
   );
 }
