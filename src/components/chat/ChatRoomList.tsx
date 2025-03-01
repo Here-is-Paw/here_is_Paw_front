@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { X } from "lucide-react";
 import { ChatModal } from "./ChatModal";
+import * as StompJs from '@stomp/stompjs';
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -36,6 +37,92 @@ export function ChatRoomList({ isOpen, onClose, onEnterRoom, me_id }: ChatRoomLi
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const client = useRef<StompJs.Client | null>(null);
+
+  // WebSocket 연결 설정
+  useEffect(() => {
+    if (isOpen) {
+      const stompClient = new StompJs.Client({
+        brokerURL: 'ws://localhost:8090/ws',
+        connectHeaders: {},
+        debug: function (str) {
+          console.log('STOMP Debug:', str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+        webSocketFactory: () => {
+          const ws = new WebSocket('ws://localhost:8090/ws');
+          ws.onerror = (err) => {
+            console.error('WebSocket 에러:', err);
+          };
+          return ws;
+        }
+      });
+
+      client.current = stompClient;
+
+      stompClient.onConnect = () => {
+        console.log('ChatRoomList WebSocket Connected');
+        
+        // 전체 채팅방 업데이트를 위한 구독
+        stompClient.subscribe('/topic/chat/rooms', (message) => {
+          try {
+            const updatedRoom = JSON.parse(message.body);
+            setChatRooms(prevRooms => {
+              return prevRooms.map(room => {
+                if (room.id === updatedRoom.id) {
+                  return {
+                    ...room,
+                    chatMessages: updatedRoom.chatMessages,
+                    modifiedDate: updatedRoom.modifiedDate
+                  };
+                }
+                return room;
+              });
+            });
+          } catch (error) {
+            console.error('채팅방 업데이트 처리 오류:', error);
+          }
+        });
+
+        // 개별 채팅방 메시지 업데이트를 위한 구독
+        chatRooms.forEach(room => {
+          stompClient.subscribe(`/topic/api/v1/chat/${room.id}/messages`, (message) => {
+            try {
+              const newMessage = JSON.parse(message.body);
+              setChatRooms(prevRooms => {
+                return prevRooms.map(r => {
+                  if (r.id === room.id) {
+                    return {
+                      ...r,
+                      chatMessages: [...r.chatMessages, {
+                        id: newMessage.id,
+                        content: newMessage.content,
+                        createDate: newMessage.createDate
+                      }],
+                      modifiedDate: newMessage.createDate
+                    };
+                  }
+                  return r;
+                });
+              });
+            } catch (error) {
+              console.error('메시지 업데이트 처리 오류:', error);
+            }
+          });
+        });
+      };
+
+      stompClient.activate();
+
+      return () => {
+        if (stompClient.active) {
+          stompClient.deactivate();
+        }
+      };
+    }
+  }, [isOpen, chatRooms]);
 
   // 채팅방 목록 불러오기
   const fetchChatRooms = async () => {
