@@ -40,7 +40,6 @@ import { MissingFormData, defaultValues } from "@/types/missing";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import LocationPicker from "../locaion/locationPicker";
-import NcpMap from "../petCard/findNcpMap";
 
 interface MissingFormPopupProps {
   open: boolean;
