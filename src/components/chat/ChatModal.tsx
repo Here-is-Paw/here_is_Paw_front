@@ -49,14 +49,12 @@ export function ChatModal({
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
-  const [myUserId, setMyUserId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const client = useRef<StompJs.Client | null>(null);
   
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false);
-  const [isMouseDown, setIsMouseDown] = useState(false);
   const [position, setPosition] = useState(() => {
     const baseOffset = chatRoomId ? (chatRoomId % 5) * 50 : 0;
     return {
@@ -68,7 +66,6 @@ export function ChatModal({
 
   // 리사이징 관련 상태
   const [isResizing, setIsResizing] = useState(false);
-  const [isResizeMouseDown, setIsResizeMouseDown] = useState(false);
   const [size, setSize] = useState({ width: 400, height: 500 });
   const resizeRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -81,29 +78,9 @@ export function ChatModal({
     scrollToBottom();
   }, [chatMessages]);
 
-  // 내 사용자 ID 가져오기
-  useEffect(() => {
-    const fetchMyUserId = async () => {
-      try {
-        const response = await axios.get(`${backUrl}/api/v1/members/me`, {
-          withCredentials: true
-        });
-        setMyUserId(response.data.id);
-        console.log('내 사용자 ID:', response.data.id);
-        console.log('상대방 사용자 ID:', targetUserId);
-      } catch (error) {
-        console.error('사용자 정보 가져오기 실패:', error);
-      }
-    };
-
-    if (isVisible) {
-      fetchMyUserId();
-    }
-  }, [isVisible]);
-
   // 이전 메시지 불러오기
   const fetchPreviousMessages = async () => {
-    if (!chatRoomId || !myUserId) return;
+    if (!chatRoomId) return;
 
     try {
       const response = await axios.get(
@@ -114,23 +91,21 @@ export function ChatModal({
       if (response.data && Array.isArray(response.data.data)) {
         const messages = response.data.data
           .filter((msg: any) => msg && msg.content)
-          .map((msg: any) => {
-            const isMyMessage = msg.senderId === myUserId;
-            console.log('메시지 송신자 ID:', msg.senderId, '내 ID:', myUserId, '내 메시지?:', isMyMessage);
-            return {
-              id: msg.id,
-              senderId: msg.senderId,
-              sender: isMyMessage ? "me" : "other",
-              message: msg.content || "",
-              time: new Date(msg.createDate).toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })
-            };
-          });
+          .map((msg: any) => ({
+            id: msg.id,
+            sender: msg.senderId === targetUserId ? "other" : "me",
+            message: msg.content || "",
+            time: new Date(msg.createDate).toLocaleTimeString('ko-KR', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          }));
 
         console.log("변환된 메시지:", messages);
         setChatMessages(messages);
+      } else {
+        console.error("잘못된 메시지 데이터 형식:", response.data);
+        setChatMessages([]);
       }
     } catch (error) {
       console.error("이전 메시지 로딩 오류:", error);
@@ -167,7 +142,7 @@ export function ChatModal({
 
   // WebSocket 연결 설정
   useEffect(() => {
-    if (isVisible && chatRoomId && myUserId) {
+    if (isVisible && chatRoomId) {
       const stompClient = new StompJs.Client({
         brokerURL: 'ws://localhost:8090/ws',
         connectHeaders: {},
@@ -202,13 +177,10 @@ export function ChatModal({
             try {
               const receivedMessage = JSON.parse(message.body) as WebSocketMessage;
               console.log('Parsed message:', receivedMessage);
-              const isMyMessage = receivedMessage.senderId === myUserId;
-              console.log('메시지 송신자 ID:', receivedMessage.senderId, '내 ID:', myUserId, '내 메시지?:', isMyMessage);
               
               const newMessage: ChatMessage = {
                 id: receivedMessage.id,
-                senderId: receivedMessage.senderId,
-                sender: isMyMessage ? "me" : "other",
+                sender: receivedMessage.senderId === targetUserId ? "other" : "me",
                 message: receivedMessage.content,
                 time: new Date(receivedMessage.createDate).toLocaleTimeString('ko-KR', {
                   hour: '2-digit',
@@ -251,38 +223,33 @@ export function ChatModal({
         }
       };
     }
-  }, [isVisible, chatRoomId, myUserId]);
+  }, [isVisible, chatRoomId, targetUserId]);
 
   // 마우스 이벤트 리스너
   useEffect(() => {
     if (isVisible) {
       const handleGlobalMouseMove = (e: MouseEvent) => {
-        // 드래그 처리
-        if (isMouseDown && dragRef.current) {
-          e.preventDefault(); // 드래그 중 텍스트 선택 방지
+        if (isDragging && dragRef.current) {
           const newX = e.clientX - dragRef.current.x;
           const newY = e.clientY - dragRef.current.y;
           
-          // 화면 경계 체크
-          const maxX = window.innerWidth - 420;
-          const maxY = window.innerHeight - 520;
+          // 화면 경계 체크 (여유 공간 추가)
+          const maxX = window.innerWidth - 420;  // 채팅방 너비 + 여유
+          const maxY = window.innerHeight - 520; // 채팅방 높이 + 여유
           
           setPosition({
             x: Math.min(Math.max(0, newX), maxX),
             y: Math.min(Math.max(0, newY), maxY)
           });
-          setIsDragging(true);
-        }
-        
-        // 리사이징 처리
-        if (isResizeMouseDown && resizeRef.current) {
-          e.preventDefault(); // 리사이징 중 텍스트 선택 방지
+        } else if (isResizing && resizeRef.current) {
           const deltaX = resizeRef.current.x - e.clientX;
           const deltaY = resizeRef.current.y - e.clientY;
           
+          // 새로운 크기 계산
           const newWidth = Math.max(300, Math.min(800, size.width + deltaX));
           const newHeight = Math.max(400, Math.min(800, size.height + deltaY));
           
+          // 위치 조정 (왼쪽 상단에서 리사이징할 때 위치도 조정해야 함)
           const newX = position.x - (newWidth - size.width);
           const newY = position.y - (newHeight - size.height);
           
@@ -293,48 +260,37 @@ export function ChatModal({
             x: e.clientX,
             y: e.clientY
           };
-          setIsResizing(true);
         }
       };
 
       const handleGlobalMouseUp = () => {
-        // 모든 마우스 상태 초기화
-        setIsMouseDown(false);
-        setIsDragging(false);
-        dragRef.current = null;
-        
-        setIsResizeMouseDown(false);
-        setIsResizing(false);
-        resizeRef.current = null;
-      };
-
-      // 마우스가 창 밖으로 나갔을 때도 드래그 중지
-      const handleMouseLeave = () => {
-        handleGlobalMouseUp();
+        if (isDragging) {
+          setIsDragging(false);
+          dragRef.current = null;
+        }
+        if (isResizing) {
+          setIsResizing(false);
+          resizeRef.current = null;
+        }
       };
 
       window.addEventListener('mousemove', handleGlobalMouseMove);
       window.addEventListener('mouseup', handleGlobalMouseUp);
-      window.addEventListener('mouseleave', handleMouseLeave);
+      window.addEventListener('mouseleave', handleGlobalMouseUp);
       
       return () => {
         window.removeEventListener('mousemove', handleGlobalMouseMove);
         window.removeEventListener('mouseup', handleGlobalMouseUp);
-        window.removeEventListener('mouseleave', handleMouseLeave);
+        window.removeEventListener('mouseleave', handleGlobalMouseUp);
       };
     }
-  }, [isVisible, isMouseDown, isResizeMouseDown, size, position]);
+  }, [isVisible, isDragging, isResizing, size, position]);
 
   // 드래그 시작
   const handleMouseDown = (e: React.MouseEvent) => {
     const chatHeader = e.target as HTMLElement;
-    if (chatHeader.closest('.no-drag')) {
-      return;
-    }
     if (chatHeader.closest('.chat-header')) {
-      e.preventDefault(); // 텍스트 선택 방지
-      setIsMouseDown(true);
-      setIsDragging(false);
+      setIsDragging(true);
       dragRef.current = {
         x: e.clientX - position.x,
         y: e.clientY - position.y
@@ -345,8 +301,7 @@ export function ChatModal({
   // 리사이징 시작
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsResizeMouseDown(true);
-    setIsResizing(false);
+    setIsResizing(true);
     resizeRef.current = {
       x: e.clientX,
       y: e.clientY
@@ -355,18 +310,28 @@ export function ChatModal({
 
   // 채팅 메시지 전송 함수
   const handleSendMessage = async () => {
-    if (chatMessage.trim() === "" || !chatRoomId || isSending || !myUserId) return;
+    if (chatMessage.trim() === "" || !chatRoomId || isSending) return;
     
     const now = new Date();
     const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
     
+    // 임시 메시지 ID (UI 업데이트용)
     const tempId = Date.now();
     
-    // 메시지 전송 시도
+    // 메시지 UI에 먼저 추가 (낙관적 UI 업데이트)
+    const newMessage: ChatMessage = {
+      id: tempId,
+      sender: "me",
+      message: chatMessage,
+      time: timeString
+    };
+    
+    // 낙관적 업데이트는 하지 않음 (WebSocket을 통해 받을 예정)
     setChatMessage("");
     setIsSending(true);
     
     try {
+      // 백엔드 API를 통해 메시지 전송
       const response = await axios.post(
         `${backUrl}/api/v1/chat/${chatRoomId}/messages`, 
         {
@@ -414,7 +379,7 @@ export function ChatModal({
       style={{ 
         left: `${position.x}px`,
         top: `${position.y}px`,
-        transition: (isDragging || isResizing) ? 'none' : 'all 0.1s ease',
+        transition: isDragging || isResizing ? 'none' : 'all 0.1s ease',
         cursor: isDragging ? 'grabbing' : 'auto'
       }}
     >
