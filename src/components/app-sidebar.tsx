@@ -1,9 +1,12 @@
-import { Sidebar } from "@/components/ui/sidebar"
-import { SidebarHeader } from './sidebar/SidebarHeader'
-import { SidebarMainContent } from './sidebar/SidebarContent'
-import { useState, useEffect } from 'react';
-import { Pet } from '@/types/pet';
-import {MyPage} from "@/components/mypage/MyPage.tsx";
+import { Sidebar } from "@/components/ui/sidebar";
+import { SidebarHeader } from "./sidebar/SidebarHeader";
+import { SidebarMainContent } from "./sidebar/SidebarContent";
+import { useState, useEffect } from "react";
+import { Pet } from "@/types/pet";
+import { MyPage } from "@/components/mypage/MyPage.tsx";
+import { PetList } from "./petCard/PetList";
+import { MissingList } from "./missingPost/missingList";
+import { backUrl } from "@/constants";
 
 interface AppSidebarProps {
   lostPets: Pet[];
@@ -11,7 +14,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ lostPets }: AppSidebarProps) {
-  const [activeFilter, setActiveFilter] = useState<string>('전체');
+  const [activeFilter, setActiveFilter] = useState<string>("전체");
 
   // 상태 변경을 감지하는 useEffect 추가
   useEffect(() => {
@@ -31,13 +34,13 @@ export function AppSidebar({ lostPets }: AppSidebarProps) {
       />
 
       {/* 컨텐츠 영역 */}
-        {activeFilter === 'My' ? (
-            <MyPage />
-        ) : (
-            <SidebarMainContent
-                lostPets={lostPets}
-            />
-        )}
+      {activeFilter === "My" ? (
+        <MyPage />
+      ) : activeFilter === "잃어버렸개" ? (
+        <MissingList backUrl={`${backUrl}/api/v1/missings`} />
+      ) : (
+        <SidebarMainContent lostPets={lostPets} />
+      )}
     </Sidebar>
   );
 }
