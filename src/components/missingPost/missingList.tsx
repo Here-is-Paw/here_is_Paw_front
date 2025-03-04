@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { MissingData } from "@/types/missing";
 import { MissingCard } from "./missingCard";
 import axios from "axios";
-import { Button } from "../ui/button";
 import { MissingDetail } from "./missingDetail";
 
 interface MissingListProps {
