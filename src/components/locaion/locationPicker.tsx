@@ -154,9 +154,9 @@ const LocationPicker = ({
 
           // 주소 정보 추출
           if (response.v2.results && response.v2.results.length > 0) {
-            const result = response.v2.results[0];
-            const address =
-              result.jibunAddress || result.roadAddress || "주소 정보 없음";
+            const result = response.v2;
+            const address = result.address.roadAddress || result.address.jibunAddress || "주소 정보 없음";
+            console.log("locationPicker result:", result, address);
             setSelectedLocation(address);
 
             // 부모 컴포넌트에 위치 정보 전달
