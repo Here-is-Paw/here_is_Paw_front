@@ -63,6 +63,9 @@ export const MissingFormPopup = ({
     address: "",
   });
 
+  // 추가 상세 주소 입력을 위한 상태 추가
+  const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
+
   // 위치 선택 핸들러
   const handleLocationSelect = (location: {
     x: number;
@@ -76,16 +79,34 @@ export const MissingFormPopup = ({
     form.setValue("location", location.address);
   };
 
+  // 추가 상세 주소 변경 핸들러
+  const handleAdditionalAddressChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setAdditionalAddressDetails(e.target.value);
+
+    // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
+    const combinedAddress = locationInfo.address
+      ? `${locationInfo.address} ${e.target.value}`.trim()
+      : e.target.value;
+
+    form.setValue("location", combinedAddress);
+  };
+
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
+      setLocationInfo({ x: 0, y: 0, address: "" });
+      setAdditionalAddressDetails("");
     }
   }, [open, form]);
 
   // 팝업 닫기 핸들러
   const handleClose = () => {
     form.reset(defaultValues);
+    setLocationInfo({ x: 0, y: 0, address: "" });
+    setAdditionalAddressDetails("");
     onOpenChange(false);
   };
 
@@ -94,8 +115,7 @@ export const MissingFormPopup = ({
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
-      //   formData.append("geo", data.geo || "sdasdasdasdsad");
-      //   formData.append("location", data.location);
+
       // geo 좌표 정보 추가 - 더 이상 임의 값이 아닌 실제 좌표
       if (locationInfo.x && locationInfo.y) {
         formData.append(
@@ -107,7 +127,12 @@ export const MissingFormPopup = ({
         return;
       }
 
-      formData.append("location", locationInfo.address || data.location);
+      // 지도 주소와 상세 주소를 결합
+      const combinedAddress = locationInfo.address
+        ? `${locationInfo.address} ${additionalAddressDetails}`.trim()
+        : data.location;
+
+      formData.append("location", combinedAddress);
 
       formData.append("color", data.color || "");
       formData.append("serialNumber", data.serialNumber || "");
@@ -132,6 +157,8 @@ export const MissingFormPopup = ({
       });
 
       form.reset(defaultValues);
+      setLocationInfo({ x: 0, y: 0, address: "" });
+      setAdditionalAddressDetails("");
       onOpenChange(false);
       if (onSuccess) {
         onSuccess();
@@ -154,6 +181,8 @@ export const MissingFormPopup = ({
         if (!newOpen) {
           // 팝업이 닫힐 때 폼 초기화
           form.reset(defaultValues);
+          setLocationInfo({ x: 0, y: 0, address: "" });
+          setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
@@ -254,7 +283,6 @@ export const MissingFormPopup = ({
                       <Select
                         onValueChange={(value) => {
                           field.onChange(parseInt(value));
-                          console.log(field);
                         }}
                         defaultValue={"0"}
                       >
@@ -328,15 +356,32 @@ export const MissingFormPopup = ({
                 )}
               />
 
+              {/* 상세 주소 입력 필드 */}
+              <div className="space-y-2">
+                <FormLabel>상세 주소</FormLabel>
+                <Input
+                  type="text"
+                  placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
+                  value={additionalAddressDetails}
+                  onChange={handleAdditionalAddressChange}
+                />
+              </div>
+
+              {/* 원래 location 필드는 hidden으로 변경하거나 제거 가능 */}
               <FormField
                 control={form.control}
                 name="location"
                 rules={{ required: "실종 위치는 필수입니다" }}
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>실종 위치 *</FormLabel>
+                  <FormItem className="sr-only">
+                    <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="실종 위치" {...field} />
+                      <Input
+                        type="text"
+                        placeholder="실종 위치"
+                        {...field}
+                        disabled
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -372,7 +417,14 @@ export const MissingFormPopup = ({
                               className="calendar-custom"
                               mode="single"
                               selected={date}
-                              onSelect={setDate} // ISO 8601 형식으로 변환
+                              onSelect={(newDate) => {
+                                setDate(newDate);
+                                if (newDate) {
+                                  field.onChange(
+                                    newDate.toISOString().split("Z")[0]
+                                  );
+                                }
+                              }}
                               initialFocus
                             />
                           </PopoverContent>
