@@ -8,8 +8,8 @@ import axios from "axios";
 import { Plus } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
-import NcpMap from "./findNcpMap";
-import useGeolocation from "@/hooks/Geolocation";
+import FindLocationPicker from "./findNcpMap";
+import useGeolocation from "@/hooks/useGeolocation";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -319,7 +319,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                     </div>
                     <div className="w-80">
                       {/* <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div> */}
-                      <NcpMap currentLocation={findLocation} findDetail={findDetail}/>
+                      <FindLocationPicker currentLocation={findLocation} findDetail={findDetail}/>
                       <div className="mb-4 ">
                         <label className="block font-medium mb-2 ">특이 사항</label>
                         <textarea

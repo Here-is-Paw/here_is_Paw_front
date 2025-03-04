@@ -9,7 +9,7 @@ interface LocationPickerProps {
   initialLocation?: { x: number; y: number };
 }
 
-const FindLocationPicker = ({
+const LocationPicker = ({
   onLocationSelect,
   initialLocation,
 }: LocationPickerProps) => {
@@ -205,4 +205,4 @@ const FindLocationPicker = ({
   );
 };
 
-export default FindLocationPicker;
+export default LocationPicker;
