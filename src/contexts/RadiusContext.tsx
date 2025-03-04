@@ -8,7 +8,7 @@ interface RadiusContextType {
 const RadiusContext = createContext<RadiusContextType | undefined>(undefined);
 
 export function RadiusProvider({ children }: { children: ReactNode }) {
-    const [radius, setRadius] = useState<number>(1000); // Default radius: 1km
+    const [radius, setRadius] = useState<number>(500); // Default radius: 1km
 
     return (
         <RadiusContext.Provider value={{ radius, setRadius }}>
