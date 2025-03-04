@@ -30,10 +30,10 @@ const NcpMap = ({ currentLocation, findDetail }: NcpMapProps) => {
     window.naver.maps.onJSContentLoaded = function () {};
     if (isInitialized.current || !currentLocation.loaded) return;
     console.log(window.naver.maps.Service)
-    if (!window.naver.maps.Service) {
-      console.error("네이버 지도 API가 올바르게 로드되지 않았습니다.");
-      return;
-    }
+    // if (!window.naver.maps.Service) {
+    //   console.error("네이버 지도 API가 올바르게 로드되지 않았습니다.");
+    //   return;
+    // }
 
     const initializeMap = () => {
       if (!mapElement.current || !window.naver) {

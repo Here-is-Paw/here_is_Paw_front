@@ -11,7 +11,7 @@ interface NcpMapProps {
   findPets: MyPet[];
 }
 
-const NcpMap = ({ currentLocation, findPets }: NcpMapProps) => {
+const FindNcpMap = ({ currentLocation, findPets }: NcpMapProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
@@ -45,10 +45,10 @@ const NcpMap = ({ currentLocation, findPets }: NcpMapProps) => {
           : defaultCenter;
 
           // 현재 좌표 출력
-  console.log("현재 위치:", {
-    lat: center.lat(),
-    lang: center.lng()
-  });
+      console.log("현재 위치:", {
+        lat: center.lat(),
+        lang: center.lng()
+      });
 
         const mapOptions = {
           center,
@@ -140,4 +140,4 @@ const NcpMap = ({ currentLocation, findPets }: NcpMapProps) => {
   );
 };
 
-export default NcpMap;
+export default FindNcpMap;

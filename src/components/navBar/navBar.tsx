@@ -43,18 +43,19 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isFindModalOpen, setIsFindModalOpen] = useState(false);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [breed, setBreed] = useState("");
   // const [geo, setGeo] = useState("");
   // const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
-  const [gender, setGender] = useState("");
+  const [gender, setGender] = useState(0);
   const [etc, setEtc] = useState("");
   const [situation, setSituation] = useState("");
   const [title, setTitle] = useState("");
   const [age, setAge] = useState("");
-  const [neutered, setNeutered] = useState("");
+  const [neutered, setNeutered] = useState(0);
 
   const { incrementSubmissionCount } = usePetContext();
 
@@ -98,13 +99,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   // 파일 업로드 핸들러
-  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (file) {
-  //     const imageUrl = URL.createObjectURL(file);
-  //     setImagePreview(imageUrl);
-  //   }
-  // };
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // 파일 객체 자체를 저장
+      setImageFile(file);
+
+      // 미리보기용 URL 생성 (필요한 경우)
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+    }
+  };
+
   useEffect(() => {
     const savedImage = localStorage.getItem("uploadedImage");
     if (savedImage) {
@@ -113,22 +119,23 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   }, []);
 
   // 🔹 파일 업로드 핸들러
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       const base64String = reader.result as string;
+  //       setImagePreview(base64String);
+  //       localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   // 파일 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
+    setImageFile(null);
     localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
   };
 
@@ -141,32 +148,36 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       const member_id = memberResponse.data.id;
 
       try {
-        const response = await fetch(`${backUrl}/find/new`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: title,
-            situation: situation,
-            breed: breed,
-            location: "서울 강남구 어딘가",
-            geo: { x: 12, y: 12},
-            name: name,
-            color: color,
-            etc: etc,
-            gender: gender,
-            age: age,
-            neutered: neutered,
-            find_date: "2025-02-20T00:00:00",
-            member_id: member_id,
-            shelter_id: 1,
-            path_url: imagePreview,
-          }),
-          credentials: "include",
+        const formData = new FormData();
+
+        // 파일 추가
+        if (imageFile) {
+          formData.append("file", imageFile);
+        }
+
+        // JSON 객체의 각 필드를 개별적으로 추가
+        formData.append("title", title);
+        formData.append("situation", situation);
+        formData.append("breed", breed);
+        formData.append("location", "서울 강남구 어딘가");
+        // Point 객체는 문자열로 변환해서 보내야 함
+        formData.append("x", "12"); // geo 객체의 x 값
+        formData.append("y", "12"); // geo 객체의 y 값
+        formData.append("name", name);
+        formData.append("color", color);
+        formData.append("etc", etc);
+        formData.append("gender", gender.toString());
+        formData.append("age", age);
+        formData.append("neutered", neutered.toString());
+        formData.append("find_date", "2025-02-20T00:00:00");
+        formData.append("member_id", member_id);
+        formData.append("shelter_id", "1");
+
+        const response = await axios.post(`${backUrl}/find/new`, formData, {
+          withCredentials: true,
         });
 
-        if (response.ok) {
+        if (response.status === 200 || response.status === 201) {
           alert("발견 신고가 성공적으로 저장되었습니다!");
           incrementSubmissionCount();
           handleRemoveImage();
@@ -369,18 +380,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                     <label className="block font-medium mb-2 ">성별</label>
                     {/* <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} /> */}
                     <select className="border p-2 w-full bg-white" onChange={handleGender}>
-                      <option value="미상">미상</option>
-                      <option value="수컷">수컷</option>
-                      <option value="암컷">암컷</option>
+                      <option value="0">미상</option>
+                      <option value="1">수컷</option>
+                      <option value="2">암컷</option>
                     </select>
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">중성화</label>
                     {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
                     <select className="border p-2 w-full bg-white" onChange={handleNeutered}>
-                      <option value="">미상</option>
-                      <option value="true">중성화 됌</option>
-                      <option value="false">중성화 안됌</option>
+                      <option value="0">미상</option>
+                      <option value="1">중성화 됌</option>
+                      <option value="2">중성화 안됌</option>
                     </select>
                   </div>
                   <div className="w-20">
