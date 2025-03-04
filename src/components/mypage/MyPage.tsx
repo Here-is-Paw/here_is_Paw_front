@@ -10,6 +10,7 @@ import {Button} from "@/components/ui/button";
 // Context and Constants
 import {useAuth} from "@/contexts/AuthContext";
 import {backUrl} from "@/constants";
+// import {useRadius} from "@/contexts/RadiusContext";
 
 // Types
 import {User} from "@/types/user";
@@ -18,7 +19,8 @@ import {MyPet} from "@/types/pet";
 // Custom Components
 import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup";
 import {AddPetFormPopup} from "@/components/mypage/pet/petForm/AddPetFormPopup.tsx";
-import {EditPetFormPopup} from "@/components/mypage/pet/petForm/EditPetFormPopup.tsx"; // Import the new component
+import {EditPetFormPopup} from "@/components/mypage/pet/petForm/EditPetFormPopup.tsx";
+import {RadiusSlider} from "@/components/mypage/RadiusSlider";
 
 // Internal Components
 import {ProfileSection} from './profile/ProfileSection.tsx';
@@ -98,10 +100,6 @@ export function MyPage() {
             setUserPets([]);
         }
     };
-
-// MyPage.tsx 파일에서 updateUserProfile 함수 수정
-
-    // MyPage.tsx 파일에서 updateUserProfile 함수 수정
 
     const updateUserProfile = async (updatedData: {
         username : string;
@@ -256,6 +254,11 @@ export function MyPage() {
                     handlePayment={handlePayment}
                     onUpdateProfile={updateUserProfile}
                 />
+            </SidebarGroup>
+
+            {/* 검색 반경 슬라이더 섹션 */}
+            <SidebarGroup className="p-4 pt-0">
+                <RadiusSlider />
             </SidebarGroup>
 
             {/* 내 반려동물 섹션 */}

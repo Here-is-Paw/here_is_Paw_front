@@ -120,6 +120,7 @@ export function FindPetCard({ pet }: PetCardProps) {
     console.log(1234);
   }, [findDetail]);
 
+  // dtaile
   const handleFindDetail = async (postId: number) => {
     try {
       const detailResponse = await axios.get(`${backUrl}/find/${postId}`, {});

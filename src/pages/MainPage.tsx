@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import NcpMap from './NcpMap'
+// import NcpMap from './NcpMap'
+import NcpMap from './NcpMap-1'
 import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
 import useGeolocation from '@/hooks/Geolocation'
@@ -40,10 +41,15 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
       <NavBar buttonStates={buttonStates} toggleButton={toggleButton} />
       <div className={`fixed ${isMobile ? 'inset-0 top-[120px]' : 'inset-0'}`}>
         <NcpMap
-          currentLocation={location}
-          lostPets={mockLostPets}
-          findPets={mockFindPets}
+            currentLocation={location}
+            lostPets={mockLostPets}
+            findPets={mockFindPets}
         />
+        {/*<NcpMap*/}
+        {/*  currentLocation={location}*/}
+        {/*  lostPets={mockLostPets}*/}
+        {/*  findPets={mockFindPets}*/}
+        {/*/>*/}
       </div>
     </div>
   )
