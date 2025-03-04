@@ -9,7 +9,7 @@ import { Plus } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NcpMap from "./findNcpMap";
-import useGeolocation from "@/hooks/Geolocation";
+import useGeolocation from "@/hooks/useGeolocation";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
