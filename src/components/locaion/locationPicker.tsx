@@ -15,9 +15,9 @@ const LocationPicker = ({
 }: LocationPickerProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
-  const markerRef = useRef<naver.maps.Marker | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [naverMapsLoaded, setNaverMapsLoaded] = useState<boolean>(false);
+  const [infoContent, setInfoContent] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // 네이버 지도 API 로드 여부 확인
@@ -61,62 +61,44 @@ const LocationPicker = ({
           zoom: 15,
           minZoom: 10,
           tileDuration: 300,
+          zoomControl: true,
+          zoomControlOptions: {
+            style: naver.maps.ZoomControlStyle.SMALL,
+            position: naver.maps.Position.TOP_RIGHT,
+          },
         };
 
         // 지도 생성
         const map = new naver.maps.Map(mapElement.current, mapOptions);
         mapInstance.current = map;
 
-        // 초기 마커 생성 (있는 경우)
-        if (initialLocation) {
-          markerRef.current = new window.naver.maps.Marker({
-            position: initialCenter,
-            map: map,
-            draggable: true,
-          });
+        // 중앙에 고정된 마커 UI 요소 추가
+        const centerMarker = document.createElement("div");
+        centerMarker.className = "center-marker";
+        centerMarker.style.cssText =
+          "position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:1000;width:20px;height:20px;background-color:red;border-radius:50%;border:2px solid white;pointer-events:none;";
+        mapElement.current.appendChild(centerMarker);
 
-          // 지오코딩으로 주소 가져오기
-          reverseGeocode(initialLocation.y, initialLocation.x);
-        }
+        // 지도 정보 표시 요소 생성
+        const contentEl = document.createElement("div");
+        contentEl.className = "map-info";
+        contentEl.style.cssText =
+          "position:absolute;top:10px;left:10px;z-index:1000;background-color:white;padding:8px 12px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-size:12px;";
+        contentEl.innerHTML = "<p>지도의 중심 위치가 선택됩니다</p>";
 
-        // 지도 클릭 이벤트 등록
-        window.naver.maps.Event.addListener(
-          map,
-          "click",
-          (e: naver.maps.PointerEvent) => {
-            const clickedPosition = e.coord;
+        mapElement.current.appendChild(contentEl);
+        setInfoContent(contentEl);
 
-            // 마커가 없으면 새로 생성, 있으면 위치 업데이트
-            if (!markerRef.current) {
-              markerRef.current = new window.naver.maps.Marker({
-                position: clickedPosition,
-                map: map,
-                draggable: true,
-              });
-            } else {
-              markerRef.current.setPosition(clickedPosition);
-            }
+        // 초기 위치 주소 가져오기
+        reverseGeocode(initialCenter.y, initialCenter.x);
 
-            // 위도, 경도 정보 추출 및 주소 조회
-            const lat = clickedPosition.y;
-            const lng = clickedPosition.x;
-            reverseGeocode(lat, lng);
-          }
-        );
+        // 지도 이동 완료 이벤트 등록
+        window.naver.maps.Event.addListener(map, "idle", () => {
+          const center = map.getCenter();
 
-        // 마커 드래그 이벤트
-        if (markerRef.current) {
-          window.naver.maps.Event.addListener(
-            markerRef.current,
-            "dragend",
-            () => {
-              if (markerRef.current) {
-                const position = markerRef.current.getPosition();
-                reverseGeocode(position.y, position.x);
-              }
-            }
-          );
-        }
+          // 주소 정보 업데이트
+          reverseGeocode(center.y, center.x);
+        });
       } catch (error) {
         console.error("Error creating map:", error);
       }
@@ -125,8 +107,14 @@ const LocationPicker = ({
     initializeMap();
 
     return () => {
+      if (infoContent && mapElement.current) {
+        const centerMarker = mapElement.current.querySelector(".center-marker");
+        if (centerMarker) {
+          mapElement.current.removeChild(centerMarker);
+        }
+        mapElement.current.removeChild(infoContent);
+      }
       mapInstance.current = null;
-      markerRef.current = null;
     };
   }, [naverMapsLoaded, initialLocation]);
 
@@ -155,8 +143,10 @@ const LocationPicker = ({
           // 주소 정보 추출
           if (response.v2.results && response.v2.results.length > 0) {
             const result = response.v2;
-            const address = result.address.jibunAddress && "주소 정보 없음";
-            console.log("locationPicker result:", result, address);
+            const address =
+              result.address.roadAddress ||
+              result.address.jibunAddress ||
+              "주소 정보 없음";
             setSelectedLocation(address);
 
             // 부모 컴포넌트에 위치 정보 전달
@@ -165,6 +155,14 @@ const LocationPicker = ({
               y: lat,
               address: address,
             });
+
+            // 정보창 업데이트
+            if (infoContent) {
+              infoContent.innerHTML = `
+                <p>좌표: ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+                <p>주소: ${address}</p>
+              `;
+            }
           } else {
             setSelectedLocation("주소 정보를 찾을 수 없습니다");
             onLocationSelect({
@@ -190,7 +188,12 @@ const LocationPicker = ({
     <div className="space-y-2">
       <div
         ref={mapElement}
-        style={{ width: "100%", height: "300px", borderRadius: "8px" }}
+        style={{
+          width: "100%",
+          height: "300px",
+          borderRadius: "8px",
+          position: "relative",
+        }}
         className="border border-gray-200"
       />
       {selectedLocation && (
@@ -199,7 +202,7 @@ const LocationPicker = ({
         </div>
       )}
       <p className="text-xs text-gray-500">
-        지도를 클릭하여 실종 위치를 지정해주세요
+        지도를 이동하면 중앙 위치가 자동으로 선택됩니다
       </p>
     </div>
   );

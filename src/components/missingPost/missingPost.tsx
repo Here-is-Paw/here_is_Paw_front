@@ -74,8 +74,6 @@ export const MissingFormPopup = ({
     form.setValue("geo", JSON.stringify({ x: location.x, y: location.y }));
     // location 필드 업데이트 (주소 문자열로 저장)
     form.setValue("location", location.address);
-
-    console.log("missing geo", location);
   };
 
   // 팝업이 닫힐 때 폼 초기화
