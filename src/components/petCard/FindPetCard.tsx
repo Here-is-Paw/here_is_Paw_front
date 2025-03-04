@@ -297,18 +297,18 @@ export function FindPetCard({ pet }: PetCardProps) {
                           <label className="block font-medium mb-2 ">성별</label>
                           {/* <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} /> */}
                           <select className="border p-2 w-full bg-white" onChange={handleGender}>
-                            <option value="미상">미상</option>
-                            <option value="수컷">수컷</option>
-                            <option value="암컷">암컷</option>
+                            <option value="0">미상</option>
+                            <option value="1">수컷</option>
+                            <option value="2">암컷</option>
                           </select>
                         </div>
                         <div className="mr-4 w-20">
                           <label className="block font-medium mb-2 ">중성화</label>
                           {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
                           <select className="border p-2 w-full bg-white" onChange={handleNeutered}>
-                            <option value="">미상</option>
-                            <option value="true">중성화 됌</option>
-                            <option value="false">중성화 안됌</option>
+                            <option value="0">미상</option>
+                            <option value="1">중성화 됌</option>
+                            <option value="2">중성화 안됌</option>
                           </select>
                         </div>
                         <div className="w-20">

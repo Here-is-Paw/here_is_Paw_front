@@ -17,17 +17,6 @@ export enum PetGender {
   Female = 2
 }
 
-export interface Pet {
-  id: string;
-  imageUrl: string;
-  date: string;
-  breed: string;
-  features: string;
-  location: string;
-  lat: number;
-  lang: number;
-}
-
 export interface MyPet {
   id: number;
   age: number;
@@ -36,7 +25,7 @@ export interface MyPet {
   etc: string;
   gender: number;
   name: string;
-  neutered: boolean;
+  neutered: number;
   serialNumber: string;
   imageUrl: string;
   location: string;
