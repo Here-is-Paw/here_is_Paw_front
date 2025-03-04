@@ -6,6 +6,8 @@ import {AuthProvider} from "@/contexts/AuthContext";
 import {PetProvider} from "./contexts/findPetContext.tsx";
 import {RadiusProvider} from "@/contexts/RadiusContext.tsx";
 
+import "./App.css";
+
 function App() {
     return (
         <BrowserRouter>

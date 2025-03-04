@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import NcpMap from './NcpMap-1'
 import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
-import useGeolocation from '@/hooks/Geolocation'
+import useGeolocation from '@/hooks/useGeolocation'
 import { Pet } from '@/types/pet'
 
 interface MainPageProps {
