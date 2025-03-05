@@ -3,7 +3,6 @@ import { Plus, MessageSquare, Bell, LogOut } from "lucide-react";
 import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { AddPetFormPopup } from "../mypage/AddMyPetFormPopup";
 import { MissingFormPopup } from "../missingPost/missingPost";
 import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
