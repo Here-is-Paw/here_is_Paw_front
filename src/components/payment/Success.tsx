@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
-import "./Payment.css";
+import "./payment.css";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ResponseData {

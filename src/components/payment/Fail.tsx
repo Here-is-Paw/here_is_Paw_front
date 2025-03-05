@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
-import "./Payment.css";
+import "./payment.css";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const FailPage: React.FC = () => {
