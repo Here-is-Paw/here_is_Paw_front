@@ -87,25 +87,53 @@ export function ChatModal({
     if (!chatRoomId) return;
 
     try {
+      // 현재 로그인한 사용자 정보 먼저 확실히 가져오기
+      let currentUserId = userId;
+      if (!currentUserId) {
+        try {
+          const userResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+            withCredentials: true
+          });
+          currentUserId = userResponse.data.id;
+          setUserId(currentUserId); // 상태 업데이트
+          console.log("현재 로그인한 사용자 ID를 가져왔습니다:", currentUserId);
+        } catch (error) {
+          console.error("사용자 정보 가져오기 오류:", error);
+          return; // 사용자 ID를 가져오지 못하면 메시지를 불러오지 않음
+        }
+      }
+
+      // 사용자 ID가 확보된 후 메시지 불러오기
       const response = await axios.get(
         `${backUrl}/api/v1/chat/${chatRoomId}/messages`,
         { withCredentials: true }
       );
 
       console.log('이전 메시지 응답:', response.data);
+      console.log('현재 로그인한 사용자 ID:', currentUserId);
 
       if (response.data && Array.isArray(response.data.data)) {
         const messages = response.data.data
           .filter((msg: any) => msg && msg.content)
-          .map((msg: any) => ({
-            id: msg.chatMessageId || msg.id,
-            sender: (msg.memberId || msg.senderId) === targetUserId ? "other" : "me",
-            message: msg.content || "",
-            time: new Date(msg.createdDate || msg.createDate).toLocaleTimeString('ko-KR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          }));
+          .map((msg: any) => {
+            // 백엔드에서 제공한 memberId 사용
+            const messageUserId = msg.memberId;
+            
+            // 명확한 비교를 위해 숫자 값으로 변환
+            const isMine = Number(messageUserId) === Number(currentUserId);
+            
+            console.log(`메시지 ID: ${msg.chatMessageId || msg.id}, 발신자 ID: ${messageUserId}, 현재 사용자 ID: ${currentUserId}, 내 메시지: ${isMine}, 타입: ${typeof messageUserId}/${typeof currentUserId}`);
+            
+            return {
+              id: msg.chatMessageId || msg.id,
+              sender: isMine ? "me" : "other",
+              message: msg.content || "",
+              time: new Date(msg.createdDate || msg.createDate).toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+            };
+          });
 
         console.log("변환된 메시지:", messages);
         setChatMessages(messages);
@@ -173,34 +201,68 @@ export function ChatModal({
       stompClient.onConnect = (frame) => {
         console.log('STOMP Connected:', frame);
 
-        const topic = `/topic/api/v1/chat/${chatRoomId}/messages`;
-        console.log(`Subscribing to topic: ${topic}`);
-
-        try {
-          subscription = stompClient.subscribe(topic, (message) => {
-            console.log('Raw message received:', message);
+        // 웹소켓 연결 시 사용자 ID가 없으면 가져오기
+        const fetchUserIdFirst = async () => {
+          if (!userId) {
             try {
-              const receivedMessage = JSON.parse(message.body) as WebSocketMessage;
-              console.log('Parsed message:', receivedMessage);
-              
-              const newMessage: ChatMessage = {
-                id: receivedMessage.chatMessageId,
-                sender: receivedMessage.memberId === targetUserId ? "other" : "me",
-                message: receivedMessage.content,
-                time: new Date(receivedMessage.createdDate).toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })
-              };
-              
-              setChatMessages(prev => [...prev, newMessage]);
+              const userResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+                withCredentials: true
+              });
+              const currentUserId = userResponse.data.id;
+              setUserId(currentUserId);
+              console.log("웹소켓 연결 시 사용자 ID 설정:", currentUserId);
+              return currentUserId;
             } catch (error) {
-              console.error('메시지 파싱 오류:', error);
+              console.error("사용자 정보 가져오기 오류:", error);
+              return null;
             }
-          });
-        } catch (error) {
-          console.error('구독 오류:', error);
-        }
+          }
+          return userId;
+        };
+
+        // 사용자 ID 확인 후 구독 진행
+        fetchUserIdFirst().then((currentUserId) => {
+          const topic = `/topic/api/v1/chat/${chatRoomId}/messages`;
+          console.log(`Subscribing to topic: ${topic}, 현재 사용자 ID: ${currentUserId}`);
+
+          try {
+            subscription = stompClient.subscribe(topic, (message) => {
+              console.log('Raw message received:', message);
+              try {
+                const receivedMessage = JSON.parse(message.body) as WebSocketMessage;
+                console.log('Parsed message:', receivedMessage);
+                
+                // 메시지 발신자 구분 - 현재 로그인한 사용자 ID를 확인
+                const messageUserId = receivedMessage.memberId;
+                
+                // 클로저에 저장된 currentUserId 사용 또는 상태 값 사용
+                const userIdToCompare = currentUserId || userId;
+                
+                console.log(`웹소켓 메시지 - ID: ${receivedMessage.chatMessageId}, 발신자 ID: ${messageUserId}, 현재 사용자 ID: ${userIdToCompare}`);
+                
+                // 명확한 비교를 위해 숫자 값으로 변환
+                const isMine = Number(messageUserId) === Number(userIdToCompare);
+                console.log(`메시지가 내 것인지 여부: ${isMine}, 타입: ${typeof messageUserId}/${typeof userIdToCompare}`);
+                
+                const newMessage: ChatMessage = {
+                  id: receivedMessage.chatMessageId,
+                  sender: isMine ? "me" : "other",
+                  message: receivedMessage.content,
+                  time: new Date(receivedMessage.createdDate).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                };
+                
+                setChatMessages(prev => [...prev, newMessage]);
+              } catch (error) {
+                console.error('메시지 파싱 오류:', error);
+              }
+            });
+          } catch (error) {
+            console.error('구독 오류:', error);
+          }
+        });
       };
 
       stompClient.onStompError = (frame) => {
@@ -228,7 +290,7 @@ export function ChatModal({
         }
       };
     }
-  }, [isVisible, chatRoomId, targetUserId]);
+  }, [isVisible, chatRoomId, userId]);
 
   // 채팅방 닫기 핸들러
   const handleClose = () => {
