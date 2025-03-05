@@ -52,7 +52,7 @@ export const EditPetFormPopup: React.FC<EditPetFormPopupProps> = ({
         color: petToEdit.color || "",
         serialNumber: petToEdit.serialNumber || "",
         gender: petToEdit.gender !== undefined ? petToEdit.gender : 0,
-        neutered: petToEdit.neutered || false,
+        neutered: petToEdit.neutered ? true : false,
         age: petToEdit.age || undefined,
         etc: petToEdit.etc || "",
         profileImage: null, // Can't pre-fill the File object, only new uploads will be sent

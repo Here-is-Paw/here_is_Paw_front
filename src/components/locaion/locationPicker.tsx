@@ -91,7 +91,7 @@ const LocationPicker = ({
         };
 
         // 지도 생성
-        const map = new naver.maps.Map(mapElement.current, mapOptions);
+        const map = new naver.maps.Map(mapElement.current!, mapOptions);
         mapInstance.current = map;
         mapInstance.current.setCenter(getInitialCenter());
 
@@ -125,7 +125,9 @@ const LocationPicker = ({
           "position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:1000;pointer-events:none;";
         // centerMarker.style.cssText =
         //     "position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:1000;width:20px;height:20px;background-color:red;border-radius:50%;border:2px solid white;pointer-events:none;";
-        mapElement.current.appendChild(centerMarker);
+        if (mapElement.current) {
+          mapElement.current.appendChild(centerMarker);
+        }
 
         // 지도 정보 표시 요소 생성
         const contentEl = document.createElement("div");
@@ -134,7 +136,9 @@ const LocationPicker = ({
           "position:absolute;top:10px;left:10px;z-index:1000;background-color:white;padding:8px 12px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-size:12px;";
         contentEl.innerHTML = "<p>지도의 중심 위치가 선택됩니다</p>";
 
-        mapElement.current.appendChild(contentEl);
+        if (mapElement.current) {
+          mapElement.current.appendChild(contentEl);
+        }
         setInfoContent(contentEl);
 
         // 초기 위치 주소 가져오기

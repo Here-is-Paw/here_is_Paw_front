@@ -64,7 +64,7 @@ const FindLocationPicker = ({
         };
 
         // 지도 생성
-        const map = new naver.maps.Map(mapElement.current, mapOptions);
+        const map = new naver.maps.Map(mapElement.current!, mapOptions);
         mapInstance.current = map;
 
         // 초기 마커 생성 (있는 경우)
