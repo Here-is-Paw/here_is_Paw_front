@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Pet } from "@/types/pet"
-
+import { useEffect, useRef } from "react";
+import { Pet } from "@/types/pet";
 
 interface NcpMapProps {
   currentLocation: {
@@ -18,7 +17,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   const isInitialized = useRef<boolean>(false);
 
   const getPawMarkerIcon = (isLost: boolean) => {
-    const color = isLost ? '#EF4444' : '#22C55E'; // red-500 : green-500
+    const color = isLost ? "#EF4444" : "#22C55E"; // red-500 : green-500
     return `
       <svg width="24" height="24" viewBox="0 0 53 54" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M11.0415 38.0417C11.0415 29.5043 17.9624 22.5834 26.4998 22.5834C35.0373 22.5834 41.9582 29.5043 41.9582 38.0417C41.9582 38.2294 41.9545 38.4164 41.9471 38.6026C41.8478 41.4194 40.3152 43.5316 38.2449 44.8897C36.2044 46.2291 33.6029 46.875 31.1031 46.875H21.8966C19.3967 46.875 16.7953 46.2291 14.7548 44.8897C12.6845 43.5316 11.1519 41.4194 11.0514 38.6026C11.0448 38.4164 11.0415 38.2294 11.0415 38.0417Z" fill="${color}"/>
@@ -45,14 +44,14 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
             )
           : defaultCenter;
 
-          // 현재 좌표 출력
-  console.log("현재 위치:", {
-    lat: center.lat(),
-    lang: center.lng()
-  });
+        // 현재 좌표 출력
+        console.log("현재 위치:", {
+          lat: center.lat(),
+          lang: center.lng(),
+        });
 
         const mapOptions = {
-          center,
+          defaultCenter,
           zoom: 17,
           minZoom: 11,
           tileDuration: 300,
@@ -60,6 +59,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
 
         const map = new naver.maps.Map(mapElement.current, mapOptions);
         mapInstance.current = map;
+        mapInstance.current.setCenter(center);
 
         // // 현재 위치 마커
         // if (currentLocation.coordinates) {
@@ -74,7 +74,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         // }
 
         // 잃어버린 반려동물 마커 (빨간색)
-        lostPets.forEach(pet => {
+        lostPets.forEach((pet) => {
           const marker = new window.naver.maps.Marker({
             position: new window.naver.maps.LatLng(pet.lang, pet.lat),
             map: map,
@@ -82,16 +82,18 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
             icon: {
               content: getPawMarkerIcon(true),
               anchor: new window.naver.maps.Point(12, 12),
-            }
+            },
           });
 
-          window.naver.maps.Event.addListener(marker, 'click', () => {
-            alert(`[실종]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`);
+          window.naver.maps.Event.addListener(marker, "click", () => {
+            alert(
+              `[실종]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`
+            );
           });
         });
 
         // 발견된 반려동물 마커 (초록색)
-        findPets.forEach(pet => {
+        findPets.forEach((pet) => {
           const marker = new window.naver.maps.Marker({
             position: new window.naver.maps.LatLng(pet.lang, pet.lat), // findPets는 lng 사용
             map: map,
@@ -99,11 +101,13 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
             icon: {
               content: getPawMarkerIcon(false),
               anchor: new window.naver.maps.Point(12, 12),
-            }
+            },
           });
 
-          window.naver.maps.Event.addListener(marker, 'click', () => {
-            alert(`[발견]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`);
+          window.naver.maps.Event.addListener(marker, "click", () => {
+            alert(
+              `[발견]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`
+            );
           });
         });
 

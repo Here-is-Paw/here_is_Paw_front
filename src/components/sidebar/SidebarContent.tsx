@@ -1,18 +1,17 @@
 import { SidebarGroup } from "@/components/ui/sidebar";
-import { PetList } from "@/components/petCard/PetList";
 import { FindPetList } from "@/components/petCard/FindPetList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Pet } from "@/types/pet";
 import { backUrl } from "@/constants";
 import { MissingList } from "../missingPost/missingList";
+import { Pet } from "@/types/pet";
 
 interface SidebarMainContentProps {
   lostPets: Pet[];
 }
 
-export function SidebarMainContent({ lostPets }: SidebarMainContentProps) {
+export function SidebarMainContent({ lostPets: _lostPets }: SidebarMainContentProps) {
   const getBackUrl = `${backUrl}/find`;
 
   return (
@@ -22,7 +21,6 @@ export function SidebarMainContent({ lostPets }: SidebarMainContentProps) {
         {/* 하단 패딩 제거 */}
         <h1 className="text-2xl font-bold mb-1">잃어버렸개</h1>{" "}
         {/* mb-6에서 mb-4로 변경 */}
-        {/* <PetList pets={lostPets} /> */}
         <MissingList backUrl={`${backUrl}/api/v1/missings`} />
       </SidebarGroup>
 

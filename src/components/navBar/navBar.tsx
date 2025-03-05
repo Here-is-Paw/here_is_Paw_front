@@ -3,20 +3,17 @@ import { Plus, MessageSquare, Bell, LogOut } from "lucide-react";
 import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { AddPetFormPopup } from "../mypage/AddMyPetFormPopup";
 import { MissingFormPopup } from "../missingPost/missingPost";
 import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
+import FindLocationPicker from "@/components/petCard/findNcpMap";
 import { useState, useEffect, useRef } from "react";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ChatModal } from "@/components/chat/ChatModal";
-import * as StompJs from '@stomp/stompjs';
+import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
-// import NcpMap from './findNcpMap'
-// import useGeolocation from '@/hooks/Geolocation'
-
-// import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { ChatRoom, OpenChatRoom } from "@/types/chat";
 
 interface NavBarProps {
   buttonStates: {
@@ -25,33 +22,6 @@ interface NavBarProps {
     hospital: boolean;
   };
   toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
-}
-
-// ChatRoom 인터페이스 추가
-interface ChatRoom {
-  id: number;
-  chatUserNickname: string;
-  chatUserImageUrl: string;
-  chatUserId: number;
-  targetUserNickname: string;
-  targetUserId: number;
-  targetUserImageUrl: string;
-  chatMessages: ChatMessage[];
-  modifiedDate: string;
-}
-
-interface ChatMessage {
-  id?: number;
-  chatMessageId?: number;  // 백엔드 응답의 실제 ID 필드
-  content: string;
-  createDate?: string;     // 이전 필드명 (호환성 유지)
-  createdDate?: string;    // 백엔드에서 오는 실제 필드명
-  modifiedDate?: string;   // 백엔드 응답에 포함된 필드
-  memberId?: number;       // 메시지 발신자 ID
-}
-
-interface OpenChatRoom extends ChatRoom {
-  isOpen: boolean;
 }
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -64,21 +34,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
     return [...rooms].sort((a, b) => {
-      // a의 마지막 메시지 시간
       const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
-        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate || 
-                  a.chatMessages[a.chatMessages.length - 1].createDate || 
+        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
+                  a.chatMessages[a.chatMessages.length - 1].createDate ||
                   a.modifiedDate).getTime()
         : new Date(a.modifiedDate).getTime();
-      
-      // b의 마지막 메시지 시간
+
       const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
-        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate || 
-                  b.chatMessages[b.chatMessages.length - 1].createDate || 
+        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
+                  b.chatMessages[b.chatMessages.length - 1].createDate ||
                   b.modifiedDate).getTime()
         : new Date(b.modifiedDate).getTime();
-      
-      // 내림차순 정렬 (최신이 상단에)
+
       return bLastMessageTime - aLastMessageTime;
     });
   };
@@ -87,11 +54,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const handleLogout = async () => {
     try {
-      // 백엔드 로그아웃 API 호출 (필요한 경우)
       await axios.delete(`${backUrl}/api/v1/members/logout`, {
         withCredentials: true,
       });
-      logout(); // Context 상태 업데이트
+      logout();
     } catch (error) {
       console.error("로그아웃 실패:", error);
     }
@@ -101,24 +67,35 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isFindModalOpen, setIsFindModalOpen] = useState(false);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [breed, setBreed] = useState("");
-  // const [geo, setGeo] = useState("");
-  // const [location, setLocation] = useState("");
+  const [geoX, setGeoX] = useState(0);
+  const [geoY, setGeoY] = useState(0);
+  const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
-  const [gender, setGender] = useState("");
   const [etc, setEtc] = useState("");
   const [situation, setSituation] = useState("");
   const [title, setTitle] = useState("");
   const [age, setAge] = useState("");
-  const [neutered, setNeutered] = useState("");
+  const [gender, setGender] = useState(0);
+  const [neutered, setNeutered] = useState(0);
   const [me_id, setMe_id] = useState(0);
 
   const { incrementSubmissionCount } = usePetContext();
 
-  //   private Long member_id; // 신고한 회원 id
-  //   private Long shelter_id; // 보호소 id
+  const handleLocationSelect = (location: {
+    x: number;
+    y: number;
+    address: string;
+  }) => {
+    setGeoX(location.x);
+    setGeoY(location.y);
+    setLocation(location.address);
+
+    console.log("missing geo", location);
+  };
 
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreed(e.target.value);
@@ -145,7 +122,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const handleGender = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setGender(e.target.value);
+    setGender(parseInt(e.target.value));
   };
 
   const handleAge = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,17 +130,19 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const handleNeutered = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNeutered(e.target.value);
+    setNeutered(parseInt(e.target.value));
   };
 
-  // 파일 업로드 핸들러
-  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (file) {
-  //     const imageUrl = URL.createObjectURL(file);
-  //     setImagePreview(imageUrl);
-  //   }
-  // };
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+    }
+  };
+
   useEffect(() => {
     const savedImage = localStorage.getItem("uploadedImage");
     if (savedImage) {
@@ -171,27 +150,12 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   }, []);
 
-  // 🔹 파일 업로드 핸들러
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // 파일 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
-    localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
+    setImageFile(null);
+    localStorage.removeItem("uploadedImage");
   };
 
-  // 유저 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -200,12 +164,12 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         });
         setMe_id(memberResponse.data.data.id);
       } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
+        console.error("유저 정보 가져오기 실패:", error);
       }
     };
 
     fetchUserInfo();
-  }, []); // 빈 배열을 넣어 한 번만 실행되도록 설정
+  }, []);
 
   const handleFindSubmit = async () => {
     if (isLoggedIn) {
@@ -213,36 +177,37 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         withCredentials: true,
       });
 
-      const member_id = memberResponse.data.id;
+      const member_id = memberResponse.data.data.id;
       setMe_id(member_id);
 
       try {
-        const response = await fetch(`${backUrl}/find/new`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: title,
-            situation: situation,
-            breed: breed,
-            location: "서울 강남구 어딘가",
-            geo: { x: 12, y: 12 },
-            name: name,
-            color: color,
-            etc: etc,
-            gender: gender,
-            age: age,
-            neutered: neutered,
-            find_date: "2025-02-20T00:00:00",
-            member_id: member_id,
-            shelter_id: 1,
-            path_url: imagePreview,
-          }),
-          credentials: "include",
+        const formData = new FormData();
+
+        if (imageFile) {
+          formData.append("file", imageFile);
+        }
+
+        formData.append("title", title);
+        formData.append("situation", situation);
+        formData.append("breed", breed);
+        formData.append("location", location);
+        formData.append("x", geoX.toString());
+        formData.append("y", geoY.toString());
+        formData.append("name", name);
+        formData.append("color", color);
+        formData.append("etc", etc);
+        formData.append("gender", gender.toString());
+        formData.append("age", age);
+        formData.append("neutered", neutered.toString());
+        formData.append("find_date", "2025-02-20T00:00:00");
+        formData.append("member_id", member_id);
+        formData.append("shelter_id", "1");
+
+        const response = await axios.post(`${backUrl}/find/new`, formData, {
+          withCredentials: true,
         });
 
-        if (response.ok) {
+        if (response.status === 200 || response.status === 201) {
           alert("발견 신고가 성공적으로 저장되었습니다!");
           incrementSubmissionCount();
           handleRemoveImage();
@@ -267,21 +232,17 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // 채팅방 입장 핸들러
+
   const handleEnterChatRoom = (room: ChatRoom) => {
     setOpenChatRooms(prev => {
-      // 이미 열려있는 채팅방인지 확인
       const existingRoomIndex = prev.findIndex(r => r.id === room.id);
       
       if (existingRoomIndex >= 0) {
-        // 이미 열려있는 채팅방이면 해당 채팅방만 활성화
         return prev.map((r, index) => ({
           ...r,
-          isOpen: index === existingRoomIndex
+          isOpen: index === existingRoomIndex,
         }));
       } else {
-        // 새로운 채팅방이면 추가
         const otherUser = getOtherUserInfo(room);
         return [...prev, { 
           ...room, 
@@ -294,25 +255,29 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     });
   };
 
-  // 채팅방 닫기 핸들러
   const handleCloseChatRoom = (roomId: number) => {
-    setOpenChatRooms(prev => prev.filter(room => room.id !== roomId));
+    setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
   };
 
-  // 채팅방 목록 불러오기
   const fetchChatRooms = async () => {
     try {
       setLoading(true);
       setError(null);
       
       const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list`, {
-        withCredentials: true
+        withCredentials: true,
       });
       console.log("=== 채팅방 목록 전체 데이터 ===");
       console.log(response.data.data);
       
-      // 마지막 메시지 시간을 기준으로 정렬
-      const sortedRooms = sortChatRoomsByLastMessageTime(response.data.data);
+      const filteredRooms = response.data.data.filter((room: ChatRoom) =>
+        room.chatUserId === me_id || room.targetUserId === me_id
+      );
+
+      console.log("=== 필터링된 채팅방 목록 ===");
+      console.log(filteredRooms);
+
+      const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
       
       setChatRooms(sortedRooms);
     } catch (err) {
@@ -323,9 +288,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   };
 
-  // 채팅방 나가기
   const handleLeaveRoom = async (roomId: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // 이벤트 버블링 방지
+    e.stopPropagation();
     
     if (!confirm("정말 채팅방을 나가시겠습니까?")) return;
     
@@ -337,10 +301,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       );
       
       console.log("채팅방 나가기 응답:", response.data);
-      
-      // 서버 응답 구조 확인하고 적절히 처리
+
       if (response.status === 200) {
-        // 성공적으로 나갔으면 목록에서 제거
         setChatRooms(prev => prev.filter(room => room.id !== roomId));
       } else {
         alert("채팅방 나가기에 실패했습니다.");
@@ -351,18 +313,15 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   };
 
-  // 채팅 메시지 포맷팅 함수
   const formatLastMessage = (room: ChatRoom) => {
     if (!room.chatMessages || room.chatMessages.length === 0) {
       return "대화 내용이 없습니다.";
     }
-    
-    // 가장 최근 메시지 가져오기
+
     const lastMessage = room.chatMessages[room.chatMessages.length - 1];
     return lastMessage.content || "메시지를 불러올 수 없습니다.";
   };
 
-  // 시간 포맷팅 함수
   const formatTime = (dateString: string) => {
     if (!dateString) return "";
     
@@ -371,19 +330,15 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     const isToday = date.toDateString() === now.toDateString();
     
     if (isToday) {
-      // 오늘 메시지는 시:분 형식으로
       const hours = date.getHours();
       const minutes = date.getMinutes().toString().padStart(2, '0');
       
-      // 오전/오후 표시 추가
       return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
     } else {
-      // 어제 이전 메시지는 월/일 형식으로
       return `${date.getMonth() + 1}/${date.getDate()}`;
     }
   };
 
-  // 이미지 URL 검증 함수
   const getValidImageUrl = (imageUrl: string | undefined) => {
     const isKakaoDefaultProfile = (url: string) => {
       return url && url.includes('kakaocdn.net') && url.includes('default_profile');
@@ -395,7 +350,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     return imageUrl;
   };
 
-  // 채팅 상대방 정보를 가져오는 함수
   const getOtherUserInfo = (room: ChatRoom) => {
     const isMyChat = me_id === room.chatUserId;
     
@@ -406,7 +360,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     };
   };
 
-  // WebSocket 연결 설정
   useEffect(() => {
     if (isLoggedIn && isChatListOpen) {
       const stompClient = new StompJs.Client({
@@ -432,40 +385,40 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       stompClient.onConnect = () => {
         console.log('NavBar WebSocket Connected');
         
-        // 새로운 채팅방 생성 구독
         stompClient.subscribe('/topic/api/v1/chat/new-room', (message) => {
           try {
             const newRoomData = JSON.parse(message.body);
             console.log('새로운 채팅방 생성됨:', newRoomData);
             
-            // 새로운 채팅방 추가
-            setChatRooms(prevRooms => {
-              if (!prevRooms.some(room => room.id === newRoomData.id)) {
-                const newRoom = {
-                  id: newRoomData.id,
-                  chatUserNickname: newRoomData.chatUserNickname,
-                  chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
-                  chatUserId: newRoomData.chatUserId,
-                  targetUserNickname: newRoomData.targetUserNickname,
-                  targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
-                  targetUserId: newRoomData.targetUserId,
-                  chatMessages: [],
-                  modifiedDate: new Date().toISOString()
-                };
-                
-                // 새로운 채팅방에 대한 메시지 구독 설정
-                subscribeToRoom(newRoomData.id);
-                
-                return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
-              }
-              return prevRooms;
-            });
+            if (newRoomData.chatUserId === me_id || newRoomData.targetUserId === me_id) {
+              setChatRooms(prevRooms => {
+                if (!prevRooms.some(room => room.id === newRoomData.id)) {
+                  const newRoom = {
+                    id: newRoomData.id,
+                    chatUserNickname: newRoomData.chatUserNickname,
+                    chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
+                    chatUserId: newRoomData.chatUserId,
+                    targetUserNickname: newRoomData.targetUserNickname,
+                    targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
+                    targetUserId: newRoomData.targetUserId,
+                    chatMessages: [],
+                    modifiedDate: new Date().toISOString()
+                  };
+
+                  subscribeToRoom(newRoomData.id);
+
+                  return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
+                }
+                return prevRooms;
+              });
+            } else {
+              console.log('새 채팅방이 현재 사용자와 관련이 없어 무시됨:', newRoomData);
+            }
           } catch (error) {
             console.error('새로운 채팅방 데이터 처리 오류:', error);
           }
         });
-        
-        // 채팅방 메시지 구독 설정
+
         const subscribeToRoom = (roomId: number) => {
           console.log(`채팅방 ${roomId} 메시지 구독 설정`);
           stompClient.subscribe(`/topic/api/v1/chat/${roomId}/messages`, (message) => {
@@ -473,39 +426,41 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               const messageData = JSON.parse(message.body);
               console.log(`채팅방 ${roomId} 새 메시지:`, messageData);
               
-              // 일반 메시지 업데이트
-              setChatRooms(prevRooms => 
-                sortChatRoomsByLastMessageTime(
-                  prevRooms.map(room => {
-                    if (room.id === roomId) {
-                      console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+              setChatRooms(prevRooms => {
+                const updatedRooms = prevRooms.map(room => {
+                  if (room.id === roomId) {
+                    console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+                      id: messageData.chatMessageId,
+                      content: messageData.content,
+                      createDate: messageData.createdDate
+                    });
+
+                    return {
+                      ...room,
+                      chatMessages: [...room.chatMessages, {
                         id: messageData.chatMessageId,
                         content: messageData.content,
-                        createDate: messageData.createdDate
-                      });
-                      
-                      return {
-                        ...room,
-                        chatMessages: [...room.chatMessages, {
-                          id: messageData.chatMessageId,
-                          content: messageData.content,
-                          createDate: messageData.createdDate,
-                          createdDate: messageData.createdDate
-                        }],
-                        modifiedDate: messageData.createdDate
-                      };
-                    }
-                    return room;
-                  })
-                )
-              );
+                        createDate: messageData.createdDate,
+                        createdDate: messageData.createdDate
+                      }],
+                      modifiedDate: messageData.createdDate
+                    };
+                  }
+                  return room;
+                });
+
+                const filteredRooms = updatedRooms.filter((room: ChatRoom) =>
+                  room.chatUserId === me_id || room.targetUserId === me_id
+                );
+
+                return sortChatRoomsByLastMessageTime(filteredRooms);
+              });
             } catch (error) {
               console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
             }
           });
         };
 
-        // 기존 채팅방들에 대한 구독 설정
         chatRooms.forEach(room => {
           subscribeToRoom(room.id);
         });
@@ -521,22 +476,19 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   }, [isLoggedIn, isChatListOpen, chatRooms]);
 
-  // 채팅방 목록 갱신 이벤트 구독
   useEffect(() => {
     if (isLoggedIn) {
-      // chatEventBus의 이벤트 구독
       const unsubscribe = chatEventBus.onRefreshChatRooms(() => {
         console.log("채팅방 목록 갱신 이벤트 수신됨");
         fetchChatRooms();
       });
       
       return () => {
-        unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
+        unsubscribe();
       }
     }
   }, [isLoggedIn]);
 
-  // 채팅방 목록 초기 로드
   useEffect(() => {
     if (isLoggedIn && isChatListOpen) {
       fetchChatRooms();
@@ -549,15 +501,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         <div className="px-4">
           <div className="flex justify-between items-center h-12 bg-white/80 backdrop-blur-sm rounded-full mx-4 shadow-lg">
             <div className="flex-none pl-4">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-green-600 rounded-full"
-                onClick={() => setIsResistModalOpen(!isResistModalOpen)}
-              >
+              <Button variant="outline" size="icon" className="bg-green-600 rounded-full" onClick={() => setIsResistModalOpen(!isResistModalOpen)}>
                 <Plus className="h-4 w-4 text-white" />
               </Button>
-              {/* 모달 on off */}
               {isResistModalOpen && (
                 <div className="absolute top-[3%] left-[0%] bg-white rounded-lg  w-[200px] overflow-hidden z-50">
                   <div className="flex flex-col">
@@ -565,7 +511,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       variant="ghost"
                       className="flex items-center justify-start hover:bg-gray-100 bgr-white h-12"
                       onClick={() => {
-                        // 실종 신고하기 로직
                         setIsResistModalOpen(false);
                       }}
                     >
@@ -578,18 +523,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       variant="ghost"
                       className="flex items-center justify-start p-4 hover:bg-gray-100 bgr-white h-12"
                       onClick={() => {
-                        // 실종 신고하기 로직
                         setIsAddPetOpen(true);
                       }}
                     >
                       <div className="w-10 h-10 mr-2 rounded-full flex items-center justify-center">
-                        {/* <Plus className="h-4 w-4 text-white" /> */}
-                        <svg
-                          viewBox="0 0 30 31"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="svg-2"
-                        >
+                        <svg viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg" className="svg-2">
                           <path
                             d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
                             fill="#DC2627"
@@ -606,7 +544,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       variant="ghost"
                       className="flex items-center justify-start p-4 hover:bg-gray-100 bgr-white h-12"
                       onClick={() => {
-                        // 발견 등록하기 로직
                         if (!isLoggedIn) {
                           alert("로그인 후 이용해주세요!");
                         } else {
@@ -616,12 +553,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       }}
                     >
                       <div className="w-6 h-6 mr-2 rounded-full flex items-center justify-center btn-size">
-                        <svg
-                          viewBox="0 0 30 31"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="svg-2"
-                        >
+                        <svg viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg" className="svg-2">
                           <path
                             d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
                             fill="#15AF55"
@@ -640,10 +572,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             </div>
 
             <div className="flex items-center gap-1 flex-none pr-4">
-              <FilterButton
-                buttonStates={buttonStates}
-                toggleButton={toggleButton}
-              />
+              <FilterButton buttonStates={buttonStates} toggleButton={toggleButton} />
 
               {isLoggedIn ? (
                 <>
@@ -659,7 +588,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       isOpen={isChatListOpen}
                       onClose={() => setIsChatListOpen(false)}
                       onEnterRoom={handleEnterChatRoom}
-                      chatRooms={chatRooms}
+                      chatRooms={chatRooms as any}
                       loading={loading}
                       error={error}
                       formatLastMessage={formatLastMessage}
@@ -684,32 +613,23 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         </div>
       </nav>
 
-      {/* 반려동물 추가 팝업 */}
       <MissingFormPopup open={isAddPetOpen} onOpenChange={setIsAddPetOpen} />
 
       {isFindModalOpen && (
-        // 배경 오버레이
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          {/* 반투명 배경 */}
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setIsFindModalOpen(false)} // 배경 클릭시 모달 닫기
+            onClick={() => setIsFindModalOpen(false)}
           ></div>
 
-          {/* 모달 컨테이너 */}
           <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50">
-            {/* 모달 헤더 */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">반려동물 발견 등록하기</h2>
             </div>
 
-            {/* 모달 내용(이미지, 폼 등) */}
-            <p className="mb-4 text-gray-600">
-              등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.
-            </p>
+            <p className="mb-4 text-gray-600">등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.</p>
 
             <div className="space-between text-[15px]">
-              {/* 예: 사진 업로드, 위치, 기타 폼 */}
               <div className="w-80">
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2">* 제목</label>
@@ -723,20 +643,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
                 {imagePreview ? (
                   <div className="mb-4">
-                    <label className="block font-medium mb-2">
-                      반려동물 사진
-                    </label>
+                    <label className="block font-medium mb-2">반려동물 사진</label>
                     <div className="mt-2 flex">
-                      <img
-                        src={imagePreview}
-                        alt="미리보기"
-                        className="w-60 h-60 object-cover rounded"
-                      />
+                      <img src={imagePreview} alt="미리보기" className="w-60 h-60 object-cover rounded" />
                       <div className="mt-[77%]">
-                        <button
-                          className=" bg-red-500 h-4 w-4 "
-                          onClick={handleRemoveImage}
-                        >
+                        <button className=" bg-red-500 h-4 w-4 " onClick={handleRemoveImage}>
                           <Plus className="text-white rotate-45 absolute top-[54.7%] left-[34%]" />
                         </button>
                       </div>
@@ -744,14 +655,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   </div>
                 ) : (
                   <div className="mb-4">
-                    <label className="block font-medium mb-2">
-                      반려동물 사진
-                    </label>
-                    <input
-                      type="file"
-                      className="border p-2 w-full"
-                      onChange={handleImageUpload}
-                    />
+                    <label className="block font-medium mb-2">반려동물 사진</label>
+                    <input type="file" className="border p-2 w-full" onChange={handleImageUpload} />
                   </div>
                 )}
 
@@ -768,92 +673,55 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">견종</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="견종"
-                      onChange={handleBreed}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed} />
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">색상</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="색상"
-                      onChange={handleColor}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor} />
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">이름</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="이름"
-                      onChange={handleName}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName} />
                   </div>
                 </div>
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">성별</label>
-                    {/* <input className="border p-2 w-full bg-white" placeholder="성별" onChange={handleGender} /> */}
-                    <select
-                      className="border p-2 w-full bg-white"
-                      onChange={handleGender}
-                    >
-                      <option value="미상">미상</option>
-                      <option value="수컷">수컷</option>
-                      <option value="암컷">암컷</option>
+                    <select className="border p-2 w-full bg-white" onChange={handleGender}>
+                      <option value="0">미상</option>
+                      <option value="1">수컷</option>
+                      <option value="2">암컷</option>
                     </select>
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">중성화</label>
-                    {/* <input className="border p-2 w-full bg-white" placeholder="중성화 여부" onChange={handleNeutered} /> */}
-                    <select
-                      className="border p-2 w-full bg-white"
-                      onChange={handleNeutered}
-                    >
-                      <option value="">미상</option>
-                      <option value="true">중성화 됌</option>
-                      <option value="false">중성화 안됌</option>
+                    <select className="border p-2 w-full bg-white" onChange={handleNeutered}>
+                      <option value="0">미상</option>
+                      <option value="1">중성화 됌</option>
+                      <option value="2">중성화 안됌</option>
                     </select>
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">나이</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="추정 나이"
-                      onChange={handleAge}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge} />
                   </div>
                 </div>
               </div>
               <div className="w-80">
-                <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
-                {/* <NcpMap
-          currentLocation={findLocation}
-        /> */}
+                <FindLocationPicker onLocationSelect={handleLocationSelect} />
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2 ">특이 사항</label>
-                  <textarea
-                    className="border p-2 w-full bg-white resize-none"
-                    rows={2}
-                    placeholder="특징을 설명해주세요."
-                    onChange={handleEtc}
-                  />
+                  <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="특징을 설명해주세요." onChange={handleEtc} />
                 </div>
               </div>
             </div>
-            {/* 예: 등록/취소 버튼 */}
             <div className="flex justify-end gap-2 h-6">
-              <button
-                className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 "
-                onClick={() => setIsFindModalOpen(false)}
-              >
+              <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindModalOpen(false)}>
                 취소하기
               </button>
               <button
                 className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
                 onClick={() => {
-                  // 등록 처리 로직
                   handleFindSubmit();
                   setIsFindModalOpen(false);
                 }}
@@ -865,7 +733,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         </div>
       )}
 
-      {/* 열려있는 모든 채팅방 렌더링 */}
       {openChatRooms.map((room) => (
         <ChatModal
           key={room.id}

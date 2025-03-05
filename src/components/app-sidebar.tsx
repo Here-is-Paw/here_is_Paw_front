@@ -4,7 +4,6 @@ import { SidebarMainContent } from "./sidebar/SidebarContent";
 import { useState, useEffect } from "react";
 import { Pet } from "@/types/pet";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
-import { PetList } from "./petCard/PetList";
 import { MissingList } from "./missingPost/missingList";
 import { backUrl } from "@/constants";
 

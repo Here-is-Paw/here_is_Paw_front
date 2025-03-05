@@ -3,7 +3,6 @@ import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import React, {useState} from "react";
 import {useAuth} from "@/contexts/AuthContext.tsx";
-import {useNavigate} from "react-router-dom";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -27,7 +26,6 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const {login} = useAuth();
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
