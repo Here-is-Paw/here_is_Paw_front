@@ -16,10 +16,13 @@ interface ChatMessage {
 }
 
 interface WebSocketMessage {
-  id: number;
-  senderId: number;
+  chatMessageId: number;
+  chatRoomId: number;
+  createdDate: string;
+  modifiedDate: string;
+  memberId: number;
+  memberNickname: string;
   content: string;
-  createDate: string;
 }
 
 interface ChatModalProps {
@@ -89,14 +92,16 @@ export function ChatModal({
         { withCredentials: true }
       );
 
+      console.log('이전 메시지 응답:', response.data);
+
       if (response.data && Array.isArray(response.data.data)) {
         const messages = response.data.data
           .filter((msg: any) => msg && msg.content)
           .map((msg: any) => ({
-            id: msg.id,
-            sender: msg.senderId === targetUserId ? "other" : "me",
+            id: msg.chatMessageId || msg.id,
+            sender: (msg.memberId || msg.senderId) === targetUserId ? "other" : "me",
             message: msg.content || "",
-            time: new Date(msg.createDate).toLocaleTimeString('ko-KR', {
+            time: new Date(msg.createdDate || msg.createDate).toLocaleTimeString('ko-KR', {
               hour: '2-digit',
               minute: '2-digit'
             })
@@ -179,10 +184,10 @@ export function ChatModal({
               console.log('Parsed message:', receivedMessage);
               
               const newMessage: ChatMessage = {
-                id: receivedMessage.id,
-                sender: receivedMessage.senderId === targetUserId ? "other" : "me",
+                id: receivedMessage.chatMessageId,
+                sender: receivedMessage.memberId === targetUserId ? "other" : "me",
                 message: receivedMessage.content,
-                time: new Date(receivedMessage.createDate).toLocaleTimeString('ko-KR', {
+                time: new Date(receivedMessage.createdDate).toLocaleTimeString('ko-KR', {
                   hour: '2-digit',
                   minute: '2-digit'
                 })
