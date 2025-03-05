@@ -1,17 +1,15 @@
 import { FindPet } from "@/types/FindPet";
 import { findDetail } from "@/types/findDetail";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
 import axios from "axios";
-import { Plus, X, Send } from "lucide-react";
+import { Plus } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NcpMap from "./findNcpMap";
 import useGeolocation from "@/hooks/Geolocation";
 import { ChatModal } from "@/components/chat/ChatModal";
-import { ChatMessage } from "@/types/chat";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -54,7 +52,6 @@ export function FindPetCard({ pet }: PetCardProps) {
   const [neutered, setNeutered] = useState("");
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [currentChatRoomId, setCurrentChatRoomId] = useState<number | null>(null);
-  const [initialMessages, setInitialMessages] = useState<ChatMessage[]>([]);
 
   const [targetUserImageUrl, setTargetUserImageUrl] = useState<string | null>(null);
   const [targetUserNickname, setTargetUserNickname] = useState<string | null>(null);
@@ -464,7 +461,6 @@ export function FindPetCard({ pet }: PetCardProps) {
                           setCurrentChatRoomId(chatRoomId);
                           setIsChatModalOpen(true);
                           setIsFindDetailModalOpen(false);
-                          setInitialMessages(response.data.data.chatMessages);
 
                         } catch (err: any) {
                           console.error("채팅방 생성 오류:", err);
@@ -497,14 +493,10 @@ export function FindPetCard({ pet }: PetCardProps) {
       <ChatModal 
         isOpen={isChatModalOpen}
         onClose={() => setIsChatModalOpen(false)}
-        petImage={findDetail?.path_url || ""}
-        petBreed={findDetail?.breed || ""}
         targetUserImageUrl={targetUserImageUrl}
         targetUserNickname={targetUserNickname}
-        petLocation={findDetail?.location || ""}
         defaultImageUrl={DEFAULT_IMAGE_URL}
         chatRoomId={currentChatRoomId}
-        targetUserId={findDetail?.member_id}
       />
     </>
   );

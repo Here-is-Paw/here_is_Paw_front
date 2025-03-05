@@ -238,11 +238,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 채팅 아이콘 클릭 핸들러
-  const handleChatIconClick = () => {
-    setIsChatListOpen(!isChatListOpen);
-  };
-
   // 채팅방 입장 핸들러
   const handleEnterChatRoom = (room: ChatRoom) => {
     setOpenChatRooms(prev => {
@@ -577,11 +572,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                     >
                       <MessageSquare className="h-4 w-4" />
                     </Button>
-                    <ChatRoomList 
+                    <ChatRoomList
                       isOpen={isChatListOpen}
                       onClose={() => setIsChatListOpen(false)}
                       onEnterRoom={handleEnterChatRoom}
-                      me_id={me_id}
                       chatRooms={chatRooms}
                       loading={loading}
                       error={error}
@@ -744,9 +738,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           key={room.id}
           isOpen={room.isOpen}
           onClose={() => handleCloseChatRoom(room.id)}
-          defaultImageUrl="https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg"
+          defaultImageUrl={DEFAULT_IMAGE_URL}
           chatRoomId={room.id}
-          targetUserId={room.targetUserId}
           targetUserImageUrl={room.targetUserImageUrl}
           targetUserNickname={room.targetUserNickname}
         />

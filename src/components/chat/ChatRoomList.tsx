@@ -23,7 +23,6 @@ interface ChatRoomListProps {
   isOpen: boolean;
   onClose: () => void;
   onEnterRoom: (room: ChatRoom) => void;
-  me_id: number;
   chatRooms: ChatRoom[];
   loading: boolean;
   error: string | null;
@@ -41,7 +40,6 @@ export function ChatRoomList({
   isOpen, 
   onClose, 
   onEnterRoom, 
-  me_id,
   chatRooms,
   loading,
   error,

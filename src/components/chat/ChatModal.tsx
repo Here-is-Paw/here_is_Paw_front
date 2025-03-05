@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Send } from "lucide-react";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
 import * as StompJs from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import { Avatar } from "@/components/ui/avatar";
 
 interface ChatMessage {
@@ -30,8 +29,6 @@ interface ChatModalProps {
   onClose: () => void;
   defaultImageUrl: string;
   chatRoomId: number | null;
-  targetUserId?: number;
-  preventAutoClose?: boolean;
   initialMessages?: ChatMessage[];
   targetUserImageUrl?: string | null;
   targetUserNickname?: string | null;
@@ -44,8 +41,6 @@ export function ChatModal({
   targetUserNickname,
   defaultImageUrl,
   chatRoomId,
-  targetUserId,
-  preventAutoClose = true,
   initialMessages = []
 }: ChatModalProps) {
   const { addChatRoom, removeChatRoom } = useChatContext();
@@ -386,21 +381,7 @@ export function ChatModal({
 
   // 채팅 메시지 전송 함수
   const handleSendMessage = async () => {
-    if (chatMessage.trim() === "" || !chatRoomId || isSending) return;
-    
-    const now = new Date();
-    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
-    // 임시 메시지 ID (UI 업데이트용)
-    const tempId = Date.now();
-    
-    // 메시지 UI에 먼저 추가 (낙관적 UI 업데이트)
-    const newMessage: ChatMessage = {
-      id: tempId,
-      sender: "me",
-      message: chatMessage,
-      time: timeString
-    };
+    if (!chatMessage.trim() || !chatRoomId || isSending) return;
     
     // 낙관적 업데이트는 하지 않음 (WebSocket을 통해 받을 예정)
     setChatMessage("");
