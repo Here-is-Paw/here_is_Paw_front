@@ -431,19 +431,19 @@ export function FindPetCard({ pet }: PetCardProps) {
                   </div>
 
                   <div className="flex justify-end gap-2 h-6">
-                    <button 
-                      className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300" 
+                    <button
+                      className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300"
                       onClick={async (e) => {
                         e.stopPropagation();
-                        
+
                         if (!isLoggedIn) {
                           alert("로그인이 필요한 서비스입니다.");
                           window.location.href = "/login"; // 로그인 페이지로 이동
                           return;
                         }
-                        
+
                         try {
-                          const response = await axios.post(`${backUrl}/api/v1/chat/rooms`, 
+                          const response = await axios.post(`${backUrl}/api/v1/chat/rooms`,
                             { targetUserId: findDetail.member_id },
                             { withCredentials: true }
                           );
@@ -454,10 +454,10 @@ export function FindPetCard({ pet }: PetCardProps) {
                           // 타켓 유저 프로필 사진 처리
                           const validImageUrl = getValidImageUrl(response.data.data.targetUserImageUrl);
                           setTargetUserImageUrl(validImageUrl);
-                          
+
                           // 타켓 유저 닉네임
                           setTargetUserNickname(response.data.data.targetUserNickname);
-                          
+
                           const chatRoomId = response.data.data.id;
                           setCurrentChatRoomId(chatRoomId);
                           setIsChatModalOpen(true);
@@ -478,6 +478,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                     <button
                       className="px-4 py-0 rounded bg-green-600 text-white hover:bg-green-700"
                       onClick={() => {
+                        // 등록 처리 로직
                         setIsFindDetailModalOpen(false);
                       }}
                     >
@@ -495,7 +496,7 @@ export function FindPetCard({ pet }: PetCardProps) {
           document.body
         )}
       {/* 채팅 모달 컴포넌트 사용 */}
-      <ChatModal 
+      <ChatModal
         isOpen={isChatModalOpen}
         onClose={() => setIsChatModalOpen(false)}
         targetUserImageUrl={targetUserImageUrl}

@@ -6,6 +6,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "./contexts/findPetContext.tsx";
 import { ChatProvider } from './contexts/ChatContext';
 
+import "./App.css";
+
 function App() {
   return (
     <ChatProvider>
