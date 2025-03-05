@@ -14,9 +14,13 @@ interface ChatRoom {
 }
 
 interface ChatMessage {
-  id: number;
+  id?: number;
+  chatMessageId?: number;
   content: string;
-  createDate: string;
+  createDate?: string;
+  createdDate?: string;
+  modifiedDate?: string;
+  memberId?: number;
 }
 
 interface ChatRoomListProps {
@@ -110,7 +114,13 @@ export function ChatRoomList({
                       {formatLastMessage(room)}
                     </p>
                     <span className="text-[10px] text-gray-400 flex-shrink-0">
-                      {formatTime(room.modifiedDate)}
+                      {room.chatMessages && room.chatMessages.length > 0 
+                        ? formatTime(
+                            room.chatMessages[room.chatMessages.length - 1].createdDate || 
+                            room.chatMessages[room.chatMessages.length - 1].createDate || 
+                            room.modifiedDate
+                          )
+                        : formatTime(room.modifiedDate)}
                     </span>
                   </div>
                 </div>

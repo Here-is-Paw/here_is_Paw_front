@@ -38,9 +38,13 @@ interface ChatRoom {
 }
 
 interface ChatMessage {
-  id: number;
+  id?: number;
+  chatMessageId?: number;  // 백엔드 응답의 실제 ID 필드
   content: string;
-  createDate: string;
+  createDate?: string;     // 이전 필드명 (호환성 유지)
+  createdDate?: string;    // 백엔드에서 오는 실제 필드명
+  modifiedDate?: string;   // 백엔드 응답에 포함된 필드
+  memberId?: number;       // 메시지 발신자 ID
 }
 
 interface OpenChatRoom extends ChatRoom {
@@ -52,6 +56,28 @@ const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a9
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const { isLoggedIn, logout } = useAuth();
   // const findLocation = useGeolocation()
+
+  // 마지막 메시지 시간으로 채팅방 정렬 함수
+  const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
+    return [...rooms].sort((a, b) => {
+      // a의 마지막 메시지 시간
+      const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
+        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate || 
+                  a.chatMessages[a.chatMessages.length - 1].createDate || 
+                  a.modifiedDate).getTime()
+        : new Date(a.modifiedDate).getTime();
+      
+      // b의 마지막 메시지 시간
+      const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
+        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate || 
+                  b.chatMessages[b.chatMessages.length - 1].createDate || 
+                  b.modifiedDate).getTime()
+        : new Date(b.modifiedDate).getTime();
+      
+      // 내림차순 정렬 (최신이 상단에)
+      return bLastMessageTime - aLastMessageTime;
+    });
+  };
 
   console.log(isLoggedIn);
 
@@ -281,7 +307,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       console.log("=== 채팅방 목록 전체 데이터 ===");
       console.log(response.data.data);
       
-      setChatRooms(response.data.data);
+      // 마지막 메시지 시간을 기준으로 정렬
+      const sortedRooms = sortChatRoomsByLastMessageTime(response.data.data);
+      
+      setChatRooms(sortedRooms);
     } catch (err) {
       console.error("채팅방 목록 조회 오류:", err);
       setError("채팅방 목록을 불러오는데 오류가 발생했습니다.");
@@ -338,8 +367,14 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     const isToday = date.toDateString() === now.toDateString();
     
     if (isToday) {
-      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+      // 오늘 메시지는 시:분 형식으로
+      const hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      
+      // 오전/오후 표시 추가
+      return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
     } else {
+      // 어제 이전 메시지는 월/일 형식으로
       return `${date.getMonth() + 1}/${date.getDate()}`;
     }
   };
@@ -417,9 +452,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 // 새로운 채팅방에 대한 메시지 구독 설정
                 subscribeToRoom(newRoomData.id);
                 
-                return [...prevRooms, newRoom].sort((a, b) => 
-                  new Date(b.modifiedDate).getTime() - new Date(a.modifiedDate).getTime()
-                );
+                return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
               }
               return prevRooms;
             });
@@ -438,16 +471,28 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               
               // 일반 메시지 업데이트
               setChatRooms(prevRooms => 
-                prevRooms.map(r => {
-                  if (r.id === roomId) {
-                    return {
-                      ...r,
-                      chatMessages: [...(r.chatMessages || []), messageData],
-                      modifiedDate: messageData.createDate
-                    };
-                  }
-                  return r;
-                }).sort((a, b) => new Date(b.modifiedDate).getTime() - new Date(a.modifiedDate).getTime())
+                sortChatRoomsByLastMessageTime(
+                  prevRooms.map(room => {
+                    if (room.id === roomId) {
+                      console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+                        id: messageData.chatMessageId,
+                        content: messageData.content,
+                        createDate: messageData.createdDate
+                      });
+                      
+                      return {
+                        ...room,
+                        chatMessages: [...room.chatMessages, {
+                          id: messageData.chatMessageId,
+                          content: messageData.content,
+                          createDate: messageData.createdDate
+                        }],
+                        modifiedDate: messageData.createdDate
+                      };
+                    }
+                    return room;
+                  })
+                )
               );
             } catch (error) {
               console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
