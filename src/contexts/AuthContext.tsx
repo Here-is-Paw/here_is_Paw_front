@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
             
             const isAuthenticated = !!response.data;
+            console.log("인증 상태:", response.data);
 
             setIsLoggedIn(isAuthenticated);
             return isAuthenticated;
