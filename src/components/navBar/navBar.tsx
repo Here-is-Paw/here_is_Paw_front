@@ -311,8 +311,16 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       console.log("=== 채팅방 목록 전체 데이터 ===");
       console.log(response.data.data);
       
+      // 로그인 유저만의 채팅방 필터링
+      const filteredRooms = response.data.data.filter((room: ChatRoom) => 
+        room.chatUserId === me_id || room.targetUserId === me_id
+      );
+      
+      console.log("=== 필터링된 채팅방 목록 ===");
+      console.log(filteredRooms);
+      
       // 마지막 메시지 시간을 기준으로 정렬
-      const sortedRooms = sortChatRoomsByLastMessageTime(response.data.data);
+      const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
       
       setChatRooms(sortedRooms);
     } catch (err) {
@@ -438,28 +446,33 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             const newRoomData = JSON.parse(message.body);
             console.log('새로운 채팅방 생성됨:', newRoomData);
             
-            // 새로운 채팅방 추가
-            setChatRooms(prevRooms => {
-              if (!prevRooms.some(room => room.id === newRoomData.id)) {
-                const newRoom = {
-                  id: newRoomData.id,
-                  chatUserNickname: newRoomData.chatUserNickname,
-                  chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
-                  chatUserId: newRoomData.chatUserId,
-                  targetUserNickname: newRoomData.targetUserNickname,
-                  targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
-                  targetUserId: newRoomData.targetUserId,
-                  chatMessages: [],
-                  modifiedDate: new Date().toISOString()
-                };
-                
-                // 새로운 채팅방에 대한 메시지 구독 설정
-                subscribeToRoom(newRoomData.id);
-                
-                return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
-              }
-              return prevRooms;
-            });
+            // 현재 로그인한 사용자의 채팅방인지 확인
+            if (newRoomData.chatUserId === me_id || newRoomData.targetUserId === me_id) {
+              // 새 채팅방 추가
+              setChatRooms(prevRooms => {
+                if (!prevRooms.some(room => room.id === newRoomData.id)) {
+                  const newRoom = {
+                    id: newRoomData.id,
+                    chatUserNickname: newRoomData.chatUserNickname,
+                    chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
+                    chatUserId: newRoomData.chatUserId,
+                    targetUserNickname: newRoomData.targetUserNickname,
+                    targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
+                    targetUserId: newRoomData.targetUserId,
+                    chatMessages: [],
+                    modifiedDate: new Date().toISOString()
+                  };
+                  
+                  // 새로운 채팅방에 대한 메시지 구독 설정
+                  subscribeToRoom(newRoomData.id);
+                  
+                  return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
+                }
+                return prevRooms;
+              });
+            } else {
+              console.log('새 채팅방이 현재 사용자와 관련이 없어 무시됨:', newRoomData);
+            }
           } catch (error) {
             console.error('새로운 채팅방 데이터 처리 오류:', error);
           }
@@ -474,31 +487,37 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               console.log(`채팅방 ${roomId} 새 메시지:`, messageData);
               
               // 일반 메시지 업데이트
-              setChatRooms(prevRooms => 
-                sortChatRoomsByLastMessageTime(
-                  prevRooms.map(room => {
-                    if (room.id === roomId) {
-                      console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+              setChatRooms(prevRooms => {
+                // 메시지가 추가된 채팅방 목록 업데이트
+                const updatedRooms = prevRooms.map(room => {
+                  if (room.id === roomId) {
+                    console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+                      id: messageData.chatMessageId,
+                      content: messageData.content,
+                      createDate: messageData.createdDate
+                    });
+                    
+                    return {
+                      ...room,
+                      chatMessages: [...room.chatMessages, {
                         id: messageData.chatMessageId,
                         content: messageData.content,
-                        createDate: messageData.createdDate
-                      });
-                      
-                      return {
-                        ...room,
-                        chatMessages: [...room.chatMessages, {
-                          id: messageData.chatMessageId,
-                          content: messageData.content,
-                          createDate: messageData.createdDate,
-                          createdDate: messageData.createdDate
-                        }],
-                        modifiedDate: messageData.createdDate
-                      };
-                    }
-                    return room;
-                  })
-                )
-              );
+                        createDate: messageData.createdDate,
+                        createdDate: messageData.createdDate
+                      }],
+                      modifiedDate: messageData.createdDate
+                    };
+                  }
+                  return room;
+                });
+                
+                // 항상 로그인한 사용자의 채팅방만 필터링
+                const filteredRooms = updatedRooms.filter((room: ChatRoom) => 
+                  room.chatUserId === me_id || room.targetUserId === me_id
+                );
+                
+                return sortChatRoomsByLastMessageTime(filteredRooms);
+              });
             } catch (error) {
               console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
             }
