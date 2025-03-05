@@ -1,5 +1,4 @@
 import { MissingData } from "@/types/missing";
-import { MissingDetail } from "./missingDetail";
 
 interface MissingCardProps {
   pet: MissingData;
