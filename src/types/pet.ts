@@ -17,17 +17,6 @@ export enum PetGender {
   Female = 2
 }
 
-export interface Pet {
-  id: string;
-  imageUrl: string;
-  date: string;
-  breed: string;
-  features: string;
-  location: string;
-  lat: number;
-  lang: number;
-}
-
 export interface MyPet {
   id: number;
   age: number;
@@ -36,12 +25,31 @@ export interface MyPet {
   etc: string;
   gender: number;
   name: string;
-  neutered: boolean;
+  neutered: number;
   serialNumber: string;
   imageUrl: string;
   location: string;
   geo: GeoPoint;
   find_date: string;
+}
+
+export interface FindPet {
+  id: string;
+  find_date: string;
+  breed: string;
+  etc: string;
+  location: string;
+  x: number;
+  y: number;
+  path_url: string;
+  name: string;
+  color: string;
+  gender: number;
+  neutered: number;
+  age: number;
+  title: string;
+  situation: string;
+  member_id: number;
 }
 
 export interface PetFormData {
