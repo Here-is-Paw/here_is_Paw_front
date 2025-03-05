@@ -11,7 +11,7 @@ import FindLocationPicker from "@/components/petCard/findNcpMap";
 import { useState, useEffect, useRef } from "react";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ChatModal } from "@/components/chat/ChatModal";
-import * as StompJs from '@stomp/stompjs';
+import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
 
@@ -29,21 +29,23 @@ const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a9
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
+  // const findLocation = useGeolocation()
 
+  // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
     return [...rooms].sort((a, b) => {
       const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
-        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate || 
-                  a.chatMessages[a.chatMessages.length - 1].createDate || 
+        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
+                  a.chatMessages[a.chatMessages.length - 1].createDate ||
                   a.modifiedDate).getTime()
         : new Date(a.modifiedDate).getTime();
-      
+
       const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
-        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate || 
-                  b.chatMessages[b.chatMessages.length - 1].createDate || 
+        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
+                  b.chatMessages[b.chatMessages.length - 1].createDate ||
                   b.modifiedDate).getTime()
         : new Date(b.modifiedDate).getTime();
-      
+
       return bLastMessageTime - aLastMessageTime;
     });
   };
@@ -162,7 +164,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         });
         setMe_id(memberResponse.data.data.id);
       } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
+        console.error("유저 정보 가져오기 실패:", error);
       }
     };
 
@@ -230,7 +232,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const handleEnterChatRoom = (room: ChatRoom) => {
     setOpenChatRooms(prev => {
       const existingRoomIndex = prev.findIndex(r => r.id === room.id);
@@ -238,7 +240,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       if (existingRoomIndex >= 0) {
         return prev.map((r, index) => ({
           ...r,
-          isOpen: index === existingRoomIndex
+          isOpen: index === existingRoomIndex,
         }));
       } else {
         const otherUser = getOtherUserInfo(room);
@@ -254,7 +256,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const handleCloseChatRoom = (roomId: number) => {
-    setOpenChatRooms(prev => prev.filter(room => room.id !== roomId));
+    setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
   };
 
   const fetchChatRooms = async () => {
@@ -263,18 +265,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       setError(null);
       
       const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list`, {
-        withCredentials: true
+        withCredentials: true,
       });
       console.log("=== 채팅방 목록 전체 데이터 ===");
       console.log(response.data.data);
       
-      const filteredRooms = response.data.data.filter((room: ChatRoom) => 
+      const filteredRooms = response.data.data.filter((room: ChatRoom) =>
         room.chatUserId === me_id || room.targetUserId === me_id
       );
-      
+
       console.log("=== 필터링된 채팅방 목록 ===");
       console.log(filteredRooms);
-      
+
       const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
       
       setChatRooms(sortedRooms);
@@ -299,7 +301,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       );
       
       console.log("채팅방 나가기 응답:", response.data);
-      
+
       if (response.status === 200) {
         setChatRooms(prev => prev.filter(room => room.id !== roomId));
       } else {
@@ -315,7 +317,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     if (!room.chatMessages || room.chatMessages.length === 0) {
       return "대화 내용이 없습니다.";
     }
-    
+
     const lastMessage = room.chatMessages[room.chatMessages.length - 1];
     return lastMessage.content || "메시지를 불러올 수 없습니다.";
   };
@@ -402,9 +404,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                     chatMessages: [],
                     modifiedDate: new Date().toISOString()
                   };
-                  
+
                   subscribeToRoom(newRoomData.id);
-                  
+
                   return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
                 }
                 return prevRooms;
@@ -416,7 +418,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             console.error('새로운 채팅방 데이터 처리 오류:', error);
           }
         });
-        
+
         const subscribeToRoom = (roomId: number) => {
           console.log(`채팅방 ${roomId} 메시지 구독 설정`);
           stompClient.subscribe(`/topic/api/v1/chat/${roomId}/messages`, (message) => {
@@ -432,7 +434,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       content: messageData.content,
                       createDate: messageData.createdDate
                     });
-                    
+
                     return {
                       ...room,
                       chatMessages: [...room.chatMessages, {
@@ -446,11 +448,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   }
                   return room;
                 });
-                
-                const filteredRooms = updatedRooms.filter((room: ChatRoom) => 
+
+                const filteredRooms = updatedRooms.filter((room: ChatRoom) =>
                   room.chatUserId === me_id || room.targetUserId === me_id
                 );
-                
+
                 return sortChatRoomsByLastMessageTime(filteredRooms);
               });
             } catch (error) {
