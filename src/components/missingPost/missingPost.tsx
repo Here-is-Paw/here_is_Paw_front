@@ -40,12 +40,19 @@ import { MissingFormData, defaultValues } from "@/types/missing";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import LocationPicker from "../locaion/locationPicker";
+import useGeolocation from "@/hooks/useGeolocation";
 
 interface MissingFormPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
+// 숫자에 천 단위 `,` 추가하는 함수
+const formatNumber = (value: number | "") => {
+  if (value === "") return "";
+  return value.toLocaleString(); // 예: 1000 -> "1,000"
+};
 
 export const MissingFormPopup = ({
   open,
@@ -55,13 +62,57 @@ export const MissingFormPopup = ({
   const form = useForm<MissingFormData>({
     defaultValues,
   });
-  const [date, setDate] = React.useState<Date>();
-
+  const location = useGeolocation();
   const [locationInfo, setLocationInfo] = useState({
-    x: 0,
-    y: 0,
+    x: location.coordinates.lat,
+    y: location.coordinates.lng,
     address: "",
   });
+  const [date, setDate] = React.useState<Date>();
+
+  const [reward, setReward] = useState<number | "">("");
+  const handleRewardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, ""); // `,` 제거하여 숫자로 변환
+    if (rawValue === "") {
+      setReward("");
+      form.setValue("reward", 0);
+    } else {
+      const numberValue = Number(rawValue);
+      if (!isNaN(numberValue)) {
+        setReward(numberValue);
+        form.setValue("reward", numberValue);
+      }
+    }
+  };
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+
+    if (selectedFile) {
+      setFile(selectedFile);
+      setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+    }
+  };
+
+  // console.log("location", location);
+
+  // 위치 정보가 로드되면 초기 geo 값 설정
+  useEffect(() => {
+    if (location.loaded && !location.error) {
+      const initialLocation = {
+        x: location.coordinates.lng,
+        y: location.coordinates.lat,
+      };
+
+      // geo 필드 업데이트 (JSON 문자열로 저장)
+      form.setValue("geo", JSON.stringify(initialLocation));
+    }
+  }, [location, form]);
+
+  // 기존 코드는 그대로 유지...
 
   // 추가 상세 주소 입력을 위한 상태 추가
   const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
@@ -97,17 +148,45 @@ export const MissingFormPopup = ({
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
+      setReward("");
+      setFile(null);
+      setImagePreview(null);
       setLocationInfo({ x: 0, y: 0, address: "" });
       setAdditionalAddressDetails("");
+    } else if (location.loaded && !location.error) {
+      // 🔥 모달이 열릴 때 현재 위치를 다시 설정
+      const currentGeo = {
+        x: location.coordinates.lng,
+        y: location.coordinates.lat,
+      };
+
+      setLocationInfo({
+        ...currentGeo,
+        address: locationInfo.address || "현재 위치",
+      });
+
+      form.setValue("geo", JSON.stringify(currentGeo));
     }
-  }, [open, form]);
+  }, [open, location, form]);
 
   // 팝업 닫기 핸들러
   const handleClose = () => {
     form.reset(defaultValues);
-    setLocationInfo({ x: 0, y: 0, address: "" });
-    setAdditionalAddressDetails("");
+    setReward("");
+    setFile(null);
+    setImagePreview(null);
     onOpenChange(false);
+
+    // 🔥 모달이 열릴 때 현재 위치를 다시 설정
+    const currentGeo = {
+      x: location.coordinates.lng,
+      y: location.coordinates.lat,
+    };
+
+    setLocationInfo({
+      ...currentGeo,
+      address: locationInfo.address || "현재 위치",
+    });
   };
 
   const handleSubmit = async (data: MissingFormData) => {
@@ -144,10 +223,10 @@ export const MissingFormPopup = ({
       formData.append("reward", data.reward?.toString() || "0");
       formData.append("missingState", data.missingState?.toString() || "0");
 
-      if (data.file) {
-        formData.append("file", data.file);
+      if (file) {
+        formData.append("file", file);
       } else {
-        alert("반려동물 사진을 업로드해야 합니다.");
+        alert("반려동물 사진은 필수입니다.");
         return;
       }
 
@@ -157,9 +236,20 @@ export const MissingFormPopup = ({
       });
 
       form.reset(defaultValues);
-      setLocationInfo({ x: 0, y: 0, address: "" });
-      setAdditionalAddressDetails("");
+      setImagePreview(null);
+      setFile(null);
       onOpenChange(false);
+
+      // 🔥 모달이 열릴 때 현재 위치를 다시 설정
+      const currentGeo = {
+        x: location.coordinates.lng,
+        y: location.coordinates.lat,
+      };
+
+      setLocationInfo({
+        ...currentGeo,
+        address: locationInfo.address || "현재 위치",
+      });
       if (onSuccess) {
         onSuccess();
       }
@@ -181,7 +271,11 @@ export const MissingFormPopup = ({
         if (!newOpen) {
           // 팝업이 닫힐 때 폼 초기화
           form.reset(defaultValues);
-          setLocationInfo({ x: 0, y: 0, address: "" });
+          setLocationInfo({
+            x: location.coordinates.lat,
+            y: location.coordinates.lng,
+            address: "",
+          });
           setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
@@ -189,7 +283,7 @@ export const MissingFormPopup = ({
     >
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-w-[500px] h-5/6 py-6 px-0 bg-white"
+        className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white"
       >
         <DialogHeader className="space-y-2 text-center px-6">
           <DialogTitle className="text-2xl font-bold text-primary">
@@ -208,301 +302,329 @@ export const MissingFormPopup = ({
               className="space-y-4"
             >
               <div className="grid grid-cols-2 gap-4">
-                {/* 필수 입력 필드 */}
-                <FormField
-                  control={form.control}
-                  name="name"
-                  rules={{ required: "반려동물 이름은 필수입니다" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>이름 *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="반려동물 이름"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid gap-4">
+                  {/* 필수 입력 필드 */}
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    rules={{ required: "반려동물 이름은 필수입니다" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>이름 *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="반려동물 이름"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="breed"
-                  rules={{ required: "견종은 필수입니다" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>견종 *</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="견종" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="breed"
+                    rules={{ required: "견종은 필수입니다" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>견종 *</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder="견종" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* 선택 입력 필드 */}
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>색상</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="털 색상" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                  {/* 선택 입력 필드 */}
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>색상</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder="털 색상" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="serialNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>등록번호</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="마이크로칩 등록번호"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="serialNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>등록번호</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="마이크로칩 등록번호"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>성별</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(parseInt(value));
-                        }}
-                        defaultValue={"0"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="성별 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">선택 안함</SelectItem>
-                          <SelectItem value="1">수컷</SelectItem>
-                          <SelectItem value="2">암컷</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>성별</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(parseInt(value));
+                            }}
+                            defaultValue={"0"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="성별 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">선택 안함</SelectItem>
+                              <SelectItem value="1">수컷</SelectItem>
+                              <SelectItem value="2">암컷</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="age"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>나이</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="나이"
-                          min={0}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value)
-                                : undefined
-                            )
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="file"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>반려동물 사진 *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => field.onChange(e.target.files?.[0])}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="geo"
-                render={({ field }) => (
-                  <FormItem className="">
-                    <FormLabel>실종 위치(geo) *</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="geo" {...field} />
-                    </FormControl>
-                    <LocationPicker onLocationSelect={handleLocationSelect} />
-                  </FormItem>
-                )}
-              />
-
-              {/* 상세 주소 입력 필드 */}
-              <div className="space-y-2">
-                <FormLabel>상세 주소</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
-                  value={additionalAddressDetails}
-                  onChange={handleAdditionalAddressChange}
-                />
-              </div>
-
-              {/* 원래 location 필드는 hidden으로 변경하거나 제거 가능 */}
-              <FormField
-                control={form.control}
-                name="location"
-                rules={{ required: "실종 위치는 필수입니다" }}
-                render={({ field }) => (
-                  <FormItem className="sr-only">
-                    <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="실종 위치"
-                        {...field}
-                        disabled
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="lostDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>실종 날짜</FormLabel>
-                      <FormControl>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon />
-                              {date ? (
-                                format(date, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              className="calendar-custom"
-                              mode="single"
-                              selected={date}
-                              onSelect={(newDate) => {
-                                setDate(newDate);
-                                if (newDate) {
-                                  field.onChange(
-                                    newDate.toISOString().split("Z")[0]
-                                  );
-                                }
-                              }}
-                              initialFocus
+                    <FormField
+                      control={form.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>나이</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="나이"
+                              min={0}
+                              max={100}
+                              {...field}
                             />
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="neutered"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>중성화 유무</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(parseInt(value));
-                        }}
-                        defaultValue={"0"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="중성화 유무 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">선택 안함</SelectItem>
-                          <SelectItem value="1">유</SelectItem>
-                          <SelectItem value="2">무</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="file"
+                    rules={{ required: "사진은 필수입니다" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>반려동물 사진 *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            id="file01"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(e) => {
+                              handleFileChange(e);
+                              field.onChange(e.target.files?.[0]);
+                            }}
+                          />
+                        </FormControl>
 
-              <FormField
-                control={form.control}
-                name="reward"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>사례금</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="사례금"
-                        min={0}
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined
-                          )
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                        {/* 미리보기 (이미지 선택 시만 표시) */}
+                        <label
+                          htmlFor="file01"
+                          className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          {imagePreview ? (
+                            <img
+                              src={imagePreview}
+                              alt="미리보기"
+                              className="w-full h-full object-contain m-auto"
+                            />
+                          ) : (
+                            <span className="text-sm text-muted-foreground p-2">
+                              반려견 사진을 첨부해주세요.
+                            </span>
+                          )}
+                        </label>
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="etc"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>기타 정보</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="반려동물에 대한 추가 정보를 입력하세요"
-                        className="min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="lostDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>실종 날짜</FormLabel>
+                          <FormControl>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon />
+                                  {date ? (
+                                    format(date, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  className="calendar-custom"
+                                  mode="single"
+                                  selected={date}
+                                  onSelect={(newDate) => {
+                                    setDate(newDate);
+                                    if (newDate) {
+                                      field.onChange(
+                                        newDate.toISOString().split("Z")[0]
+                                      );
+                                    }
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-              <FormField
+                    <FormField
+                      control={form.control}
+                      name="neutered"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>중성화 유무</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(parseInt(value));
+                            }}
+                            defaultValue={"0"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="중성화 유무 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">선택 안함</SelectItem>
+                              <SelectItem value="1">유</SelectItem>
+                              <SelectItem value="2">무</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="geo"
+                    render={({ field }) => (
+                      <FormItem className="">
+                        <FormLabel>실종 위치(지도) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="geo"
+                            className="sr-only"
+                            {...field}
+                            readOnly
+                            disabled
+                          />
+                        </FormControl>
+                        <LocationPicker
+                          onLocationSelect={handleLocationSelect}
+                        />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* 상세 주소 입력 필드 */}
+                  <div className="space-y-2">
+                    <FormLabel>상세 주소</FormLabel>
+                    <Input
+                      type="text"
+                      placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
+                      value={additionalAddressDetails}
+                      onChange={handleAdditionalAddressChange}
+                    />
+                  </div>
+
+                  {/* 원래 location 필드는 hidden으로 변경하거나 제거 가능 */}
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    rules={{ required: "실종 위치는 필수입니다" }}
+                    render={({ field }) => (
+                      <FormItem className="sr-only">
+                        <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="실종 위치"
+                            {...field}
+                            disabled
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reward"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>사례금</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="사례금"
+                            min={0}
+                            {...field}
+                            value={formatNumber(reward) ?? ""}
+                            onChange={handleRewardChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="etc"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>기타 정보</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="반려동물에 대한 추가 정보를 입력하세요"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* <FormField
                 control={form.control}
                 name="missingState"
                 render={({ field }) => (
@@ -524,7 +646,9 @@ export const MissingFormPopup = ({
                     </Select>
                   </FormItem>
                 )}
-              />
+              /> */}
+                </div>
+              </div>
             </form>
           </Form>
         </div>

@@ -1,3 +1,4 @@
+import useGeolocation from "@/hooks/useGeolocation";
 import { useEffect, useRef, useState } from "react";
 
 interface LocationPickerProps {
@@ -18,6 +19,8 @@ const LocationPicker = ({
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [naverMapsLoaded, setNaverMapsLoaded] = useState<boolean>(false);
   const [infoContent, setInfoContent] = useState<HTMLDivElement | null>(null);
+
+  const location = useGeolocation();
 
   useEffect(() => {
     // 네이버 지도 API 로드 여부 확인
@@ -49,15 +52,34 @@ const LocationPicker = ({
     // 네이버 맵 API가 로드된 후에만 지도 초기화
     if (!naverMapsLoaded || !mapElement.current) return;
 
+    // 우선순위:
+    // 1. props로 전달된 초기 위치
+    // 2. useGeolocation으로 가져온 현재 위치
+    // 3. 서울 기본 좌표
+    const getInitialCenter = () => {
+      console.log("--->", location);
+      if (initialLocation) {
+        return new window.naver.maps.LatLng(
+          initialLocation.y,
+          initialLocation.x
+        );
+      }
+      if (location.loaded && !location.error) {
+        return new window.naver.maps.LatLng(
+          location.coordinates.lat,
+          location.coordinates.lng
+        );
+      }
+      return new window.naver.maps.LatLng(37.52133, 126.9522); // 서울 기본 좌표
+    };
+
     const initializeMap = () => {
       try {
         // 초기 위치 설정 (기본값 또는 초기 위치)
-        const initialCenter = initialLocation
-          ? new window.naver.maps.LatLng(initialLocation.y, initialLocation.x)
-          : new window.naver.maps.LatLng(37.52133, 126.9522); // 서울 기본 좌표
+        const initialCenter = getInitialCenter(); // 서울 기본 좌표
 
         const mapOptions = {
-          center: initialCenter,
+          center: new window.naver.maps.LatLng(37.52133, 126.9522),
           zoom: 15,
           minZoom: 10,
           tileDuration: 300,
@@ -71,6 +93,7 @@ const LocationPicker = ({
         // 지도 생성
         const map = new naver.maps.Map(mapElement.current, mapOptions);
         mapInstance.current = map;
+        mapInstance.current.setCenter(getInitialCenter());
 
         // 중앙에 고정된 마커 UI 요소 추가
         const centerMarker = document.createElement("div");
