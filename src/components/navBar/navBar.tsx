@@ -198,7 +198,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
           withCredentials: true,
         });
-        setMe_id(memberResponse.data.id);
+        setMe_id(memberResponse.data.data.id);
       } catch (error) {
         console.error('유저 정보 가져오기 실패:', error);
       }

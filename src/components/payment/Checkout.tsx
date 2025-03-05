@@ -2,7 +2,7 @@
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import "./Payment.css";
+import "./payment.css";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // clientKey, customerKey 세팅

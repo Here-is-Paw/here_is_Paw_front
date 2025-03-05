@@ -89,7 +89,8 @@ export function ChatModal({
           const userResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
             withCredentials: true
           });
-          currentUserId = userResponse.data.id;
+
+          currentUserId = userResponse.data.data.id;
           setUserId(currentUserId); // 상태 업데이트
           console.log("현재 로그인한 사용자 ID를 가져왔습니다:", currentUserId);
         } catch (error) {
@@ -203,7 +204,7 @@ export function ChatModal({
               const userResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
                 withCredentials: true
               });
-              const currentUserId = userResponse.data.id;
+              const currentUserId = userResponse.data.data.id;
               setUserId(currentUserId);
               console.log("웹소켓 연결 시 사용자 ID 설정:", currentUserId);
               return currentUserId;

@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NcpMap from "./findNcpMap";
-import useGeolocation from "@/hooks/Geolocation";
+import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ChatModal } from "@/components/chat/ChatModal";
 import { chatEventBus } from "@/contexts/ChatContext";
 
