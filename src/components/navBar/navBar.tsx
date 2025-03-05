@@ -9,6 +9,7 @@ import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useState, useEffect } from "react";
+import FindLocationPicker from "@/components/petCard/findNcpMap";
 // import NcpMap from './findNcpMap'
 // import useGeolocation from '@/hooks/Geolocation'
 
@@ -49,8 +50,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [breed, setBreed] = useState("");
-  // const [geo, setGeo] = useState("");
-  // const [location, setLocation] = useState("");
+  const [geoX, setGeoX] = useState(0);
+  const [geoY, setGeoY] = useState(0);
+  const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [etc, setEtc] = useState("");
@@ -61,6 +63,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [neutered, setNeutered] = useState(0);
 
   const { incrementSubmissionCount } = usePetContext();
+
+  const handleLocationSelect = (location: {
+    x: number;
+    y: number;
+    address: string;
+  }) => {
+    setGeoX(location.x);
+    setGeoY(location.y);
+    setLocation(location.address);
+
+    console.log("missing geo", location);
+  };
 
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
@@ -121,20 +135,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   }, []);
 
-  // 🔹 파일 업로드 핸들러
-  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (file) {
-  //     const reader = new FileReader();
-  //     reader.onloadend = () => {
-  //       const base64String = reader.result as string;
-  //       setImagePreview(base64String);
-  //       localStorage.setItem("uploadedImage", base64String); // 🔹 localStorage에 저장
-  //     };
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
-
   // 파일 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
@@ -142,16 +142,16 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     localStorage.removeItem("uploadedImage"); // 🔹 localStorage에서도 삭제
   };
 
+  // 발견 신고 작성
   const handleFindSubmit = async () => {
     if (isLoggedIn) {
       const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
         withCredentials: true,
       });
 
-      const member_id = memberResponse.data.id;
+      const member_id = memberResponse.data.data.id;
 
       try {
-
         const formData = new FormData();
 
         // 파일 추가
@@ -163,10 +163,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         formData.append("title", title);
         formData.append("situation", situation);
         formData.append("breed", breed);
-        formData.append("location", "서울 강남구 어딘가");
+        formData.append("location", location);
         // Point 객체는 문자열로 변환해서 보내야 함
-        formData.append("x", "12"); // geo 객체의 x 값
-        formData.append("y", "12"); // geo 객체의 y 값
+        formData.append("x", geoX.toString()); // geo 객체의 x 값
+        formData.append("y", geoY.toString()); // geo 객체의 y 값
         formData.append("name", name);
         formData.append("color", color);
         formData.append("etc", etc);
@@ -205,12 +205,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         <div className="px-4">
           <div className="flex justify-between items-center h-12 bg-white/80 backdrop-blur-sm rounded-full mx-4 shadow-lg">
             <div className="flex-none pl-4">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-green-600 rounded-full"
-                onClick={() => setIsResistModalOpen(!isResistModalOpen)}
-              >
+              <Button variant="outline" size="icon" className="bg-green-600 rounded-full" onClick={() => setIsResistModalOpen(!isResistModalOpen)}>
                 <Plus className="h-4 w-4 text-white" />
               </Button>
               {/* 모달 on off */}
@@ -240,12 +235,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                     >
                       <div className="w-10 h-10 mr-2 rounded-full flex items-center justify-center">
                         {/* <Plus className="h-4 w-4 text-white" /> */}
-                        <svg
-                          viewBox="0 0 30 31"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="svg-2"
-                        >
+                        <svg viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg" className="svg-2">
                           <path
                             d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
                             fill="#DC2627"
@@ -272,12 +262,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       }}
                     >
                       <div className="w-6 h-6 mr-2 rounded-full flex items-center justify-center btn-size">
-                        <svg
-                          viewBox="0 0 30 31"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="svg-2"
-                        >
+                        <svg viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg" className="svg-2">
                           <path
                             d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
                             fill="#15AF55"
@@ -296,10 +281,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             </div>
 
             <div className="flex items-center gap-1 flex-none pr-4">
-              <FilterButton
-                buttonStates={buttonStates}
-                toggleButton={toggleButton}
-              />
+              <FilterButton buttonStates={buttonStates} toggleButton={toggleButton} />
 
               {isLoggedIn ? (
                 <>
@@ -342,9 +324,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             </div>
 
             {/* 모달 내용(이미지, 폼 등) */}
-            <p className="mb-4 text-gray-600">
-              등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.
-            </p>
+            <p className="mb-4 text-gray-600">등록 게시글 미 연장시, 7일 후 자동 삭제 됩니다.</p>
 
             <div className="space-between text-[15px]">
               {/* 예: 사진 업로드, 위치, 기타 폼 */}
@@ -361,20 +341,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
                 {imagePreview ? (
                   <div className="mb-4">
-                    <label className="block font-medium mb-2">
-                      반려동물 사진
-                    </label>
+                    <label className="block font-medium mb-2">반려동물 사진</label>
                     <div className="mt-2 flex">
-                      <img
-                        src={imagePreview}
-                        alt="미리보기"
-                        className="w-60 h-60 object-cover rounded"
-                      />
+                      <img src={imagePreview} alt="미리보기" className="w-60 h-60 object-cover rounded" />
                       <div className="mt-[77%]">
-                        <button
-                          className=" bg-red-500 h-4 w-4 "
-                          onClick={handleRemoveImage}
-                        >
+                        <button className=" bg-red-500 h-4 w-4 " onClick={handleRemoveImage}>
                           <Plus className="text-white rotate-45 absolute top-[54.7%] left-[34%]" />
                         </button>
                       </div>
@@ -382,14 +353,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   </div>
                 ) : (
                   <div className="mb-4">
-                    <label className="block font-medium mb-2">
-                      반려동물 사진
-                    </label>
-                    <input
-                      type="file"
-                      className="border p-2 w-full"
-                      onChange={handleImageUpload}
-                    />
+                    <label className="block font-medium mb-2">반려동물 사진</label>
+                    <input type="file" className="border p-2 w-full" onChange={handleImageUpload} />
                   </div>
                 )}
 
@@ -406,27 +371,15 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 <div className="mb-4 flex justify-between">
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">견종</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="견종"
-                      onChange={handleBreed}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed} />
                   </div>
                   <div className="mr-4 w-20">
                     <label className="block font-medium mb-2 ">색상</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="색상"
-                      onChange={handleColor}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor} />
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">이름</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="이름"
-                      onChange={handleName}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName} />
                   </div>
                 </div>
                 <div className="mb-4 flex justify-between">
@@ -450,36 +403,25 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   </div>
                   <div className="w-20">
                     <label className="block font-medium mb-2 ">나이</label>
-                    <input
-                      className="border p-2 w-full bg-white"
-                      placeholder="추정 나이"
-                      onChange={handleAge}
-                    />
+                    <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge} />
                   </div>
                 </div>
               </div>
               <div className="w-80">
-                <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                {/* <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div> */}
+                <FindLocationPicker onLocationSelect={handleLocationSelect} />
                 {/* <NcpMap
           currentLocation={findLocation}
         /> */}
                 <div className="mb-4 ">
                   <label className="block font-medium mb-2 ">특이 사항</label>
-                  <textarea
-                    className="border p-2 w-full bg-white resize-none"
-                    rows={2}
-                    placeholder="특징을 설명해주세요."
-                    onChange={handleEtc}
-                  />
+                  <textarea className="border p-2 w-full bg-white resize-none" rows={2} placeholder="특징을 설명해주세요." onChange={handleEtc} />
                 </div>
               </div>
             </div>
             {/* 예: 등록/취소 버튼 */}
             <div className="flex justify-end gap-2 h-6">
-              <button
-                className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 "
-                onClick={() => setIsFindModalOpen(false)}
-              >
+              <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindModalOpen(false)}>
                 취소하기
               </button>
               <button

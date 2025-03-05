@@ -19,6 +19,7 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
   const [error, setError] = useState<string | null>(null);
   const { submissionCount } = usePetContext();
 
+  // 발견 신고 전체 조회
   useEffect(() => {
     const fetchPets = async () => {
       try {
@@ -40,7 +41,7 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
     };
 
     fetchPets();
-  }, [apiUrl, submissionCount]);
+  }, [submissionCount]);
 
   if (loading && pets.length === 0) {
     return <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>;
