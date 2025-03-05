@@ -48,6 +48,7 @@ export function ChatModal({
   const { addChatRoom, removeChatRoom } = useChatContext();
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
+  const [userId, setUserId] = useState<number | null>(null);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -68,7 +69,7 @@ export function ChatModal({
   const [isResizing, setIsResizing] = useState(false);
   const [size, setSize] = useState({ width: 400, height: 500 });
   const resizeRef = useRef<{ x: number; y: number } | null>(null);
-
+  
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -120,7 +121,6 @@ export function ChatModal({
     }
   }, [isOpen, chatRoomId]);
 
-  // 컴포넌트 마운트 시 중복 체크
   useEffect(() => {
     if (isOpen && chatRoomId) {
       const canOpen = addChatRoom(chatRoomId);
@@ -224,6 +224,15 @@ export function ChatModal({
       };
     }
   }, [isVisible, chatRoomId, targetUserId]);
+
+  // 채팅방 닫기 핸들러
+  const handleClose = () => {
+    setIsVisible(false);
+    if (chatRoomId) {
+      removeChatRoom(chatRoomId);
+    }
+    onClose();
+  };
 
   // 마우스 이벤트 리스너
   useEffect(() => {
@@ -353,18 +362,8 @@ export function ChatModal({
     }
   };
 
-  // 채팅방 닫기 핸들러
-  const handleClose = () => {
-    setIsVisible(false);
-    if (chatRoomId) {
-      removeChatRoom(chatRoomId);
-    }
-    onClose();
-  };
-
   // 프로필 이미지 가져오는 함수
-  const getProfileImage = useCallback(() => {
-    // targetUserImageUrl이 'profile'이거나 없을 때 defaultImageUrl 사용
+  const getValidUserImage = useCallback(() => {
     if (!targetUserImageUrl || targetUserImageUrl === 'profile') {
       return defaultImageUrl;
     }
@@ -424,7 +423,7 @@ export function ChatModal({
         >
           <div className="flex items-center">
             <img 
-              src={getProfileImage()}
+              src={getValidUserImage()}
               alt="프로필" 
               className="w-10 h-10 rounded-full object-cover mr-3 select-none border-2 border-white shadow-md"
               onError={(e) => {
@@ -461,7 +460,7 @@ export function ChatModal({
                     {msg.sender !== 'me' && (
                       <Avatar className="h-8 w-8 mr-2 ring-2 ring-white shadow-sm">
                         <img
-                          src={getProfileImage()}
+                          src={getValidUserImage()}
                           alt="프로필"
                           className="h-full w-full object-cover"
                           onError={(e) => {

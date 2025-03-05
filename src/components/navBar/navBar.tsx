@@ -308,7 +308,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         { withCredentials: true }
       );
       
-      if (response.data.success) {
+      console.log("채팅방 나가기 응답:", response.data);
+      
+      // 서버 응답 구조 확인하고 적절히 처리
+      if (response.status === 200) {
         // 성공적으로 나갔으면 목록에서 제거
         setChatRooms(prev => prev.filter(room => room.id !== roomId));
       } else {
