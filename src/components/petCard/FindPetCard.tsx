@@ -1,17 +1,29 @@
 import { FindPet } from "@/types/FindPet";
 import { findDetail } from "@/types/findDetail";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
-import axios from "axios";
 import { Plus } from "lucide-react";
 import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { ChatModal } from "@/components/chat/ChatModal";
+import { chatEventBus } from "@/contexts/ChatContext";
+import axios from "axios";
 import GetFindLocationPicker from "./findNcpMap";
-// import useGeolocation from "@/hooks/useGeolocation";
+
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+
+const isKakaoDefaultProfile = (url: string) => {
+  return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+};
+
+const getValidImageUrl = (imageUrl: string | undefined) => {
+  if (!imageUrl || imageUrl === 'profile' || isKakaoDefaultProfile(imageUrl)) {
+    return DEFAULT_IMAGE_URL;
+  }
+  return imageUrl;
+};
 
 interface PetCardProps {
   pet: FindPet;
@@ -41,6 +53,11 @@ export function FindPetCard({ pet }: PetCardProps) {
   const [title, setTitle] = useState<string | "">("");
   const [age, setAge] = useState(0);
   const [neutered, setNeutered] = useState(0);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [currentChatRoomId, setCurrentChatRoomId] = useState<number | null>(null);
+
+  const [targetUserImageUrl, setTargetUserImageUrl] = useState<string | null>(null);
+  const [targetUserNickname, setTargetUserNickname] = useState<string | null>(null);
 
   //   private Long member_id; // 신고한 회원 id
   //   private Long shelter_id; // 보호소 id
@@ -487,7 +504,7 @@ export function FindPetCard({ pet }: PetCardProps) {
                       </div>
                     </div>
                     <div className="w-80">
-                      <div className="w-20 h-20 bg-pink">지도 들어갈 곳</div>
+                    <GetFindLocationPicker onLocationSelect={handleLocationSelect} initialLocation={{ "x": findDetail.x, "y": findDetail.y, "location":findDetail.location }}/>
                       <div className="mb-4 ">
                         <label className="block font-medium mb-2 ">특이 사항</label>
                         <div className="w-full bg-white text-gray-500">{findDetail.etc}</div>
@@ -496,7 +513,48 @@ export function FindPetCard({ pet }: PetCardProps) {
                   </div>
 
                   <div className="flex justify-end gap-2 h-6">
-                    <button className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300 " onClick={() => setIsFindDetailModalOpen(false)}>
+                    <button
+                      className="px-4 py-0 rounded bg-gray-200 hover:bg-gray-300"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+
+                        if (!isLoggedIn) {
+                          alert("로그인이 필요한 서비스입니다.");
+                          window.location.href = "/login"; // 로그인 페이지로 이동
+                          return;
+                        }
+
+                        try {
+                          const response = await axios.post(`${backUrl}/api/v1/chat/rooms`,
+                            { targetUserId: findDetail.member_id },
+                            { withCredentials: true }
+                          );
+                          console.log("채팅방 생성/조회 응답:", response.data);
+                          // 생성된 채팅방 ID 확인
+                          console.log("생성된 채팅방 ID:", response.data.data.id);
+
+                          // 타켓 유저 프로필 사진 처리
+                          const validImageUrl = getValidImageUrl(response.data.data.targetUserImageUrl);
+                          setTargetUserImageUrl(validImageUrl);
+
+                          // 타켓 유저 닉네임
+                          setTargetUserNickname(response.data.data.targetUserNickname);
+
+                          const chatRoomId = response.data.data.id;
+                          setCurrentChatRoomId(chatRoomId);
+                          setIsChatModalOpen(true);
+                          setIsFindDetailModalOpen(false);
+
+                          // 채팅방 목록 갱신 이벤트 발행
+                          chatEventBus.emitRefreshChatRooms();
+                          console.log("채팅방 목록 갱신 이벤트 발행됨");
+
+                        } catch (err: any) {
+                          console.error("채팅방 생성 오류:", err);
+                          alert("채팅방을 생성하는 중 오류가 발생했습니다.");
+                        }
+                      }}
+                    >
                       연락하기
                     </button>
                     <button
@@ -519,6 +577,15 @@ export function FindPetCard({ pet }: PetCardProps) {
           </div>,
           document.body
         )}
+      {/* 채팅 모달 컴포넌트 사용 */}
+      <ChatModal
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        targetUserImageUrl={targetUserImageUrl}
+        targetUserNickname={targetUserNickname}
+        defaultImageUrl={DEFAULT_IMAGE_URL}
+        chatRoomId={currentChatRoomId}
+      />
     </>
   );
 }
