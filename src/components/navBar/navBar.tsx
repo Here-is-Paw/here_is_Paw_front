@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from '@stomp/stompjs';
+import { chatEventBus } from "@/contexts/ChatContext";
 // import NcpMap from './findNcpMap'
 // import useGeolocation from '@/hooks/Geolocation'
 
@@ -485,7 +486,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                         chatMessages: [...room.chatMessages, {
                           id: messageData.chatMessageId,
                           content: messageData.content,
-                          createDate: messageData.createdDate
+                          createDate: messageData.createdDate,
+                          createdDate: messageData.createdDate
                         }],
                         modifiedDate: messageData.createdDate
                       };
@@ -515,6 +517,21 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       };
     }
   }, [isLoggedIn, isChatListOpen, chatRooms]);
+
+  // 채팅방 목록 갱신 이벤트 구독
+  useEffect(() => {
+    if (isLoggedIn) {
+      // chatEventBus의 이벤트 구독
+      const unsubscribe = chatEventBus.onRefreshChatRooms(() => {
+        console.log("채팅방 목록 갱신 이벤트 수신됨");
+        fetchChatRooms();
+      });
+      
+      return () => {
+        unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
+      }
+    }
+  }, [isLoggedIn]);
 
   // 채팅방 목록 초기 로드
   useEffect(() => {

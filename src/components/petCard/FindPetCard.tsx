@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import NcpMap from "./findNcpMap";
 import useGeolocation from "@/hooks/Geolocation";
 import { ChatModal } from "@/components/chat/ChatModal";
+import { chatEventBus } from "@/contexts/ChatContext";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -461,6 +462,10 @@ export function FindPetCard({ pet }: PetCardProps) {
                           setCurrentChatRoomId(chatRoomId);
                           setIsChatModalOpen(true);
                           setIsFindDetailModalOpen(false);
+
+                          // 채팅방 목록 갱신 이벤트 발행
+                          chatEventBus.emitRefreshChatRooms();
+                          console.log("채팅방 목록 갱신 이벤트 발행됨");
 
                         } catch (err: any) {
                           console.error("채팅방 생성 오류:", err);
