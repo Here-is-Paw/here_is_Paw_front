@@ -117,6 +117,12 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
                 <p>{pet.etc || "정보 없음"}</p>
               </div>
             </div>
+
+            <Button
+              className=""
+            >
+              연락하기
+            </Button>
           </div>
         </DialogContent>
       </DialogPortal>
