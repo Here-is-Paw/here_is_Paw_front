@@ -18,7 +18,7 @@ interface ProfileSectionProps {
     points: number;
     handlePayment?: () => Promise<void>;
     onUpdateProfile?: (updatedData: {
-        username: string,
+        id: number,
         nickname?: string,
         profileImage?: File
     }) => Promise<void>;
