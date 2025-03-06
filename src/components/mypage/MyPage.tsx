@@ -10,7 +10,6 @@ import {Button} from "@/components/ui/button";
 // Context and Constants
 import {useAuth} from "@/contexts/AuthContext";
 import {backUrl} from "@/constants";
-// import {useRadius} from "@/contexts/RadiusContext";
 
 // Types
 import {User} from "@/types/user";
@@ -57,6 +56,7 @@ export function MyPage() {
             }
             setLoading(false);
         };
+        console.log(userData?.username)
         loadUserData();
     }, [isLoggedIn]);
 
@@ -131,7 +131,7 @@ export function MyPage() {
             });
 
             // 성공 시 사용자 데이터 업데이트 - 새 객체로 만들어서 확실히 재렌더링 되도록 함
-            setUserData({...response.data});
+            setUserData({...response.data.data});
 
             // 포인트 정보도 함께 갱신
             await fetchUserPoints();
