@@ -1,24 +1,6 @@
 import { Avatar } from "@/components/ui/avatar";
 import { X } from "lucide-react";
-
-interface ChatRoom {
-  id: number;
-  chatUserNickname: string;
-  chatUserImageUrl: string;
-  chatUserId: number;
-  targetUserNickname: string;
-  targetUserId: number;
-  targetUserImageUrl: string;
-  chatMessages: ChatMessage[];
-  modifiedDate: string;
-}
-
-interface ChatMessage {
-  id: number;
-  content: string;
-  createDate: string;
-  createdDate?: string;
-}
+import { ChatRoom } from "@/types/chat";
 
 interface ChatRoomListProps {
   isOpen: boolean;
@@ -112,7 +94,8 @@ export function ChatRoomList({
                     </p>
                     <span className="text-[10px] text-gray-400 flex-shrink-0">
                       {room.chatMessages && room.chatMessages.length > 0 
-                        ? formatTime(room.chatMessages[room.chatMessages.length - 1].createdDate || room.chatMessages[room.chatMessages.length - 1].createDate)
+                        ? formatTime(room.chatMessages[room.chatMessages.length - 1].createdDate || 
+                                     room.chatMessages[room.chatMessages.length - 1].createDate || '')
                         : formatTime(room.modifiedDate)}
                     </span>
                   </div>
