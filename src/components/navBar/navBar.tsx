@@ -7,7 +7,7 @@ import { MissingFormPopup } from "../missingPost/missingPost";
 import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
-import FindLocationPicker from "@/components/petCard/findNcpMap";
+import FindLocationPicker from "@/components/navBar/findNcpMap";
 import { useState, useEffect, useRef } from "react";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ChatModal } from "@/components/chat/ChatModal";
@@ -29,7 +29,6 @@ const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a9
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
-  // const findLocation = useGeolocation()
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
@@ -49,8 +48,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       return bLastMessageTime - aLastMessageTime;
     });
   };
-
-  console.log(isLoggedIn);
 
   const handleLogout = async () => {
     try {
@@ -203,7 +200,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         formData.append("member_id", member_id);
         formData.append("shelter_id", "1");
 
-        const response = await axios.post(`${backUrl}/find/new`, formData, {
+        const response = await axios.post(`${backUrl}api/v1/finding/write`, formData, {
           withCredentials: true,
         });
 

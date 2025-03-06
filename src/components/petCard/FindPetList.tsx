@@ -7,13 +7,13 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import './swiper.css';
 import { usePetContext } from '@/contexts/findPetContext';
+import { backUrl } from "@/constants";
 
 interface FindPetListProps {
-  apiUrl: string;
   initialPets?: FindPet[];
 }
 
-export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
+export function FindPetList({ initialPets = [] }: FindPetListProps) {
   const [pets, setPets] = useState<FindPet[]>(initialPets);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
     const fetchPets = async () => {
       try {
         setLoading(true);
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${backUrl}api/v1/finding`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

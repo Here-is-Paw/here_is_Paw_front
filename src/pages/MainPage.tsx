@@ -4,15 +4,42 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
 import useGeolocation from '@/hooks/useGeolocation'
 import { Pet } from '@/types/pet'
+import { FindPets } from "@/types/FindPet";
+import { backUrl } from "@/constants";
+import { usePetContext } from "@/contexts/findPetContext";
 
 interface MainPageProps {
   mockLostPets: Pet[];
-  mockFindPets: Pet[];
+  mockFindPets: FindPets[];
 }
 
 export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) {
   const isMobile = useIsMobile()
   const location = useGeolocation()
+  const [findPets, setFindPets] = useState<FindPets[] | null>(null);
+  const { submissionCount } = usePetContext();
+
+  // 발견 신고 전체 조회
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const response = await fetch(`${backUrl}api/v1/finding`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setFindPets(data);
+
+
+      } catch (err) {
+        console.error("Error fetching pets:", err);
+      }
+    };
+
+    fetchPets();
+  }, [submissionCount]);
 
   // MainPage에서 props 수신 확인
   useEffect(() => {
@@ -42,7 +69,7 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
         <NcpMap
           currentLocation={location}
           lostPets={mockLostPets}
-          findPets={mockFindPets}
+          findPets={findPets ? findPets : []}
         />
       </div>
     </div>

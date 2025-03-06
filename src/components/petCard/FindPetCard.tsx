@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ChatModal } from "@/components/chat/ChatModal";
 import { chatEventBus } from "@/contexts/ChatContext";
 import axios from "axios";
-import GetFindLocationPicker from "./findNcpMap";
+import GetFindLocationPicker from "./findedNcpMap";
 
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -71,7 +71,6 @@ export function FindPetCard({ pet }: PetCardProps) {
     setGeoY(location.y);
     setLocation(location.address);
 
-    console.log("missing geo", location);
   };
 
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,50 +123,37 @@ export function FindPetCard({ pet }: PetCardProps) {
     };
   };
 
-  // useEffect(() => {
-  //   const savedImage = localStorage.getItem("uploadedImage");
-  //   if (savedImage) {
-  //     setImagePreview(savedImage);
-  //   }
-  // }, []);
-
   // 이미지 삭제 핸들러
   const handleRemoveImage = () => {
     setImagePreview(null);
     setImageFile(null);
-    
-    // setFindDetail(prevDetail => {
-    //     // null 체크 추가
-    //     if (!prevDetail) return null;
-        
-    //     // 새로운 객체 생성 시 모든 기존 속성 복사
-    //     const updatedDetail: findDetail = {
-    //         ...prevDetail,
-    //         path_url: ""
-    //     };
-        
-    //     return updatedDetail;
-    // });
 
     localStorage.removeItem("uploadedImage");
 };
 
   useEffect(() => {
-    const loginCheck = async () => {
-      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-        withCredentials: true,
-      });
-
-      setMember(memberResponse.data.data.id);
-    };
-
-    loginCheck();
+    if (isLoggedIn) {
+      const loginCheck = async () => {
+        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+          withCredentials: true,
+        });
+  
+        setMember(memberResponse.data.data.id);
+      };
+  
+      loginCheck();
+      
+    }
   }, [findDetail]);
 
   // find post 단건 조회
   const handleFindDetail = async (postId: number) => {
+    if (!isLoggedIn) {
+      setMember(null);
+    }
+
     try {
-      const detailResponse = await axios.get(`${backUrl}/find/${postId}`, {});
+      const detailResponse = await axios.get(`${backUrl}api/v1/finding/${postId}`, {});
       setFindDetail(detailResponse.data);
       if (findDetail) {
         setImagePreview(findDetail.path_url);
@@ -200,7 +186,8 @@ export function FindPetCard({ pet }: PetCardProps) {
     if (isLoggedIn) {
       const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
         withCredentials: true,
-      });
+      })
+        ;
 
       const member_id = memberResponse.data.data.id;
 
@@ -231,7 +218,7 @@ export function FindPetCard({ pet }: PetCardProps) {
         formData.append("member_id", member_id);
         formData.append("shelter_id", "1");
 
-        const response = await axios.put(`${backUrl}/find/update/${postId}`, formData, {
+        const response = await axios.put(`${backUrl}api/v1/finding/${postId}`, formData, {
           withCredentials: true,
         });
 
@@ -248,6 +235,7 @@ export function FindPetCard({ pet }: PetCardProps) {
         handleRemoveImage();
       }
     } else {
+      setMember(null);
       alert("로그인 후 이용 가능한 서비스 입니다!");
       return;
     }
@@ -261,7 +249,7 @@ export function FindPetCard({ pet }: PetCardProps) {
     }
 
     try {
-      const response = await axios.delete(`${backUrl}/find/delete/${postId}`, {
+      const response = await axios.delete(`${backUrl}api/v1/finding/${postId}`, {
         withCredentials: true,
       });
   
