@@ -13,13 +13,13 @@
 }
 
 @layer utilities {
-  .calendar-custom {
-    @apply border;
+  .rdp-dropdown_root span {
+    /* @apply sr-only; */
   }
 }
 
 @layer components {
   .body {
-    @apply bg-red-700;
+    /* @apply bg-red-700; */
   }
 }

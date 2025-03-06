@@ -41,6 +41,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import LocationPicker from "../locaion/locationPicker";
 import useGeolocation from "@/hooks/useGeolocation";
+import { ko } from "date-fns/locale";
 
 interface MissingFormPopupProps {
   open: boolean;
@@ -87,6 +88,7 @@ export const MissingFormPopup = ({
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
@@ -153,6 +155,13 @@ export const MissingFormPopup = ({
       setImagePreview(null);
       setLocationInfo({ x: 0, y: 0, address: "" });
       setAdditionalAddressDetails("");
+
+      // 날짜 초기화
+      setDate(undefined);
+      // 혹은 오늘 날짜로 설정하고 싶다면: setDate(new Date());
+
+      // form의 lostDate 필드도 초기화
+      form.setValue("lostDate", "");
     } else if (location.loaded && !location.error) {
       // 🔥 모달이 열릴 때 현재 위치를 다시 설정
       const currentGeo = {
@@ -176,6 +185,9 @@ export const MissingFormPopup = ({
     setFile(null);
     setImagePreview(null);
     onOpenChange(false);
+
+    // 날짜 초기화
+    setDate(undefined);
 
     // 🔥 모달이 열릴 때 현재 위치를 다시 설정
     const currentGeo = {
@@ -464,7 +476,7 @@ export const MissingFormPopup = ({
                         <FormItem>
                           <FormLabel>실종 날짜</FormLabel>
                           <FormControl>
-                            <Popover>
+                            <Popover open={calendarIsOpen}>
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
@@ -472,10 +484,13 @@ export const MissingFormPopup = ({
                                     "w-full justify-start text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
+                                  onClick={() =>
+                                    setCalendarIsOpen((open) => !open)
+                                  }
                                 >
                                   <CalendarIcon />
                                   {date ? (
-                                    format(date, "PPP")
+                                    format(date, "yyyy-MM-dd")
                                   ) : (
                                     <span>Pick a date</span>
                                   )}
@@ -486,9 +501,14 @@ export const MissingFormPopup = ({
                                 align="start"
                               >
                                 <Calendar
-                                  className="calendar-custom"
+                                  className="min-h-80"
                                   mode="single"
+                                  captionLayout="dropdown"
+                                  locale={ko}
                                   selected={date}
+                                  onDayClick={() => {
+                                    setCalendarIsOpen(false);
+                                  }}
                                   onSelect={(newDate) => {
                                     setDate(newDate);
                                     if (newDate) {
