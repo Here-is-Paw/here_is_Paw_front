@@ -14,6 +14,7 @@ import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
+import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 interface NavBarProps {
   buttonStates: {
@@ -29,7 +30,8 @@ const DEFAULT_IMAGE_URL =
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth()
+  const { radius } = useRadius();
   // const findLocation = useGeolocation()
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
@@ -61,6 +63,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const handleLogout = async () => {
     try {
+      await axios.patch(`${backUrl}/api/v1/members/radius`,
+          { radius },
+          { withCredentials: true, }
+      )
       await axios.delete(`${backUrl}/api/v1/members/logout`, {
         withCredentials: true,
       });

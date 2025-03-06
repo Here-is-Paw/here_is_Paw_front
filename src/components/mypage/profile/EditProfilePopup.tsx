@@ -20,7 +20,7 @@ interface EditProfilePopupProps {
   onOpenChange: (open: boolean) => void;
   userData: User | null;
   onUpdateProfile: (updatedData: {
-    username: string;
+    id: number;
     nickname?: string;
     profileImage?: File;
   }) => Promise<void>;
@@ -86,11 +86,11 @@ export const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     try {
       // 닉네임이나 프로필 이미지 중 하나라도 변경되었다면
       const updateData: {
-        username: string;
+        id: number;
         nickname?: string;
         profileImage?: File;
       } = {
-        username: userData?.username || "",
+        id: userData?.id || 0,
       };
 
       if (editedNickname.trim() !== userData?.nickname) {

@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import axios from 'axios';
 import { backUrl } from '@/constants';
+import {User} from "@/types/user.ts";
 
 interface AuthContextType {
     isLoggedIn: boolean;
+    userData: User | null;
     login: () => void;
     logout: () => void;
     checkAuthStatus: () => Promise<boolean>;
@@ -13,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [userData, setUserData] = useState<User | null>(null);
 
     // 인증 상태 확인 함수
     const checkAuthStatus = async (): Promise<boolean> => {
@@ -20,11 +23,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
                 withCredentials: true,
             });
-            
-            const isAuthenticated = !!response.data;
+
+            const isAuthenticated = response.data && response.data.statusCode === 200;
             console.log("인증 상태:", response.data);
 
             setIsLoggedIn(isAuthenticated);
+
+            if (isAuthenticated) {
+                setUserData(response.data.data);
+            } else {
+                setUserData(null);
+            }
+
             return isAuthenticated;
         } catch (error) {
             console.log(error)
@@ -35,12 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = () => {
         setIsLoggedIn(true);
+        setUserData(null);
     };
 
     const logout = async () => {
         try {
             // 백엔드 로그아웃 API가 있다면 호출
             // await axios.post(`${backUrl}/api/v1/members/logout`, {}, { withCredentials: true });
+
             setIsLoggedIn(false);
         } catch (error) {
             console.error('로그아웃 오류:', error);
@@ -53,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, login, logout, checkAuthStatus }}>
+        <AuthContext.Provider value={{ isLoggedIn, login, logout, checkAuthStatus, userData }}>
             {children}
         </AuthContext.Provider>
     );

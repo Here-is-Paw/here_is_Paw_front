@@ -135,17 +135,17 @@ export function FindPetCard({ pet }: PetCardProps) {
   const handleRemoveImage = () => {
     setImagePreview(null);
     setImageFile(null);
-    
+
     // setFindDetail(prevDetail => {
     //     // null 체크 추가
     //     if (!prevDetail) return null;
-        
+
     //     // 새로운 객체 생성 시 모든 기존 속성 복사
     //     const updatedDetail: findDetail = {
     //         ...prevDetail,
     //         path_url: ""
     //     };
-        
+
     //     return updatedDetail;
     // });
 
@@ -254,7 +254,7 @@ export function FindPetCard({ pet }: PetCardProps) {
   };
 
   // 발견 신고 삭제
-  const handleFindDeleteSubmit = async (postId: number) => { 
+  const handleFindDeleteSubmit = async (postId: number) => {
     if (!isLoggedIn) {
       alert("로그인 후 이용 가능한 서비스 입니다!");
       return;
@@ -264,7 +264,7 @@ export function FindPetCard({ pet }: PetCardProps) {
       const response = await axios.delete(`${backUrl}/find/delete/${postId}`, {
         withCredentials: true,
       });
-  
+
       if (response.status === 200 || response.status === 201) {
         alert("발견 신고가 성공적으로 삭제되었습니다!")
         incrementSubmissionCount();

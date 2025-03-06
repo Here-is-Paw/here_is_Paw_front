@@ -18,15 +18,18 @@ import {MyPet} from "@/types/pet";
 // Custom Components
 import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup";
 import {AddPetFormPopup} from "@/components/mypage/pet/petForm/AddPetFormPopup.tsx";
-import {EditPetFormPopup} from "@/components/mypage/pet/petForm/EditPetFormPopup.tsx"; // Import the new component
+import {EditPetFormPopup} from "@/components/mypage/pet/petForm/EditPetFormPopup.tsx";
+import {RadiusSlider} from "@/components/mypage/RadiusSlider";
 
 // Internal Components
 import {ProfileSection} from './profile/ProfileSection.tsx';
 import {PetsSection} from './pet/PetsSection.tsx';
 import {DeletePetDialog} from './pet/DeletePetDialog.tsx';
+import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 export function MyPage() {
     const navigate = useNavigate();
+    const { radius } = useRadius();
 
     // Authentication and State Management
     const {isLoggedIn, logout} = useAuth();
@@ -55,7 +58,7 @@ export function MyPage() {
             }
             setLoading(false);
         };
-        console.log(userData?.username)
+        console.log(userData?.id)
         loadUserData();
     }, [isLoggedIn]);
 
@@ -80,7 +83,7 @@ export function MyPage() {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
                 withCredentials: true,
             });
-            setUserData(response.data);
+            setUserData(response.data.data);
         } catch (error) {
             console.error("유저 정보 가져오기 실패:", error);
             setUserData(null);
@@ -101,7 +104,7 @@ export function MyPage() {
     };
 
     const updateUserProfile = async (updatedData: {
-        username : string;
+        id : number;
         nickname?: string;
         profileImage?: File;
     }) => {
@@ -109,7 +112,9 @@ export function MyPage() {
             // FormData 생성
             const formData = new FormData();
 
-            formData.append("username", userData?.username ?? "");
+            console.log("유저 이름: ", userData?.id);
+
+            formData.append("id", String(userData?.id ?? 0));
 
             // 닉네임 추가 (변경된 경우)
             if (updatedData.nickname) {
@@ -129,8 +134,11 @@ export function MyPage() {
                 withCredentials: true
             });
 
-            // 성공 시 사용자 데이터 업데이트
-            setUserData(response.data);
+            // 성공 시 사용자 데이터 업데이트 - 새 객체로 만들어서 확실히 재렌더링 되도록 함
+            setUserData({...response.data.data});
+
+            // 포인트 정보도 함께 갱신
+            await fetchUserPoints();
 
             // 성공 메시지 표시
             alert('프로필이 성공적으로 업데이트되었습니다.');
@@ -141,7 +149,7 @@ export function MyPage() {
 
             // 에러 처리
             if (axios.isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || '프로필 업데이트에 실패했습니다.';
+                const errorMessage = error.response?.data?.data?.message || '프로필 업데이트에 실패했습니다.';
                 alert(errorMessage);
             } else {
                 alert('프로필 업데이트 중 알 수 없는 오류가 발생했습니다.');
@@ -200,6 +208,28 @@ export function MyPage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+
+            console.log("radius 값: ", radius);
+
+            await axios.patch(`${backUrl}/api/v1/members/radius`,
+                { radius },
+                { withCredentials: true, }
+            )
+
+            // 백엔드 로그아웃 API 호출 (필요한 경우)
+            await axios.delete(`${backUrl}/api/v1/members/logout`, {
+                withCredentials: true,
+            });
+
+            logout(); // Context 상태 업데이트
+        } catch (error) {
+            console.error("로그아웃 실패:", error);
+        }
+    };
+
+
     // Render Loading State for Non-Logged In Users
     if (!isLoggedIn) {
         return (
@@ -239,6 +269,11 @@ export function MyPage() {
                 />
             </SidebarGroup>
 
+            {/* 검색 반경 슬라이더 섹션 */}
+            <SidebarGroup className="p-4 pt-0">
+                <RadiusSlider />
+            </SidebarGroup>
+
             {/* 내 반려동물 섹션 */}
             <SidebarGroup className="p-4 pt-0">
                 <PetsSection
@@ -267,7 +302,7 @@ export function MyPage() {
 
             {/* 로그아웃 버튼 */}
             <SidebarGroup className="p-4">
-                <Button className="w-full" variant="ghost" onClick={logout}>
+                <Button className="w-full" variant="ghost" onClick={handleLogout}>
                     로그아웃
                 </Button>
             </SidebarGroup>
