@@ -1,5 +1,5 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination } from "swiper/modules";
+// import { Pagination } from "swiper/modules";
 import { useEffect, useState } from "react";
 import { MissingData } from "@/types/missing";
 import { MissingCard } from "./missingCard";
