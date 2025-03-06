@@ -59,15 +59,15 @@ export function MissingList({ backUrl }: MissingListProps) {
           <Swiper
             slidesPerView={"auto"}
             spaceBetween={8}
-            // pagination={{
-            //   clickable: true,
-            // }}
-            // modules={[Pagination]}
+            pagination={{
+              clickable: true,
+            }}
+            modules={[Pagination]}
             className="relative" // h-full 제거
           >
             {/* {console.log(pets)} */}
             {pets.map((pet) => (
-              <SwiperSlide key={`missing${pet.id}`} className="w-40">
+              <SwiperSlide key={`missing${pet.id}`} className="w-40 pb-2">
                 <button
                   type="button"
                   className="text-left"

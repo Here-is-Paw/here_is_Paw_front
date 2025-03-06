@@ -25,7 +25,7 @@ export function AppSidebar({ lostPets }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar>
+    <Sidebar className="max-lg:w-[18rem]">
       {/* 헤더 영역 */}
       <SidebarHeader
         activeFilter={activeFilter}
