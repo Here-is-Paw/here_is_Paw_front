@@ -210,6 +210,9 @@ export function MyPage() {
             await axios.delete(`${backUrl}/api/v1/members/logout`, {
                 withCredentials: true,
             });
+            await axios.patch(`${backUrl}/api/v1/members/logout`, {
+                withCredentials: true,
+            })
             logout(); // Context 상태 업데이트
         } catch (error) {
             console.error("로그아웃 실패:", error);
