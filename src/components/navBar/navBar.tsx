@@ -14,7 +14,7 @@ import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
-import {useRadius} from "@/contexts/RadiusContext.tsx";
+import { useRadius } from "@/contexts/RadiusContext.tsx";
 
 interface NavBarProps {
   buttonStates: {
@@ -30,7 +30,7 @@ const DEFAULT_IMAGE_URL =
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn, logout } = useAuth();
   const { radius } = useRadius();
   // const findLocation = useGeolocation()
 
@@ -63,10 +63,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const handleLogout = async () => {
     try {
-      await axios.patch(`${backUrl}/api/v1/members/radius`,
-          { radius },
-          { withCredentials: true, }
-      )
+      await axios.patch(
+        `${backUrl}/api/v1/members/radius`,
+        { radius },
+        { withCredentials: true }
+      );
       await axios.delete(`${backUrl}/api/v1/members/logout`, {
         withCredentials: true,
       });
@@ -543,10 +544,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   return (
     <>
-      <nav className="mt-5 fixed right-0 z-50 w-[calc(95%-320px)]">
-        <div className="px-4">
-          <div className="flex justify-between items-center h-12 bg-white/80 backdrop-blur-sm rounded-full mx-4 shadow-lg">
-            <div className="flex-none pl-4">
+      <nav className="mt-5 fixed right-0 z-50 w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
+        <div className="px-4 max-lg:px-1">
+          <div className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white/80 backdrop-blur-sm rounded-full shadow-lg">
+            <div className="flex-none pl-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -632,46 +633,48 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-1 flex-none pr-4">
-              <FilterButton
-                buttonStates={buttonStates}
-                toggleButton={toggleButton}
-              />
+            <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-4">
+              <div className="flex flex-wrap justify-end w-full gap-3">
+                <FilterButton
+                  buttonStates={buttonStates}
+                  toggleButton={toggleButton}
+                />
 
-              {isLoggedIn ? (
-                <>
-                  <div ref={chatListRef}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsChatListOpen(!isChatListOpen)}
-                    >
-                      <MessageSquare className="h-4 w-4" />
+                {isLoggedIn ? (
+                  <>
+                    <div ref={chatListRef}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsChatListOpen(!isChatListOpen)}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                      <ChatRoomList
+                        isOpen={isChatListOpen}
+                        onClose={() => setIsChatListOpen(false)}
+                        onEnterRoom={handleEnterChatRoom}
+                        chatRooms={chatRooms as any}
+                        loading={loading}
+                        error={error}
+                        formatLastMessage={formatLastMessage}
+                        formatTime={formatTime}
+                        getOtherUserInfo={getOtherUserInfo}
+                        onLeaveRoom={handleLeaveRoom}
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon">
+                      <Bell className="h-4 w-4" />
                     </Button>
-                    <ChatRoomList
-                      isOpen={isChatListOpen}
-                      onClose={() => setIsChatListOpen(false)}
-                      onEnterRoom={handleEnterChatRoom}
-                      chatRooms={chatRooms as any}
-                      loading={loading}
-                      error={error}
-                      formatLastMessage={formatLastMessage}
-                      formatTime={formatTime}
-                      getOtherUserInfo={getOtherUserInfo}
-                      onLeaveRoom={handleLeaveRoom}
-                    />
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" onClick={handleLogout}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <KakaoLoginPopup />
-              )}
+                    <Button variant="ghost" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      로그아웃
+                    </Button>
+                  </>
+                ) : (
+                  <KakaoLoginPopup />
+                )}
+              </div>
             </div>
           </div>
         </div>
