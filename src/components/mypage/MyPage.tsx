@@ -80,7 +80,7 @@ export function MyPage() {
             const response = await axios.get(`${backUrl}/api/v1/members/me`, {
                 withCredentials: true,
             });
-            setUserData(response.data);
+            setUserData(response.data.data);
         } catch (error) {
             console.error("유저 정보 가져오기 실패:", error);
             setUserData(null);
@@ -130,7 +130,7 @@ export function MyPage() {
             });
 
             // 성공 시 사용자 데이터 업데이트
-            setUserData(response.data);
+            setUserData(response.data.data);
 
             // 성공 메시지 표시
             alert('프로필이 성공적으로 업데이트되었습니다.');
