@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Pet } from "@/types/pet";
+import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 interface NcpMapProps {
   currentLocation: {
