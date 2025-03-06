@@ -5,6 +5,7 @@ import { MissingData } from "@/types/missing";
 import { MissingCard } from "./missingCard";
 import axios from "axios";
 import { MissingDetail } from "./missingDetail";
+import { Pagination } from "swiper/modules";
 
 interface MissingListProps {
   backUrl: string;
