@@ -314,12 +314,28 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const formatLastMessage = (room: ChatRoom) => {
-    if (!room.chatMessages || room.chatMessages.length === 0) {
-      return "대화 내용이 없습니다.";
+    try {
+      if (!room.chatMessages || !Array.isArray(room.chatMessages) || room.chatMessages.length === 0) {
+        return "새로운 채팅방이 열렸습니다.";
+      }
+      
+      const sortedMessages = [...room.chatMessages].sort((a, b) => {
+        const dateA = a.createDate || a.createdDate || "";
+        const dateB = b.createDate || b.createdDate || "";
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
+      
+      const lastMessage = sortedMessages[0];
+      
+      if (!lastMessage || !lastMessage.content) {
+        return "새로운 메시지가 없습니다.";
+      }
+      
+      return lastMessage.content;
+    } catch (error) {
+      console.error("채팅방 마지막 메시지 형식화 오류:", error);
+      return "메시지를 불러올 수 없습니다.";
     }
-
-    const lastMessage = room.chatMessages[room.chatMessages.length - 1];
-    return lastMessage.content || "메시지를 불러올 수 없습니다.";
   };
 
   const formatTime = (dateString: string) => {
@@ -363,7 +379,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   useEffect(() => {
     if (isLoggedIn && isChatListOpen) {
       const stompClient = new StompJs.Client({
-        brokerURL: 'ws://localhost:8090/ws',
+        brokerURL: `${backUrl.replace('http', 'ws')}/ws`,
         connectHeaders: {},
         debug: function (str) {
           console.log('STOMP Debug:', str);
@@ -372,7 +388,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         webSocketFactory: () => {
-          const ws = new WebSocket('ws://localhost:8090/ws');
+          const ws = new WebSocket(`${backUrl.replace('http', 'ws')}/ws`);
           ws.onerror = (err) => {
             console.error('WebSocket 에러:', err);
           };
@@ -483,8 +499,46 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         fetchChatRooms();
       });
       
+      // 새 채팅방 추가 이벤트 구독
+      const unsubscribeAddRoom = chatEventBus.onAddChatRoom((newChatRoom) => {
+        console.log("새 채팅방 추가 이벤트 수신됨:", newChatRoom);
+        
+        // 기존 채팅방 목록에 새 채팅방 추가
+        setChatRooms(prevRooms => {
+          // 이미 존재하는 채팅방인지 확인
+          const existingRoomIndex = prevRooms.findIndex(room => room.id === newChatRoom.id);
+          
+          // 존재하지 않는 경우에만 새로 추가
+          if (existingRoomIndex === -1) {
+            const updatedRooms = [...prevRooms, newChatRoom];
+            
+            // 필터링 및 정렬
+            const filteredRooms = updatedRooms.filter((room) => 
+              room.chatUserId === me_id || room.targetUserId === me_id
+            );
+            
+            return sortChatRoomsByLastMessageTime(filteredRooms);
+          }
+          
+          // 기존에 동일한 ID의 채팅방이 있으면 업데이트
+          const updatedRooms = [...prevRooms];
+          updatedRooms[existingRoomIndex] = {
+            ...updatedRooms[existingRoomIndex],
+            ...newChatRoom
+          };
+          
+          // 필터링 및 정렬
+          const filteredRooms = updatedRooms.filter((room) => 
+            room.chatUserId === me_id || room.targetUserId === me_id
+          );
+          
+          return sortChatRoomsByLastMessageTime(filteredRooms);
+        });
+      });
+      
       return () => {
         unsubscribe();
+        unsubscribeAddRoom();
       }
     }
   }, [isLoggedIn]);
