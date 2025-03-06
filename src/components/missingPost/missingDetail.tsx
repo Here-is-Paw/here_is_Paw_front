@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
 } from "@/components/ui/dialog";
-import React from "react";
+import React, { useEffect } from "react";
 import { MissingData } from "@/types/missing";
 import { X } from "lucide-react";
 

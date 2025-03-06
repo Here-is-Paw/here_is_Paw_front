@@ -67,6 +67,7 @@ export function MissingList({ backUrl }: MissingListProps) {
                   onClick={() => {
                     // 실종 신고하기 로직
                     setIsOpen(true);
+                    console.log(pet);
                   }}
                 >
                   <div className="p-2">
