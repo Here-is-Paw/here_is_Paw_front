@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, /*useMemo*/ } from 'react';
 import { Pet } from "@/types/pet";
 import { useRadius } from '@/contexts/RadiusContext';
 
@@ -12,7 +12,7 @@ interface NcpMapProps {
   findPets: Pet[];
 }
 
-const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
+const NcpMap = ({ currentLocation, /*lostPets, findPets*/ }: NcpMapProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
