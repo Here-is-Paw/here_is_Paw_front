@@ -11,10 +11,9 @@ import { usePetContext } from "@/contexts/findPetContext";
 
 interface MainPageProps {
   mockLostPets: Pet[];
-  mockFindPets: FindPets[];
 }
 
-export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) {
+export default function MainPage({ mockLostPets }: MainPageProps) {
   const isMobile = useIsMobile()
   const location = useGeolocation()
   const [findPets, setFindPets] = useState<FindPets[] | null>(null);
@@ -46,9 +45,8 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
   useEffect(() => {
     console.log('MainPage received:', {
       mockLostPets,
-      mockFindPets
     });
-  }, [mockLostPets, mockFindPets]);
+  }, [mockLostPets]);
 
   const [buttonStates, setButtonStates] = useState({
     lost: false,
