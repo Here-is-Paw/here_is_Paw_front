@@ -173,7 +173,7 @@ export function ChatModal({
   useEffect(() => {
     if (isVisible && chatRoomId) {
       const stompClient = new StompJs.Client({
-        brokerURL: 'ws://localhost:8090/ws',
+        brokerURL: `${backUrl.replace('http', 'ws')}/ws`,
         connectHeaders: {},
         debug: function (str) {
           console.log('STOMP Debug:', str);
@@ -182,7 +182,7 @@ export function ChatModal({
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         webSocketFactory: () => {
-          const ws = new WebSocket('ws://localhost:8090/ws');
+          const ws = new WebSocket(`${backUrl.replace('http', 'ws')}/ws`);
           ws.onerror = (err) => {
             console.error('WebSocket 에러:', err);
           };

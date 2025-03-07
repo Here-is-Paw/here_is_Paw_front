@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { MissingData } from "@/types/missing";
 import { MissingCard } from "./missingCard";
 import axios from "axios";
-import { MissingDetail } from "./missingDetail";
+import { MissingDetail, ChatModalInfo } from "./missingDetail";
 import { Pagination } from "swiper/modules";
+import { ChatModal } from "@/components/chat/ChatModal";
 
 interface MissingListProps {
   backUrl: string;
@@ -17,20 +18,26 @@ export function MissingList({ backUrl }: MissingListProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   // 선택된 펫을 추적하는 상태 추가
   const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
+  
+  // ChatModal 관련 상태 추가
+  const [chatModalInfo, setChatModalInfo] = useState<ChatModalInfo>({
+    isOpen: false,
+    targetUserImageUrl: null,
+    targetUserNickname: null,
+    chatRoomId: null
+  });
+  const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
   useEffect(() => {
     const fetchMissingPoints = async () => {
       try {
         setLoading(true);
 
-        // console.log("backUrl: ", backUrl);
-
         const response = await axios.get(`${backUrl}`, {
           withCredentials: true,
         });
 
         // console.log("missing", response.data.data);
-
         setPets(response.data.data || []);
         setLoading(false);
 
@@ -38,6 +45,7 @@ export function MissingList({ backUrl }: MissingListProps) {
       } catch (error) {
         console.error("포인트 정보 가져오기 실패:", error);
         setPets([]);
+        setLoading(false);
       }
     };
 
@@ -48,6 +56,19 @@ export function MissingList({ backUrl }: MissingListProps) {
   const handlePetSelect = (pet: MissingData) => {
     setSelectedPet(pet);
     setIsOpen(true);
+  };
+
+  // ChatModal을 닫는 핸들러
+  const handleChatModalClose = () => {
+    setChatModalInfo({
+      ...chatModalInfo,
+      isOpen: false
+    });
+  };
+
+  // ChatModalInfo를 받아 상태를 업데이트하는 핸들러
+  const handleChatModalOpen = (info: ChatModalInfo) => {
+    setChatModalInfo(info);
   };
 
   return (
@@ -90,6 +111,17 @@ export function MissingList({ backUrl }: MissingListProps) {
               setIsOpen(open);
               if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
             }}
+            onChatModalOpen={handleChatModalOpen}
+          />
+          
+          {/* ChatModal - Dialog 외부에서 관리 */}
+          <ChatModal
+            isOpen={chatModalInfo.isOpen}
+            onClose={handleChatModalClose}
+            targetUserImageUrl={chatModalInfo.targetUserImageUrl}
+            targetUserNickname={chatModalInfo.targetUserNickname}
+            defaultImageUrl={DEFAULT_IMAGE_URL}
+            chatRoomId={chatModalInfo.chatRoomId}
           />
         </div>
       )}
