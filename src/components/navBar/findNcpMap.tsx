@@ -187,7 +187,7 @@ const FindLocationPicker = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pb-10">
       <div
         ref={mapElement}
         style={{ width: "100%", height: "300px", borderRadius: "8px" }}

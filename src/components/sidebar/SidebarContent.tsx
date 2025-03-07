@@ -11,10 +11,7 @@ interface SidebarMainContentProps {
   lostPets: Pet[];
 }
 
-export function SidebarMainContent({
-  lostPets: _lostPets,
-}: SidebarMainContentProps) {
-  const getBackUrl = `${backUrl}/api/v1/finding`;
+export function SidebarMainContent({ lostPets: _lostPets }: SidebarMainContentProps) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
@@ -29,7 +26,7 @@ export function SidebarMainContent({
         {/* 상단 패딩 줄임 */}
         <h2 className="text-xl font-bold mb-1">발견했개</h2>
         {/* mb-6에서 mb-4로 변경 */}
-        <FindPetList apiUrl={getBackUrl} />
+        <FindPetList/>
       </SidebarGroup>
 
       <SidebarGroup className="p-4 pt-2">
