@@ -7,37 +7,43 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "./swiper.css";
 import { usePetContext } from "@/contexts/findPetContext";
-import axios from "axios";
+import { backUrl } from "@/constants";
 
-interface FindPetListProps {
-  apiUrl: string;
-  initialPets?: FindPet[];
-}
-
-export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
-  const [pets, setPets] = useState<FindPet[]>(initialPets);
+export function FindPetList() {
+  const [pets, setPets] = useState<FindPet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { submissionCount } = usePetContext();
 
   // 발견 신고 전체 조회
   useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(apiUrl, {
-          withCredentials: true,
+    const fetchPets = () => {
+      setLoading(true);
+
+      fetch(`${backUrl}/api/v1/finding`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return Promise.reject(new Error(`HTTP error! Status: ${response.status}`));
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setPets(data.data.content);
+          console.log(data.data.content)
+        })
+        .catch((err) => {
+          console.error("Error fetching pets:", err);
+          setError(err instanceof Error ? err.message : "Unknown error occurred");
+        })
+        .finally(() => {
+          setLoading(false);
         });
-
-        setPets(response.data.data.content);
-
-        console.log("find", response.data);
-      } catch (err) {
-        console.error("Error fetching pets:", err);
-        setError(err instanceof Error ? err.message : "Unknown error occurred");
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchPets();
@@ -69,13 +75,14 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
         modules={[Pagination]}
         className="relative"
       >
-        {pets.map((pet) => (
-          <SwiperSlide key={pet.id}>
-            <div className="p-2">
-              <FindPetCard pet={pet} />
-            </div>
-          </SwiperSlide>
-        ))}
+        {pets.length > 0 &&
+          pets.map((pet) => (
+            <SwiperSlide key={pet.id}>
+              <div className="p-2">
+                <FindPetCard pet={pet} />
+              </div>
+            </SwiperSlide>
+          ))}
       </Swiper>
     </div>
   );

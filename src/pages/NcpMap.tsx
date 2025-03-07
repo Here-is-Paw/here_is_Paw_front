@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Pet } from "@/types/pet";
+import { FindPets } from "@/types/FindPet";
 import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 interface NcpMapProps {
@@ -9,7 +10,7 @@ interface NcpMapProps {
     error?: { code: number; message: string };
   };
   lostPets: Pet[];
-  findPets: Pet[];
+  findPets: FindPets[];
 }
 
 const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
@@ -120,7 +121,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         // 발견된 반려동물 마커 (초록색)
         findPets.forEach((pet) => {
           const marker = new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(pet.lang, pet.lat), // findPets는 lng 사용
+            position: new window.naver.maps.LatLng(pet.y, pet.x), // findPets는 lng 사용
             map: map,
             title: `[발견] ${pet.breed}`,
             icon: {
@@ -131,7 +132,7 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
 
           window.naver.maps.Event.addListener(marker, "click", () => {
             alert(
-              `[발견]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`
+              `[발견]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n발견일: ${pet.find_date}`
             );
           });
         });

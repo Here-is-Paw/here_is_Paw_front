@@ -4,16 +4,16 @@ import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { MissingFormPopup } from "../missingPost/missingPost";
-import { usePetContext } from "@/contexts/findPetContext";
 import axios from "axios";
 import { backUrl } from "@/constants";
-import FindLocationPicker from "@/components/petCard/findNcpMap";
+import FindLocationPicker from "@/components/navBar/findNcpMap";
 import { useState, useEffect, useRef } from "react";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
+import { useFindWrite } from "@/hooks/useFindWrite";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
 
 interface NavBarProps {
@@ -90,8 +90,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [gender, setGender] = useState(0);
   const [neutered, setNeutered] = useState(0);
   const [me_id, setMe_id] = useState(0);
-
-  const { incrementSubmissionCount } = usePetContext();
+  const { writeFindPost } = useFindWrite();
 
   const handleLocationSelect = (location: {
     x: number;
@@ -103,6 +102,36 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     setLocation(location.address);
 
     console.log("missing geo", location);
+  };
+
+  // 마지막 메시지 시간으로 채팅방 정렬 함수
+  const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
+    return [...rooms].sort((a, b) => {
+      const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
+        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
+                  a.chatMessages[a.chatMessages.length - 1].createDate ||
+                  a.modifiedDate).getTime()
+        : new Date(a.modifiedDate).getTime();
+
+      const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
+        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
+                  b.chatMessages[b.chatMessages.length - 1].createDate ||
+                  b.modifiedDate).getTime()
+        : new Date(b.modifiedDate).getTime();
+
+      return bLastMessageTime - aLastMessageTime;
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.delete(`${backUrl}/api/v1/members/logout`, {
+        withCredentials: true,
+      });
+      logout();
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
   };
 
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,57 +212,26 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   }, []);
 
   const handleFindSubmit = async () => {
-    if (isLoggedIn) {
-      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-        withCredentials: true,
-      });
-
-      const member_id = memberResponse.data.data.id;
-      setMe_id(member_id);
-
-      try {
-        const formData = new FormData();
-
-        if (imageFile) {
-          formData.append("file", imageFile);
-        }
-
-        formData.append("title", title);
-        formData.append("situation", situation);
-        formData.append("breed", breed);
-        formData.append("location", location);
-        formData.append("x", geoX.toString());
-        formData.append("y", geoY.toString());
-        formData.append("name", name);
-        formData.append("color", color);
-        formData.append("etc", etc);
-        formData.append("gender", gender.toString());
-        formData.append("age", age);
-        formData.append("neutered", neutered.toString());
-        formData.append("find_date", "2025-02-20T00:00:00");
-        formData.append("member_id", member_id);
-        formData.append("shelter_id", "1");
-
-        const response = await axios.post(`${backUrl}/find/new`, formData, {
-          withCredentials: true,
-        });
-
-        if (response.status === 200 || response.status === 201) {
-          alert("발견 신고가 성공적으로 저장되었습니다!");
-          incrementSubmissionCount();
-          handleRemoveImage();
-        } else {
-          alert("저장 실패");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("오류가 발생했습니다.");
-        handleRemoveImage();
-      }
-    } else {
-      alert("로그인 후 이용 가능한 서비스 입니다!");
-      return;
+    const formData = new FormData();
+    if (imageFile) {
+      formData.append("file", imageFile);
     }
+    formData.append("title", title);
+    formData.append("situation", situation);
+    formData.append("breed", breed);
+    formData.append("location", location);
+    formData.append("x", geoX.toString());
+    formData.append("y", geoY.toString());
+    formData.append("name", name);
+    formData.append("color", color);
+    formData.append("etc", etc);
+    formData.append("gender", gender.toString());
+    formData.append("age", age.toString());
+    formData.append("neutered", neutered.toString());
+    formData.append("find_date", "2025-02-20T00:00:00");
+    formData.append("shelter_id", "1");
+
+    await writeFindPost(formData);
   };
 
   const [isChatListOpen, setIsChatListOpen] = useState(false);
