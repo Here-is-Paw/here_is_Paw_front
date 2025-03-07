@@ -1,21 +1,14 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar.tsx";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogPortal,
-  DialogOverlay,
   DialogTitle,
   DialogDescription,
   DialogHeader,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import React, { useEffect } from "react";
-import { MissingData } from "@/types/missing";
-import { X } from "lucide-react";
+import { MissingData, MissingUtils } from "@/types/missing";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -83,20 +76,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
   if (!pet) return null;
 
-  // gender 값에 따른 표시 문자열 결정
-  const getGenderText = (gender: number) => {
-    switch (gender) {
-      case 0:
-        return "정보없음";
-      case 1:
-        return "수컷";
-      case 2:
-        return "암컷";
-      default:
-        return "정보없음";
-    }
-  };
-
   // 이미지 URL이 유효한지 확인하고 기본 이미지로 대체하는 함수
   const isKakaoDefaultProfile = (url: string) => {
     return (
@@ -113,11 +92,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
       return DEFAULT_IMAGE_URL;
     }
     return imageUrl;
-  };
-
-  // 닫기 버튼 핸들러
-  const handleClose = () => {
-    onOpenChange(false);
   };
 
   // 연락하기 버튼 핸들러
@@ -280,84 +254,90 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        <DialogOverlay className="bg-black/50" />
-        <DialogHeader>
-          <DialogTitle></DialogTitle>
-          <DialogDescription></DialogDescription>
+      <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+        <DialogHeader className="space-y-2 text-center px-6">
+          <DialogTitle className="text-2xl font-bold text-primary">
+            잃어버렸개
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            잃어버렸개 상세정보
+          </DialogDescription>
         </DialogHeader>
-        <DialogContent className="max-w-[450px] p-0 rounded-xl bg-white shadow-lg overflow-hidden">
-          {/* 커스텀 헤더 영역 */}
-          <div className="w-full bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
-            <h2 className="text-lg font-semibold">반려동물 상세정보</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={handleClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+
+        {/* 내용 영역 */}
+        <div className="px-6 py-4 overflow-auto">
+          <div className="flex flex-col items-center mb-6">
+            <div className="h-60 w-full mb-4">
+              {pet?.pathUrl && (
+                <img
+                  src={pet.pathUrl}
+                  alt={pet.name || "이름 없음"}
+                  className="object-contain w-full h-full"
+                />
+              )}
+            </div>
           </div>
 
-          {/* 내용 영역 */}
-          <div className="px-6 py-4">
-            <div className="flex flex-col items-center mb-6">
-              <Avatar className="h-24 w-24 mb-4">
-                {pet?.pathUrl && (
-                  <AvatarImage
-                    src={pet.pathUrl}
-                    alt={pet.name || "반려동물"}
-                    className="object-cover w-full h-full"
-                  />
-                )}
-                <AvatarFallback>{pet.name?.charAt(0) || "?"}</AvatarFallback>
-              </Avatar>
-              <h2 className="text-xl font-bold">{pet.name || "이름 없음"}</h2>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">이름</dt>
+              <dd>{pet.name || "이름 없음"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">견종</dt>
+              <dd>{pet.breed || "견종 미상"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">색상</dt>
+              <dd>{pet.color || "정보 없음"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">나이</dt>
+              <dd>{pet.age ? `${pet.age}살` : "나이 미상"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">성별</dt>
+              <dd>{MissingUtils.getGenderText(pet.gender || 0)}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">중성화 여부</dt>
+              <dd>{MissingUtils.getNeuteredText(pet.neutered || 0)}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">등록 번호</dt>
+              <dd>{pet.serialNumber || "등록번호 없음"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
+              <dd>{pet.lostDate || "실종 날짜 없음"}</dd>
+            </dl>
+            <dl className="col-span-2">
+              <dt className="text-sm font-medium text-gray-500">지역</dt>
+              <dd>{pet.location || "지역 없음"}</dd>
+            </dl>
+            <dl className="col-span-2">
+              <dt className="text-sm font-medium text-gray-500">특이사항</dt>
+              <dd>{pet.etc || "특이사항 없음"}</dd>
+            </dl>
+            <dl className="col-span-2">
+              <dt className="text-sm font-medium text-gray-500">사례금</dt>
+              <dd>{pet.reward || "사례금 없음"}</dd>
+            </dl>
+          </div>
+        </div>
 
-            {/**
-             * 이름, 견종, 유기견 이미지, 지역, 좌표
-             * 색상, 동물 등록 번호, 성별, 중성화 유무, 나이, 실종 날짜, 기타(특징), 사례금
-             */}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">품종</p>
-                <p>{pet.breed || "품종 미상"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">나이</p>
-                <p>{pet.age ? `${pet.age}살` : "나이 미상"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">성별</p>
-                <p>{getGenderText(pet.gender || 0)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">색상</p>
-                <p>{pet.color || "정보 없음"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">중성화 여부</p>
-                <p>{pet.neutered ? "예" : "아니오"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">등록번호</p>
-                <p>{pet.serialNumber || "정보 없음"}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-sm font-medium text-gray-500">특이사항</p>
-                <p>{pet.etc || "정보 없음"}</p>
-              </div>
-            </div>
-
-            <Button className="" onClick={handleContactClick}>
+        <DialogFooter className="px-6">
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              className="bg-green-600"
+              onClick={handleContactClick}
+            >
               연락하기
             </Button>
           </div>
-        </DialogContent>
-      </DialogPortal>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };
