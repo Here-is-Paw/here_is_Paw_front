@@ -31,10 +31,12 @@ export function MissingList({ backUrl }: MissingListProps) {
 
         // console.log("missing", response.data.data);
 
-        setPets(response.data.data || []);
+        setPets(response.data.data.content || []);
         setLoading(false);
 
-        return response.data.data;
+        console.log("missingList", response.data.data);
+
+        return response.data.data.content;
       } catch (error) {
         console.error("포인트 정보 가져오기 실패:", error);
         setPets([]);
@@ -43,6 +45,8 @@ export function MissingList({ backUrl }: MissingListProps) {
 
     fetchMissingPoints();
   }, [backUrl]);
+
+  // console.log("missingList", pets);
 
   // 펫 선택 핸들러 추가
   const handlePetSelect = (pet: MissingData) => {
