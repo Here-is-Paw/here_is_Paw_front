@@ -43,7 +43,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   onOpenChange,
   onChatModalOpen,
 }) => {
-  const DEFAULT_IMAGE_URL = '/images/default-profile.png';
+  const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
 
   // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
@@ -61,6 +61,22 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         이미지경로: pet.pathUrl,
         전체데이터: pet
       });
+      
+      // 작성자 ID 확인 (타입 캐스팅으로 타입 에러 방지)
+      const petAny = pet as any;
+      if (petAny.authorId) {
+        console.log('작성자 ID 확인:', petAny.authorId);
+      } else if (petAny.member_id) {
+        console.log('작성자 ID 확인:', petAny.member_id);
+      } else if (petAny.memberId) {
+        console.log('작성자 ID 확인:', petAny.memberId);
+      } else if (petAny.userId) {
+        console.log('작성자 ID 확인:', petAny.userId);
+      } else if (petAny.ownerId) {
+        console.log('작성자 ID 확인:', petAny.ownerId);
+      } else {
+        console.log('작성자 ID를 찾을 수 없음. 전체 데이터 확인:', pet);
+      }
     }
   }, [pet, open]);
 
@@ -81,8 +97,14 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   };
 
   // 이미지 URL이 유효한지 확인하고 기본 이미지로 대체하는 함수
+  const isKakaoDefaultProfile = (url: string) => {
+    return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+  };
+
   const getValidImageUrl = (imageUrl: string | undefined) => {
-    if (!imageUrl) return DEFAULT_IMAGE_URL;
+    if (!imageUrl || imageUrl === 'profile' || isKakaoDefaultProfile(imageUrl)) {
+      return DEFAULT_IMAGE_URL;
+    }
     return imageUrl;
   };
 
@@ -104,8 +126,14 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     }
     
     try {
-      // 펫 ID를 targetUserId로 사용 (실제 API 응답에 따라 수정 필요)
-      const targetUserId = pet.id;
+      // 펫 데이터 확인
+      console.log("채팅 대상 펫 데이터:", pet);
+      
+      // 작성자 ID를 targetUserId로 사용
+      const petAny = pet as any;
+      const targetUserId = petAny.authorId || pet.id; // authorId가 없으면 기본값으로 pet.id 사용
+      
+      console.log("채팅 요청 targetUserId:", targetUserId);
       
       const response = await axios.post(`${backUrl}/api/v1/chat/rooms`,
         { targetUserId },
