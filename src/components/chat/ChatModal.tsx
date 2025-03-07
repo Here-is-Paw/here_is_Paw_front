@@ -43,7 +43,7 @@ export function ChatModal({
   chatRoomId,
   initialMessages = []
 }: ChatModalProps) {
-  const { addChatRoom, removeChatRoom } = useChatContext();
+  const { addChatRoom, removeChatRoom, refreshChatRooms } = useChatContext();
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
   const [userId, setUserId] = useState<number | null>(null);
@@ -251,6 +251,16 @@ export function ChatModal({
                 };
                 
                 setChatMessages(prev => [...prev, newMessage]);
+                
+                // 내가 보낸 메시지가 아닌 경우 자동으로 읽음 처리
+                if (!isMine) {
+                  try {
+                    // 읽음 처리 API 호출 및 채팅방 목록 갱신
+                    markMessagesAsReadAndRefresh();
+                  } catch (error) {
+                    console.error('새 메시지 읽음 처리 오류:', error);
+                  }
+                }
               } catch (error) {
                 console.error('메시지 파싱 오류:', error);
               }
@@ -272,6 +282,33 @@ export function ChatModal({
       console.log('Attempting to connect to WebSocket...');
       stompClient.activate();
 
+      // 메시지 읽음 처리 API를 호출하고 채팅방 목록 갱신
+      const markMessagesAsReadAndRefresh = async () => {
+        try {
+          console.log(`채팅방 ${chatRoomId}의 메시지 읽음 처리 API 호출`);
+          const response = await axios.post(
+            `${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`,
+            {},
+            { withCredentials: true }
+          );
+          console.log('메시지 읽음 처리 결과:', response.data);
+          
+          // 채팅방 목록 갱신
+          refreshChatRooms();
+        } catch (error) {
+          console.error('메시지 읽음 처리 오류:', error);
+        }
+      };
+
+      // 채팅방이 열리면 메시지 읽음 처리 API 호출
+      markMessagesAsReadAndRefresh();
+
+      // 주기적으로 메시지 읽음 처리를 갱신하기 위한 인터벌 설정
+      const readInterval = setInterval(() => {
+        // 채팅방이 열려있는 동안 주기적으로 읽음 처리 API 호출 및 채팅방 목록 갱신
+        markMessagesAsReadAndRefresh();
+      }, 10000); // 10초마다 갱신
+
       return () => {
         console.log('Cleaning up WebSocket connection...');
         if (subscription) {
@@ -284,6 +321,7 @@ export function ChatModal({
         if (stompClient.active) {
           stompClient.deactivate();
         }
+        clearInterval(readInterval); // 인터벌 정리
       };
     }
   }, [isVisible, chatRoomId, userId]);
