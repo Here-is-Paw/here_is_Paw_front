@@ -23,7 +23,7 @@ export function MissingCard({ activeFilter, pet }: MissingCardProps) {
           />
         </div>
         <div className="p-3">
-          <div className="font-medium mb-3">{pet.breed}</div>
+          <div className="font-medium mb-3 truncate">{pet.breed}</div>
           <div className="space-y-1">
             <div className="text-xs flex gap-4">
               <span className="w-11 text-gray-600">지역</span>
