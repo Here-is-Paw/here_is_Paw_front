@@ -66,7 +66,29 @@ export function MissingList({ backUrl }: MissingListProps) {
             className="relative" // h-full 제거
           >
             {/* {console.log(pets)} */}
-            {pets.map((pet) => (
+            {Array.isArray(pets) && pets.length > 0 ? (
+              pets.map((pet) => (
+                <SwiperSlide key={`missing${pet.id}`} className="w-40">
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() => handlePetSelect(pet)}
+                  >
+                    <div className="p-2">
+                      <MissingCard pet={pet} />
+                    </div>
+                  </button>
+                </SwiperSlide>
+              ))
+            ) : (
+              // 데이터가 없을 경우 표시할 내용
+              <SwiperSlide className="w-full text-center py-8">
+                <div className="text-gray-500">
+                  등록된 실종 반려동물이 없습니다.
+                </div>
+              </SwiperSlide>
+            )}
+            {/* {pets.map((pet) => (
               <SwiperSlide key={`missing${pet.id}`} className="w-40">
                 <button
                   type="button"
@@ -78,7 +100,7 @@ export function MissingList({ backUrl }: MissingListProps) {
                   </div>
                 </button>
               </SwiperSlide>
-            ))}
+            ))} */}
           </Swiper>
 
           {/* 모달은 한 번만 렌더링 */}
