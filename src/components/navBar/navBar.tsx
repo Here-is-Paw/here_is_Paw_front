@@ -275,25 +275,123 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       setLoading(true);
       setError(null);
 
+      console.log("======= 채팅방 목록 데이터 로드 시작 =======");
+      
+      // 채팅방 목록 API 호출
       const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list`, {
         withCredentials: true,
       });
-      console.log("=== 채팅방 목록 전체 데이터 ===");
-      console.log(response.data.data);
-
+      
+      console.log("====== 원본 API 응답 데이터 ======");
+      console.log("채팅방 목록 데이터:", response.data.data);
+      
+      // 첫 번째 채팅방 상세 정보 (있는 경우)
+      if (response.data.data && response.data.data.length > 0) {
+        const firstRoom = response.data.data[0];
+        console.log("====== 첫 번째 채팅방 상세 구조 ======");
+        console.log("채팅방 ID:", firstRoom.id);
+        console.log("채팅방 객체 키 목록:", Object.keys(firstRoom));
+        
+        // 메시지 데이터 확인
+        if (firstRoom.chatMessages && firstRoom.chatMessages.length > 0) {
+          const firstMessage = firstRoom.chatMessages[0];
+          console.log("====== 첫 번째 메시지 상세 구조 ======");
+          console.log("메시지 객체 키 목록:", Object.keys(firstMessage));
+          console.log("메시지 JSON 전체 데이터:", JSON.stringify(firstMessage, null, 2));
+          
+          // 메시지에 읽음 상태 필드가 있는지 확인
+          const hasReadField = Object.keys(firstMessage).some(key => 
+            key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
+          );
+          console.log("메시지에 읽음 상태 관련 필드 존재:", hasReadField);
+          
+          // 읽음 상태 관련 필드 찾기
+          const readFields = Object.keys(firstMessage).filter(key => 
+            key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
+          );
+          if (readFields.length > 0) {
+            console.log("읽음 상태 관련 필드:", readFields);
+            readFields.forEach(field => {
+              console.log(`- ${field}: ${firstMessage[field]}`);
+            });
+          }
+        } else {
+          console.log("채팅 메시지 없음");
+        }
+        
+        // 현재 로그인 사용자와의 관계 확인
+        console.log("====== 사용자 관계 확인 ======");
+        console.log("현재 로그인 사용자 ID:", me_id);
+        console.log("채팅 생성 사용자 ID:", firstRoom.chatUserId);
+        console.log("타겟 사용자 ID:", firstRoom.targetUserId);
+        console.log("현재 사용자가 채팅 생성자인가:", firstRoom.chatUserId === me_id);
+        console.log("현재 사용자가 타겟 사용자인가:", firstRoom.targetUserId === me_id);
+      }
+      
+      // 사용자와 관련된 채팅방만 필터링
       const filteredRooms = response.data.data.filter(
         (room: ChatRoom) =>
           room.chatUserId === me_id || room.targetUserId === me_id
       );
-
-      console.log("=== 필터링된 채팅방 목록 ===");
-      console.log(filteredRooms);
-
+      
+      // 최근 메시지 순으로 정렬
       const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
-
+      
+      console.log("======= 안 읽은 메시지 수 계산 =======");
+      // 각 채팅방의 안 읽은 메시지 수 계산
+      sortedRooms.forEach((room: any) => {
+        // 현재 사용자가 채팅 사용자인지 대상 사용자인지 확인
+        const isCurrentUserChatUser = room.chatUserId === me_id;
+        const isCurrentUserTargetUser = room.targetUserId === me_id;
+        
+        console.log(`[채팅방 ${room.id}] 현재 사용자는 채팅 사용자=${isCurrentUserChatUser}, 대상 사용자=${isCurrentUserTargetUser}`);
+        
+        // 안 읽은 메시지 수 계산
+        let unreadCount = 0;
+        
+        if (room.chatMessages && room.chatMessages.length > 0) {
+          console.log(`[채팅방 ${room.id}] 메시지 총 개수: ${room.chatMessages.length}`);
+          
+          // 메시지 객체에 어떤 읽음 상태 필드가 있는지 확인
+          const lastMessage = room.chatMessages[room.chatMessages.length - 1];
+          const readFields = Object.keys(lastMessage).filter(key => 
+            key.toLowerCase().includes('read')
+          );
+          console.log(`[채팅방 ${room.id}] 메시지의 읽음 상태 필드:`, readFields);
+          
+          // 각 메시지의 읽음 상태를 확인하여 안 읽은 메시지 수 계산
+          room.chatMessages.forEach((msg: any, index: number) => {
+            let isRead = false;
+            
+            // 현재 사용자가 채팅 사용자인 경우 chatUserRead 필드를 확인
+            if (isCurrentUserChatUser) {
+              isRead = msg.chatUserRead === true;
+              if (!isRead) {
+                unreadCount++;
+                console.log(`  - 메시지 ${index + 1} (${msg.content.substring(0, 10)}...): chatUserRead = ${msg.chatUserRead}, 안 읽음`);
+              }
+            }
+            // 현재 사용자가 대상 사용자인 경우 targetUserRead 필드를 확인
+            else if (isCurrentUserTargetUser) {
+              isRead = msg.targetUserRead === true;
+              if (!isRead) {
+                unreadCount++;
+                console.log(`  - 메시지 ${index + 1} (${msg.content.substring(0, 10)}...): targetUserRead = ${msg.targetUserRead}, 안 읽음`);
+              }
+            }
+          });
+        }
+        
+        // 계산된 안 읽은 메시지 수 설정
+        room.unreadCount = unreadCount;
+        console.log(`[채팅방 ${room.id}] 계산된 안 읽은 메시지 수: ${unreadCount}`);
+      });
+      
+      console.log("======= 채팅방 목록 데이터 로드 완료 =======");
+      
       setChatRooms(sortedRooms);
     } catch (err) {
-      console.error("채팅방 목록 조회 오류:", err);
+      console.error("[채팅방 API] 채팅방 목록 조회 오류:", err);
       setError("채팅방 목록을 불러오는데 오류가 발생했습니다.");
     } finally {
       setLoading(false);

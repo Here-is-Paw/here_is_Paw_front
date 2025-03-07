@@ -33,6 +33,8 @@ export function ChatRoomList({
 }: ChatRoomListProps) {
   if (!isOpen) return null;
 
+  console.log("채팅방 목록 정보:", chatRooms);
+  
   return (
     <div className="absolute top-12 right-16 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-[100] border border-gray-100">
       <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-emerald-500 to-green-500">
@@ -65,6 +67,39 @@ export function ChatRoomList({
         <div className="max-h-96 overflow-y-auto">
           {chatRooms.map((room) => {
             const otherUser = getOtherUserInfo(room);
+            // TypeScript에서 인식할 수 있도록 수정
+            const roomWithUnread = room as ChatRoom & { unreadCount?: number };
+            console.log(`채팅방 ${room.id} 안 읽은 메시지 수:`, roomWithUnread.unreadCount);
+            const unreadCount = roomWithUnread.unreadCount || 0;
+            
+            // 메시지에 읽음 상태 관련 필드가 있는지 확인
+            const msgAny = room.chatMessages && room.chatMessages.length > 0 ? room.chatMessages[room.chatMessages.length - 1] as any : null;
+            const hasReadField = msgAny && Object.keys(msgAny).some(key => 
+              key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
+            );
+            
+            if (hasReadField) {
+              // 읽음 상태 관련 필드 출력
+              const readFields = Object.keys(msgAny).filter(key => 
+                key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
+              );
+              
+              console.log("- 메시지 읽음 상태 필드:", readFields);
+              readFields.forEach(field => {
+                console.log(`  - ${field}: ${msgAny[field]}`);
+              });
+              
+              // chatUserRead와 targetUserRead 필드 확인
+              if ('chatUserRead' in msgAny) {
+                console.log(`  - chatUserRead (채팅 사용자 읽음 여부): ${msgAny.chatUserRead}`);
+              }
+              if ('targetUserRead' in msgAny) {
+                console.log(`  - targetUserRead (대상 사용자 읽음 여부): ${msgAny.targetUserRead}`);
+              }
+            } else {
+              console.log("- 메시지에 읽음 상태 관련 필드 없음");
+            }
+            
             return (
               <div
                 key={room.id}
@@ -87,6 +122,10 @@ export function ChatRoomList({
                     <p className="text-sm font-medium truncate text-gray-900">
                       {otherUser.nickname || "상대방"}
                     </p>
+                    {/* 안 읽은 메시지 수 표시 (0도 표시) */}
+                    <div className={`text-xs rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1 font-medium ml-1 ${unreadCount > 0 ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
                   </div>
                   <div className="flex justify-between items-end">
                     <p className="text-xs text-gray-500 truncate flex-1 mr-4">
