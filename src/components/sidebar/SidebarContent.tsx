@@ -14,7 +14,7 @@ interface SidebarMainContentProps {
 export function SidebarMainContent({
   lostPets: _lostPets,
 }: SidebarMainContentProps) {
-  const getBackUrl = `${backUrl}/find`;
+  const getBackUrl = `${backUrl}/api/v1/finding`;
 
   return (
     <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">

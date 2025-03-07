@@ -18,15 +18,16 @@ export function MissingList({ backUrl }: MissingListProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   // 선택된 펫을 추적하는 상태 추가
   const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
-  
+
   // ChatModal 관련 상태 추가
   const [chatModalInfo, setChatModalInfo] = useState<ChatModalInfo>({
     isOpen: false,
     targetUserImageUrl: null,
     targetUserNickname: null,
-    chatRoomId: null
+    chatRoomId: null,
   });
-  const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+  const DEFAULT_IMAGE_URL =
+    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
   useEffect(() => {
     const fetchMissingPoints = async () => {
@@ -38,10 +39,13 @@ export function MissingList({ backUrl }: MissingListProps) {
         });
 
         // console.log("missing", response.data.data);
-        setPets(response.data.data || []);
+
+        setPets(response.data.data.content || []);
         setLoading(false);
 
-        return response.data.data;
+        console.log("missingList", response.data.data);
+
+        return response.data.data.content;
       } catch (error) {
         console.error("포인트 정보 가져오기 실패:", error);
         setPets([]);
@@ -51,6 +55,8 @@ export function MissingList({ backUrl }: MissingListProps) {
 
     fetchMissingPoints();
   }, [backUrl]);
+
+  // console.log("missingList", pets);
 
   // 펫 선택 핸들러 추가
   const handlePetSelect = (pet: MissingData) => {
@@ -62,7 +68,7 @@ export function MissingList({ backUrl }: MissingListProps) {
   const handleChatModalClose = () => {
     setChatModalInfo({
       ...chatModalInfo,
-      isOpen: false
+      isOpen: false,
     });
   };
 
@@ -113,7 +119,7 @@ export function MissingList({ backUrl }: MissingListProps) {
             }}
             onChatModalOpen={handleChatModalOpen}
           />
-          
+
           {/* ChatModal - Dialog 외부에서 관리 */}
           <ChatModal
             isOpen={chatModalInfo.isOpen}

@@ -53,7 +53,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     });
   };
 
-  console.log(isLoggedIn);
+  console.log("isLoggedIn", isLoggedIn);
 
   const handleLogout = async () => {
     try {
@@ -656,7 +656,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               )}
             </div>
 
-            <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-4">
+            <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-5">
               <div className="flex flex-wrap justify-end w-full gap-3">
                 <FilterButton
                   buttonStates={buttonStates}
@@ -664,7 +664,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 />
 
                 {isLoggedIn ? (
-                  <>
+                  <div className="flex gap-1">
                     <div ref={chatListRef}>
                       <Button
                         variant="ghost"
@@ -693,7 +693,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       <LogOut className="h-4 w-4 mr-2" />
                       로그아웃
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <KakaoLoginPopup />
                 )}
