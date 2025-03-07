@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { FindPetCard } from "./FindPetCard";
 import { FindPet } from "@/types/FindPet";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import './swiper.css';
-import { usePetContext } from '@/contexts/findPetContext';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "./swiper.css";
+import { usePetContext } from "@/contexts/findPetContext";
+import axios from "axios";
 
 interface FindPetListProps {
   apiUrl: string;
@@ -24,14 +25,13 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
     const fetchPets = async () => {
       try {
         setLoading(true);
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setPets(data);
+        const response = await axios.get(apiUrl, {
+          withCredentials: true,
+        });
+
+        setPets(response.data.data.content);
+
+        console.log("find", response.data);
       } catch (err) {
         console.error("Error fetching pets:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");
@@ -44,11 +44,17 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
   }, [submissionCount]);
 
   if (loading && pets.length === 0) {
-    return <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>;
+    return (
+      <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>
+    );
   }
 
   if (error && pets.length === 0) {
-    return <div className="h-auto p-4 text-center text-red-500">데이터가 없습니다.</div>;
+    return (
+      <div className="h-auto p-4 text-center text-red-500">
+        데이터가 없습니다.
+      </div>
+    );
   }
 
   return (
@@ -64,10 +70,9 @@ export function FindPetList({ apiUrl, initialPets = [] }: FindPetListProps) {
         className="relative"
       >
         {pets.map((pet) => (
-          
           <SwiperSlide key={pet.id}>
             <div className="p-2">
-              <FindPetCard pet={pet}/>
+              <FindPetCard pet={pet} />
             </div>
           </SwiperSlide>
         ))}

@@ -25,7 +25,7 @@ export function AppSidebar({ lostPets }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar>
+    <Sidebar className="max-lg:w-[18rem]">
       {/* 헤더 영역 */}
       <SidebarHeader
         activeFilter={activeFilter}
@@ -36,7 +36,10 @@ export function AppSidebar({ lostPets }: AppSidebarProps) {
       {activeFilter === "My" ? (
         <MyPage />
       ) : activeFilter === "잃어버렸개" ? (
-        <MissingList backUrl={`${backUrl}/api/v1/missings`} />
+        <MissingList
+          activeFilter={"잃어버렸개"}
+          backUrl={`${backUrl}/api/v1/missings`}
+        />
       ) : (
         <SidebarMainContent lostPets={lostPets} />
       )}
