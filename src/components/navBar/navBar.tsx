@@ -549,6 +549,19 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           }
         });
 
+        // 읽음 상태 변경 이벤트 구독
+        stompClient.subscribe('/topic/api/v1/chat/read-status', (message) => {
+          try {
+            const readStatusData = JSON.parse(message.body);
+            console.log('읽음 상태 변경 이벤트 수신:', readStatusData);
+            
+            // 채팅방 목록 갱신
+            fetchChatRooms();
+          } catch (error) {
+            console.error('읽음 상태 변경 이벤트 처리 오류:', error);
+          }
+        });
+
         const subscribeToRoom = (roomId: number) => {
           console.log(`채팅방 ${roomId} 메시지 구독 설정`);
           stompClient.subscribe(`/topic/api/v1/chat/${roomId}/messages`, (message) => {
@@ -610,7 +623,12 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     if (isLoggedIn) {
       const unsubscribe = chatEventBus.onRefreshChatRooms(() => {
         console.log("채팅방 목록 갱신 이벤트 수신됨");
+        
+        // 채팅방 목록 데이터 갱신
         fetchChatRooms();
+        
+        // 콘솔에 로그 출력하여 갱신 여부 확인
+        console.log("채팅방 목록 갱신 API 호출 완료");
       });
 
       // 새 채팅방 추가 이벤트 구독

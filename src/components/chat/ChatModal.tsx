@@ -6,6 +6,7 @@ import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
 import * as StompJs from '@stomp/stompjs';
 import { Avatar } from "@/components/ui/avatar";
+import { chatEventBus } from "@/contexts/ChatContext";
 
 interface ChatMessage {
   id?: number;
@@ -293,8 +294,24 @@ export function ChatModal({
           );
           console.log('메시지 읽음 처리 결과:', response.data);
           
-          // 채팅방 목록 갱신
+          // 채팅방 목록 갱신 이벤트 발행
           refreshChatRooms();
+          
+          // 읽음 상태가 변경되었음을 알리는 이벤트 발행
+          try {
+            // 채팅방 목록 API를 직접 호출하여 최신 데이터 가져오기
+            const chatRoomsResponse = await axios.get(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
+              withCredentials: true,
+            });
+            
+            // 이 부분에서 이벤트 버스 또는 WebSocket을 통해 NavBar에 알림을 전송할 수 있음
+            console.log('채팅방 목록 데이터 갱신 완료:', chatRoomsResponse.data);
+            
+            // chatEventBus를 통해 채팅방 목록 갱신 이벤트 다시 발행
+            chatEventBus.emitRefreshChatRooms();
+          } catch (error) {
+            console.error('채팅방 목록 갱신 오류:', error);
+          }
         } catch (error) {
           console.error('메시지 읽음 처리 오류:', error);
         }
