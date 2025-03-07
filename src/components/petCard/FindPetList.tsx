@@ -50,11 +50,17 @@ export function FindPetList() {
   }, [submissionCount]);
 
   if (loading && pets.length === 0) {
-    return <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>;
+    return (
+      <div className="h-auto p-4 text-center">데이터를 불러오는 중...</div>
+    );
   }
 
   if (error && pets.length === 0) {
-    return <div className="h-auto p-4 text-center text-red-500">데이터가 없습니다.</div>;
+    return (
+      <div className="h-auto p-4 text-center text-red-500">
+        데이터가 없습니다.
+      </div>
+    );
   }
 
   return (

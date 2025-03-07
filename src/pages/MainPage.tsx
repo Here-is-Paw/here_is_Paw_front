@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import NcpMap from './NcpMap'
+// import NcpMap from './NcpMap-1'
 import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
 import useGeolocation from '@/hooks/useGeolocation'
@@ -71,6 +72,11 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
           lostPets={mockLostPets}
           findPets={findPets ? findPets : []}
         />
+        {/*<NcpMap*/}
+        {/*  currentLocation={location}*/}
+        {/*  lostPets={mockLostPets}*/}
+        {/*  findPets={mockFindPets}*/}
+        {/*/>*/}
       </div>
     </div>
   )

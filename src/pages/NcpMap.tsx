@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Pet } from "@/types/pet";
 import { FindPets } from "@/types/FindPet";
+import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 interface NcpMapProps {
   currentLocation: {
@@ -17,6 +18,10 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
 
+  const circleRef = useRef<naver.maps.Circle | null>(null);
+
+  const { radius } = useRadius();
+
   const getPawMarkerIcon = (isLost: boolean) => {
     const color = isLost ? "#EF4444" : "#22C55E"; // red-500 : green-500
     return `
@@ -26,6 +31,13 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
       </svg>
     `;
   };
+
+  useEffect(() => {
+    if (circleRef.current && mapInstance.current && currentLocation.coordinates) {
+      // 지도 중심 및 확대 수준 유지하면서 원 크기만 변경
+      circleRef.current.setRadius(radius);
+    }
+  }, [radius]);
 
   useEffect(() => {
     if (isInitialized.current || !currentLocation.loaded) return;
@@ -73,6 +85,19 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
         //     }
         //   });
         // }
+
+        if (currentLocation.coordinates) {
+          circleRef.current = new window.naver.maps.Circle({
+            map: map,
+            center: center,
+            radius: radius, // Use radius from context
+            strokeColor: '#5F9EA0',
+            strokeOpacity: 0.6,
+            strokeWeight: 2,
+            fillColor: '#5F9EA0',
+            fillOpacity: 0.2
+          });
+        }
 
         // 잃어버린 반려동물 마커 (빨간색)
         lostPets.forEach((pet) => {
