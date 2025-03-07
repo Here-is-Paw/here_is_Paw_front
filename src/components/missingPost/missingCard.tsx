@@ -1,13 +1,20 @@
 import { MissingData } from "@/types/missing";
 
 interface MissingCardProps {
+  activeFilter: string;
   pet: MissingData;
 }
 
-export function MissingCard({ pet }: MissingCardProps) {
+export function MissingCard({ activeFilter, pet }: MissingCardProps) {
   return (
     <>
-      <div className="w-40 bg-white rounded-lg shadow-md overflow-hidden">
+      <div
+        className={
+          activeFilter === "전체"
+            ? "w-40 bg-white rounded-lg shadow-md overflow-hidden"
+            : "bg-white rounded-lg shadow-md overflow-hidden"
+        }
+      >
         <div className="w-full h-32 overflow-hidden">
           <img
             src={pet.pathUrl}
