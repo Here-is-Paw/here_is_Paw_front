@@ -14,7 +14,7 @@ import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
-import {useRadius} from "@/contexts/RadiusContext.tsx";
+import { useRadius } from "@/contexts/RadiusContext.tsx";
 
 interface NavBarProps {
   buttonStates: {
@@ -30,43 +30,38 @@ const DEFAULT_IMAGE_URL =
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn, logout } = useAuth();
   const { radius } = useRadius();
   // const findLocation = useGeolocation()
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
     return [...rooms].sort((a, b) => {
-      const aLastMessageTime =
-        a.chatMessages && a.chatMessages.length > 0
-          ? new Date(
-              a.chatMessages[a.chatMessages.length - 1].createdDate ||
-                a.chatMessages[a.chatMessages.length - 1].createDate ||
-                a.modifiedDate
-            ).getTime()
-          : new Date(a.modifiedDate).getTime();
+      const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
+        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
+                  a.chatMessages[a.chatMessages.length - 1].createDate ||
+                  a.modifiedDate).getTime()
+        : new Date(a.modifiedDate).getTime();
 
-      const bLastMessageTime =
-        b.chatMessages && b.chatMessages.length > 0
-          ? new Date(
-              b.chatMessages[b.chatMessages.length - 1].createdDate ||
-                b.chatMessages[b.chatMessages.length - 1].createDate ||
-                b.modifiedDate
-            ).getTime()
-          : new Date(b.modifiedDate).getTime();
+      const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
+        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
+                  b.chatMessages[b.chatMessages.length - 1].createDate ||
+                  b.modifiedDate).getTime()
+        : new Date(b.modifiedDate).getTime();
 
       return bLastMessageTime - aLastMessageTime;
     });
   };
 
-  console.log(isLoggedIn);
+  console.log("isLoggedIn", isLoggedIn);
 
   const handleLogout = async () => {
     try {
-      await axios.patch(`${backUrl}/api/v1/members/radius`,
-          { radius },
-          { withCredentials: true, }
-      )
+      await axios.patch(
+        `${backUrl}/api/v1/members/radius`,
+        { radius },
+        { withCredentials: true }
+      );
       await axios.delete(`${backUrl}/api/v1/members/logout`, {
         withCredentials: true,
       });
@@ -250,8 +245,8 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handleEnterChatRoom = (room: ChatRoom) => {
-    setOpenChatRooms((prev) => {
-      const existingRoomIndex = prev.findIndex((r) => r.id === room.id);
+    setOpenChatRooms(prev => {
+      const existingRoomIndex = prev.findIndex(r => r.id === room.id);
 
       if (existingRoomIndex >= 0) {
         return prev.map((r, index) => ({
@@ -260,16 +255,13 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }));
       } else {
         const otherUser = getOtherUserInfo(room);
-        return [
-          ...prev,
-          {
-            ...room,
-            isOpen: true,
-            targetUserNickname: otherUser.nickname,
-            targetUserImageUrl: otherUser.imageUrl,
-            targetUserId: otherUser.userId,
-          },
-        ];
+        return [...prev, { 
+          ...room, 
+          isOpen: true,
+          targetUserNickname: otherUser.nickname,
+          targetUserImageUrl: otherUser.imageUrl,
+          targetUserId: otherUser.userId
+        }];
       }
     });
   };
@@ -323,7 +315,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       console.log("채팅방 나가기 응답:", response.data);
 
       if (response.status === 200) {
-        setChatRooms((prev) => prev.filter((room) => room.id !== roomId));
+        setChatRooms(prev => prev.filter(room => room.id !== roomId));
       } else {
         alert("채팅방 나가기에 실패했습니다.");
       }
@@ -334,12 +326,28 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const formatLastMessage = (room: ChatRoom) => {
-    if (!room.chatMessages || room.chatMessages.length === 0) {
-      return "대화 내용이 없습니다.";
-    }
+    try {
+      if (!room.chatMessages || !Array.isArray(room.chatMessages) || room.chatMessages.length === 0) {
+        return "새로운 채팅방이 열렸습니다.";
+      }
 
-    const lastMessage = room.chatMessages[room.chatMessages.length - 1];
-    return lastMessage.content || "메시지를 불러올 수 없습니다.";
+      const sortedMessages = [...room.chatMessages].sort((a, b) => {
+        const dateA = a.createDate || a.createdDate || "";
+        const dateB = b.createDate || b.createdDate || "";
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
+
+      const lastMessage = sortedMessages[0];
+
+      if (!lastMessage || !lastMessage.content) {
+        return "새로운 메시지가 없습니다.";
+      }
+
+      return lastMessage.content;
+    } catch (error) {
+      console.error("채팅방 마지막 메시지 형식화 오류:", error);
+      return "메시지를 불러올 수 없습니다.";
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -351,9 +359,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
     if (isToday) {
       const hours = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-
-      return `${hours < 12 ? "오전" : "오후"} ${hours % 12 || 12}:${minutes}`;
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      
+      return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
     } else {
       return `${date.getMonth() + 1}/${date.getDate()}`;
     }
@@ -361,9 +369,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const getValidImageUrl = (imageUrl: string | undefined) => {
     const isKakaoDefaultProfile = (url: string) => {
-      return (
-        url && url.includes("kakaocdn.net") && url.includes("default_profile")
-      );
+      return url && url.includes('kakaocdn.net') && url.includes('default_profile');
     };
 
     if (
@@ -378,136 +384,116 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   const getOtherUserInfo = (room: ChatRoom) => {
     const isMyChat = me_id === room.chatUserId;
-
+    
     return {
       nickname: isMyChat ? room.targetUserNickname : room.chatUserNickname,
-      imageUrl: getValidImageUrl(
-        isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl
-      ),
-      userId: isMyChat ? room.targetUserId : room.chatUserId,
+      imageUrl: getValidImageUrl(isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl),
+      userId: isMyChat ? room.targetUserId : room.chatUserId
     };
   };
 
   useEffect(() => {
     if (isLoggedIn && isChatListOpen) {
       const stompClient = new StompJs.Client({
-        brokerURL: "ws://localhost:8090/ws",
+        brokerURL: `${backUrl.replace('http', 'ws')}/ws`,
         connectHeaders: {},
         debug: function (str) {
-          console.log("STOMP Debug:", str);
+          console.log('STOMP Debug:', str);
         },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         webSocketFactory: () => {
-          const ws = new WebSocket("ws://localhost:8090/ws");
+          const ws = new WebSocket(`${backUrl.replace('http', 'ws')}/ws`);
           ws.onerror = (err) => {
-            console.error("WebSocket 에러:", err);
+            console.error('WebSocket 에러:', err);
           };
           return ws;
-        },
+        }
       });
 
       client.current = stompClient;
 
       stompClient.onConnect = () => {
-        console.log("NavBar WebSocket Connected");
-
-        stompClient.subscribe("/topic/api/v1/chat/new-room", (message) => {
+        console.log('NavBar WebSocket Connected');
+        
+        stompClient.subscribe('/topic/api/v1/chat/new-room', (message) => {
           try {
             const newRoomData = JSON.parse(message.body);
-            console.log("새로운 채팅방 생성됨:", newRoomData);
-
-            if (
-              newRoomData.chatUserId === me_id ||
-              newRoomData.targetUserId === me_id
-            ) {
-              setChatRooms((prevRooms) => {
-                if (!prevRooms.some((room) => room.id === newRoomData.id)) {
+            console.log('새로운 채팅방 생성됨:', newRoomData);
+            
+            if (newRoomData.chatUserId === me_id || newRoomData.targetUserId === me_id) {
+              setChatRooms(prevRooms => {
+                if (!prevRooms.some(room => room.id === newRoomData.id)) {
                   const newRoom = {
                     id: newRoomData.id,
                     chatUserNickname: newRoomData.chatUserNickname,
-                    chatUserImageUrl:
-                      newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
+                    chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
                     chatUserId: newRoomData.chatUserId,
                     targetUserNickname: newRoomData.targetUserNickname,
-                    targetUserImageUrl:
-                      newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
+                    targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
                     targetUserId: newRoomData.targetUserId,
                     chatMessages: [],
-                    modifiedDate: new Date().toISOString(),
+                    modifiedDate: new Date().toISOString()
                   };
 
                   subscribeToRoom(newRoomData.id);
 
-                  return sortChatRoomsByLastMessageTime([
-                    ...prevRooms,
-                    newRoom,
-                  ]);
+                  return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
                 }
                 return prevRooms;
               });
             } else {
-              console.log(
-                "새 채팅방이 현재 사용자와 관련이 없어 무시됨:",
-                newRoomData
-              );
+              console.log('새 채팅방이 현재 사용자와 관련이 없어 무시됨:', newRoomData);
             }
           } catch (error) {
-            console.error("새로운 채팅방 데이터 처리 오류:", error);
+            console.error('새로운 채팅방 데이터 처리 오류:', error);
           }
         });
 
         const subscribeToRoom = (roomId: number) => {
           console.log(`채팅방 ${roomId} 메시지 구독 설정`);
-          stompClient.subscribe(
-            `/topic/api/v1/chat/${roomId}/messages`,
-            (message) => {
-              try {
-                const messageData = JSON.parse(message.body);
-                console.log(`채팅방 ${roomId} 새 메시지:`, messageData);
+          stompClient.subscribe(`/topic/api/v1/chat/${roomId}/messages`, (message) => {
+            try {
+              const messageData = JSON.parse(message.body);
+              console.log(`채팅방 ${roomId} 새 메시지:`, messageData);
+              
+              setChatRooms(prevRooms => {
+                const updatedRooms = prevRooms.map(room => {
+                  if (room.id === roomId) {
+                    console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+                      id: messageData.chatMessageId,
+                      content: messageData.content,
+                      createDate: messageData.createdDate
+                    });
 
-                setChatRooms((prevRooms) => {
-                  const updatedRooms = prevRooms.map((room) => {
-                    if (room.id === roomId) {
-                      console.log(`채팅방 ${room.id}에 새 메시지 추가:`, {
+                    return {
+                      ...room,
+                      chatMessages: [...room.chatMessages, {
                         id: messageData.chatMessageId,
                         content: messageData.content,
                         createDate: messageData.createdDate,
-                      });
-
-                      return {
-                        ...room,
-                        chatMessages: [
-                          ...room.chatMessages,
-                          {
-                            id: messageData.chatMessageId,
-                            content: messageData.content,
-                            createDate: messageData.createdDate,
-                            createdDate: messageData.createdDate,
-                          },
-                        ],
-                        modifiedDate: messageData.createdDate,
-                      };
-                    }
-                    return room;
-                  });
-
-                  const filteredRooms = updatedRooms.filter(
-                    (room: ChatRoom) =>
-                      room.chatUserId === me_id || room.targetUserId === me_id
-                  );
-
-                  return sortChatRoomsByLastMessageTime(filteredRooms);
+                        createdDate: messageData.createdDate
+                      }],
+                      modifiedDate: messageData.createdDate
+                    };
+                  }
+                  return room;
                 });
-              } catch (error) {
-                console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
-              }
+
+                const filteredRooms = updatedRooms.filter((room: ChatRoom) =>
+                  room.chatUserId === me_id || room.targetUserId === me_id
+                );
+
+                return sortChatRoomsByLastMessageTime(filteredRooms);
+              });
+            } catch (error) {
+              console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
             }
-          );
+          });
         };
 
-        chatRooms.forEach((room) => {
+        chatRooms.forEach(room => {
           subscribeToRoom(room.id);
         });
       };
@@ -529,9 +515,47 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         fetchChatRooms();
       });
 
+      // 새 채팅방 추가 이벤트 구독
+      const unsubscribeAddRoom = chatEventBus.onAddChatRoom((newChatRoom) => {
+        console.log("새 채팅방 추가 이벤트 수신됨:", newChatRoom);
+
+        // 기존 채팅방 목록에 새 채팅방 추가
+        setChatRooms(prevRooms => {
+          // 이미 존재하는 채팅방인지 확인
+          const existingRoomIndex = prevRooms.findIndex(room => room.id === newChatRoom.id);
+
+          // 존재하지 않는 경우에만 새로 추가
+          if (existingRoomIndex === -1) {
+            const updatedRooms = [...prevRooms, newChatRoom];
+
+            // 필터링 및 정렬
+            const filteredRooms = updatedRooms.filter((room) =>
+              room.chatUserId === me_id || room.targetUserId === me_id
+            );
+
+            return sortChatRoomsByLastMessageTime(filteredRooms);
+          }
+
+          // 기존에 동일한 ID의 채팅방이 있으면 업데이트
+          const updatedRooms = [...prevRooms];
+          updatedRooms[existingRoomIndex] = {
+            ...updatedRooms[existingRoomIndex],
+            ...newChatRoom
+          };
+
+          // 필터링 및 정렬
+          const filteredRooms = updatedRooms.filter((room) =>
+            room.chatUserId === me_id || room.targetUserId === me_id
+          );
+
+          return sortChatRoomsByLastMessageTime(filteredRooms);
+        });
+      });
+
       return () => {
         unsubscribe();
-      };
+        unsubscribeAddRoom();
+      }
     }
   }, [isLoggedIn]);
 
@@ -543,10 +567,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
   return (
     <>
-      <nav className="mt-5 fixed right-0 z-50 w-[calc(95%-320px)]">
-        <div className="px-4">
-          <div className="flex justify-between items-center h-12 bg-white/80 backdrop-blur-sm rounded-full mx-4 shadow-lg">
-            <div className="flex-none pl-4">
+      <nav className="mt-5 fixed right-0 z-50 w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
+        <div className="px-4 max-lg:px-1">
+          <div className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white/80 backdrop-blur-sm rounded-full shadow-lg">
+            <div className="flex-none pl-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -632,46 +656,48 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-1 flex-none pr-4">
-              <FilterButton
-                buttonStates={buttonStates}
-                toggleButton={toggleButton}
-              />
+            <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-5">
+              <div className="flex flex-wrap justify-end w-full gap-3">
+                <FilterButton
+                  buttonStates={buttonStates}
+                  toggleButton={toggleButton}
+                />
 
-              {isLoggedIn ? (
-                <>
-                  <div ref={chatListRef}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsChatListOpen(!isChatListOpen)}
-                    >
-                      <MessageSquare className="h-4 w-4" />
+                {isLoggedIn ? (
+                  <div className="flex gap-1">
+                    <div ref={chatListRef}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsChatListOpen(!isChatListOpen)}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                      <ChatRoomList
+                        isOpen={isChatListOpen}
+                        onClose={() => setIsChatListOpen(false)}
+                        onEnterRoom={handleEnterChatRoom}
+                        chatRooms={chatRooms as any}
+                        loading={loading}
+                        error={error}
+                        formatLastMessage={formatLastMessage}
+                        formatTime={formatTime}
+                        getOtherUserInfo={getOtherUserInfo}
+                        onLeaveRoom={handleLeaveRoom}
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon">
+                      <Bell className="h-4 w-4" />
                     </Button>
-                    <ChatRoomList
-                      isOpen={isChatListOpen}
-                      onClose={() => setIsChatListOpen(false)}
-                      onEnterRoom={handleEnterChatRoom}
-                      chatRooms={chatRooms as any}
-                      loading={loading}
-                      error={error}
-                      formatLastMessage={formatLastMessage}
-                      formatTime={formatTime}
-                      getOtherUserInfo={getOtherUserInfo}
-                      onLeaveRoom={handleLeaveRoom}
-                    />
+                    <Button variant="ghost" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      로그아웃
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" onClick={handleLogout}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <KakaoLoginPopup />
-              )}
+                ) : (
+                  <KakaoLoginPopup />
+                )}
+              </div>
             </div>
           </div>
         </div>
