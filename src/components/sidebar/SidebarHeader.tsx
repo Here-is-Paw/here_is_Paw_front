@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import paw from "../../assets/paw.svg";
 import { IntegratedSearch } from "./IntegratedSearch";
 import { SearchResult } from "@/services/searchService";
+import { Button } from "../ui/button";
 // import { useToast } from "@/components/ui/use-toast";
 
 interface SidebarHeaderProps {
@@ -63,12 +64,12 @@ export const SidebarHeader: FC<SidebarHeaderProps> = ({
       />
       <div className="grid grid-cols-12 gap-3">
         {filters.map((filter) => (
-          <button
+          <Button
             key={filter}
             onClick={() => {
               onFilterChange(filter);
             }}
-            className={`px-1 rounded-lg text-sm font-medium focus:outline-none ${
+            className={`px-1 rounded-lg text-sm font-medium focus:outline-none shadow-none ${
               activeFilter === filter
                 ? "bg-green-700 text-white"
                 : "bg-green-600 text-white hover:bg-green-500 focus:outline-none hover:outline-none"
@@ -78,7 +79,7 @@ export const SidebarHeader: FC<SidebarHeaderProps> = ({
             disabled={isSearching}
           >
             {filter}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

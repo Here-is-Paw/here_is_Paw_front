@@ -9,10 +9,11 @@ import { Pagination } from "swiper/modules";
 import { ChatModal } from "@/components/chat/ChatModal";
 
 interface MissingListProps {
+  activeFilter: string;
   backUrl: string;
 }
 
-export function MissingList({ backUrl }: MissingListProps) {
+export function MissingList({ activeFilter, backUrl }: MissingListProps) {
   const [pets, setPets] = useState<MissingData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -82,54 +83,96 @@ export function MissingList({ backUrl }: MissingListProps) {
       {loading ? (
         <p>loading...</p>
       ) : (
-        <div className="h-auto">
-          {/* pb-6에서 pb-2로 변경 */}
-          <Swiper
-            slidesPerView={"auto"}
-            spaceBetween={8}
-            pagination={{
-              clickable: true,
-            }}
-            modules={[Pagination]}
-            className="relative" // h-full 제거
-          >
-            {/* {console.log(pets)} */}
-            {pets.map((pet) => (
-              <SwiperSlide key={`missing${pet.id}`} className="w-40 pb-2">
-                <button
-                  type="button"
-                  className="text-left"
-                  onClick={() => handlePetSelect(pet)}
-                >
+        <>
+          {pets.length !== 0 ? (
+            <>
+              <div
+                className={`h-auto ${
+                  activeFilter === "전체" ? `` : `overflow-y-auto`
+                }`}
+              >
+                {activeFilter === "전체" ? (
+                  <Swiper
+                    slidesPerView={"auto"}
+                    spaceBetween={8}
+                    pagination={{
+                      clickable: true,
+                    }}
+                    modules={[Pagination]}
+                    className="relative" // h-full 제거
+                  >
+                    {/* {console.log(pets)} */}
+                    {pets.map((pet) => (
+                      <SwiperSlide
+                        key={`missing${pet.id}`}
+                        className="w-40 pb-2"
+                      >
+                        <button
+                          type="button"
+                          className="text-left"
+                          onClick={() => handlePetSelect(pet)}
+                        >
+                          <div className="p-2">
+                            <MissingCard activeFilter={"전체"} pet={pet} />
+                          </div>
+                        </button>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
                   <div className="p-2">
-                    <MissingCard pet={pet} />
+                    <ul className="flex flex-wrap gap-2">
+                      {pets.map((pet) => (
+                        <li
+                          key={`missing${pet.id}`}
+                          className="flex-[0.5] w-2/5 flex"
+                        >
+                          <button
+                            type="button"
+                            className="text-left w-full"
+                            onClick={() => handlePetSelect(pet)}
+                          >
+                            <div className="w-full">
+                              <MissingCard
+                                activeFilter={"잃어버렸개"}
+                                pet={pet}
+                              />
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </button>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                )}
 
-          {/* 모달은 한 번만 렌더링 */}
-          <MissingDetail
-            pet={selectedPet}
-            open={isOpen}
-            onOpenChange={(open) => {
-              setIsOpen(open);
-              if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
-            }}
-            onChatModalOpen={handleChatModalOpen}
-          />
+                {/* 모달은 한 번만 렌더링 */}
+                <MissingDetail
+                  pet={selectedPet}
+                  open={isOpen}
+                  onOpenChange={(open) => {
+                    setIsOpen(open);
+                    if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+                  }}
+                  onChatModalOpen={handleChatModalOpen}
+                />
 
-          {/* ChatModal - Dialog 외부에서 관리 */}
-          <ChatModal
-            isOpen={chatModalInfo.isOpen}
-            onClose={handleChatModalClose}
-            targetUserImageUrl={chatModalInfo.targetUserImageUrl}
-            targetUserNickname={chatModalInfo.targetUserNickname}
-            defaultImageUrl={DEFAULT_IMAGE_URL}
-            chatRoomId={chatModalInfo.chatRoomId}
-          />
-        </div>
+                {/* ChatModal - Dialog 외부에서 관리 */}
+                <ChatModal
+                  isOpen={chatModalInfo.isOpen}
+                  onClose={handleChatModalClose}
+                  targetUserImageUrl={chatModalInfo.targetUserImageUrl}
+                  targetUserNickname={chatModalInfo.targetUserNickname}
+                  defaultImageUrl={DEFAULT_IMAGE_URL}
+                  chatRoomId={chatModalInfo.chatRoomId}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="p-4 text-center text-red-500">데이터가 없습니다.</p>
+            </>
+          )}
+        </>
       )}
     </>
   );
