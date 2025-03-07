@@ -632,7 +632,7 @@ export const MissingFormPopup = ({
                     name="etc"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>기타 정보</FormLabel>
+                        <FormLabel>특이사항</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="반려동물에 대한 추가 정보를 입력하세요"

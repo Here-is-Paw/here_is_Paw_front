@@ -19,10 +19,7 @@ export function SidebarMainContent({ lostPets: _lostPets }: SidebarMainContentPr
         {/* 하단 패딩 제거 */}
         <h2 className="text-xl font-bold mb-1">잃어버렸개</h2>
         {/* mb-6에서 mb-4로 변경 */}
-        <MissingList
-          activeFilter={"전체"}
-          backUrl={`${backUrl}/api/v1/missings`}
-        />
+        <MissingList activeFilter={"전체"} backUrl={`${backUrl}`} />
       </SidebarGroup>
 
       <SidebarGroup className="p-4 pt-2">
