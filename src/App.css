@@ -13,6 +13,12 @@
 }
 
 @layer utilities {
+  /* .swiper-scrollbar {
+    @apply h-2 bg-slate-100 !important;
+  }
+  .swiper-scrollbar-drag {
+    @apply h-2 bg-muted !important;
+  } */
   .rdp-dropdown_root span {
     /* @apply sr-only; */
   }

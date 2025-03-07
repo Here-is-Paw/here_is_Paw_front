@@ -36,7 +36,7 @@ export function AppSidebar({ lostPets }: AppSidebarProps) {
       {activeFilter === "My" ? (
         <MyPage />
       ) : activeFilter === "잃어버렸개" ? (
-        <MissingList backUrl={`${backUrl}/api/v1/missings`} />
+        <MissingList activeFilter={"잃어버렸개"} backUrl={`${backUrl}`} />
       ) : (
         <SidebarMainContent lostPets={lostPets} />
       )}

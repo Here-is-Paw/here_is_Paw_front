@@ -18,7 +18,6 @@ export default function AppRoutes() {
         element={
           <MainPage
             mockLostPets={petsData.lostPets}
-            mockFindPets={petsData.findPets}
           />
         }
       />
