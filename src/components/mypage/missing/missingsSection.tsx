@@ -21,7 +21,6 @@ interface MissingsSectionProps {
 
 export const MissingsSection: React.FC<MissingsSectionProps> = ({
   userPets,
-  onAddPetClick,
   onDeletePet,
   onUpdatePet,
 }) => {

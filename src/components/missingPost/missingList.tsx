@@ -50,6 +50,7 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
           }
         );
 
+        console.log(page)
         const newPets = response.data.data.content || [];
         const isLast = response.data.data.last || false;
 

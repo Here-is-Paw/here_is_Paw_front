@@ -26,7 +26,6 @@ import { ProfileSection } from "./profile/ProfileSection.tsx";
 import { PetsSection } from "./pet/PetsSection.tsx";
 import { DeletePetDialog } from "./pet/DeletePetDialog.tsx";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
-import { MissingCard } from "../missingPost/missingCard.tsx";
 import { MissingsSection } from "./missing/missingsSection.tsx";
 
 export function MyPage() {
