@@ -1,10 +1,11 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination } from "swiper/modules";
+// import { Pagination } from "swiper/modules";
 import { useEffect, useState } from "react";
 import { MissingData } from "@/types/missing";
 import { MissingCard } from "./missingCard";
 import axios from "axios";
 import { MissingDetail } from "./missingDetail";
+import { Pagination } from "swiper/modules";
 
 interface MissingListProps {
   backUrl: string;
@@ -14,6 +15,8 @@ export function MissingList({ backUrl }: MissingListProps) {
   const [pets, setPets] = useState<MissingData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  // 선택된 펫을 추적하는 상태 추가
+  const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
 
   useEffect(() => {
     const fetchMissingPoints = async () => {
@@ -41,6 +44,12 @@ export function MissingList({ backUrl }: MissingListProps) {
     fetchMissingPoints();
   }, [backUrl]);
 
+  // 펫 선택 핸들러 추가
+  const handlePetSelect = (pet: MissingData) => {
+    setSelectedPet(pet);
+    setIsOpen(true);
+  };
+
   return (
     <>
       {loading ? (
@@ -49,9 +58,8 @@ export function MissingList({ backUrl }: MissingListProps) {
         <div className="h-auto">
           {/* pb-6에서 pb-2로 변경 */}
           <Swiper
-            slidesPerView={2}
-            spaceBetween={5}
-            slidesPerGroup={1}
+            slidesPerView={"auto"}
+            spaceBetween={8}
             pagination={{
               clickable: true,
             }}
@@ -60,29 +68,29 @@ export function MissingList({ backUrl }: MissingListProps) {
           >
             {/* {console.log(pets)} */}
             {pets.map((pet) => (
-              <SwiperSlide key={`missing${pet.id}`}>
+              <SwiperSlide key={`missing${pet.id}`} className="w-40 pb-2">
                 <button
                   type="button"
                   className="text-left"
-                  onClick={() => {
-                    // 실종 신고하기 로직
-                    setIsOpen(true);
-                    console.log(pet);
-                  }}
+                  onClick={() => handlePetSelect(pet)}
                 >
                   <div className="p-2">
                     <MissingCard pet={pet} />
                   </div>
                 </button>
-
-                <MissingDetail
-                  pet={pet}
-                  open={isOpen}
-                  onOpenChange={setIsOpen}
-                />
               </SwiperSlide>
             ))}
           </Swiper>
+
+          {/* 모달은 한 번만 렌더링 */}
+          <MissingDetail
+            pet={selectedPet}
+            open={isOpen}
+            onOpenChange={(open) => {
+              setIsOpen(open);
+              if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+            }}
+          />
         </div>
       )}
     </>
