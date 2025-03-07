@@ -121,12 +121,9 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
                   </Swiper>
                 ) : (
                   <div className="p-2">
-                    <ul className="flex flex-wrap gap-2">
+                    <ul className="grid grid-cols-2 gap-2">
                       {pets.map((pet) => (
-                        <li
-                          key={`missing${pet.id}`}
-                          className="flex-[0.5] w-2/5 flex"
-                        >
+                        <li key={`missing${pet.id}`} className="">
                           <button
                             type="button"
                             className="text-left w-full"
