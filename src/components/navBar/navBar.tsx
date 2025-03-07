@@ -105,34 +105,23 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
-  const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
-    return [...rooms].sort((a, b) => {
-      const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
-        ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
-                  a.chatMessages[a.chatMessages.length - 1].createDate ||
-                  a.modifiedDate).getTime()
-        : new Date(a.modifiedDate).getTime();
+  // const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
+  //   return [...rooms].sort((a, b) => {
+  //     const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
+  //       ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
+  //                 a.chatMessages[a.chatMessages.length - 1].createDate ||
+  //                 a.modifiedDate).getTime()
+  //       : new Date(a.modifiedDate).getTime();
 
-      const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
-        ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
-                  b.chatMessages[b.chatMessages.length - 1].createDate ||
-                  b.modifiedDate).getTime()
-        : new Date(b.modifiedDate).getTime();
+  //     const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
+  //       ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
+  //                 b.chatMessages[b.chatMessages.length - 1].createDate ||
+  //                 b.modifiedDate).getTime()
+  //       : new Date(b.modifiedDate).getTime();
 
-      return bLastMessageTime - aLastMessageTime;
-    });
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.delete(`${backUrl}/api/v1/members/logout`, {
-        withCredentials: true,
-      });
-      logout();
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-    }
-  };
+  //     return bLastMessageTime - aLastMessageTime;
+  //   });
+  // };
 
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreed(e.target.value);
