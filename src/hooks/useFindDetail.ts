@@ -1,9 +1,8 @@
 // hooks/useFindDetail.ts
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { findDetail } from "@/types/findDetail";
 import { backUrl } from "@/constants";
-import { useAuth } from "@/contexts/AuthContext";
 import { usePetContext } from "@/contexts/findPetContext";
 
 interface UseFindDetailReturn {
@@ -24,14 +23,16 @@ interface FormFields {
   setGender: (gender: number) => void;
   setSituation: (situation: string) => void;
   setName: (name: string) => void;
+  setLocation: (location: string) => void;
   setNeutered: (neutered: number) => void;
+  setGeoX: (geoX: number) => void;
+  setGeoY: (geoY: number) => void;
 }
 
 export const useFindDetail = (formFields: FormFields): UseFindDetailReturn => {
   const [findDetail, setFindDetail] = useState<findDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const { isLoggedIn } = useAuth();
   const { incrementSubmissionCount } = usePetContext();
 
   const updateFormFields = () => {
@@ -46,6 +47,9 @@ export const useFindDetail = (formFields: FormFields): UseFindDetailReturn => {
       formFields.setSituation(findDetail.situation);
       formFields.setName(findDetail.name);
       formFields.setNeutered(findDetail.neutered);
+      formFields.setLocation(findDetail.location);
+      formFields.setGeoX(findDetail.x);
+      formFields.setGeoY(findDetail.y);
     } else {
       incrementSubmissionCount();
     }
@@ -56,8 +60,8 @@ export const useFindDetail = (formFields: FormFields): UseFindDetailReturn => {
     setError(null);
 
     try {
-      const detailResponse = await axios.get(`${backUrl}api/v1/finding/${postId}`, {});
-      setFindDetail(detailResponse.data);
+      const detailResponse = await axios.get(`${backUrl}/api/v1/finding/${postId}`, {});
+      setFindDetail(detailResponse.data.data);
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch pet details:", err);

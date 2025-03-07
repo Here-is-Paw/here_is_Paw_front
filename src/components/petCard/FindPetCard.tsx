@@ -1,16 +1,16 @@
 import { FindPet } from "@/types/FindPet";
-import { findDetail } from "@/types/findDetail";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
 import { Plus } from "lucide-react";
-import { usePetContext } from "@/contexts/findPetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChatModal } from "@/components/chat/ChatModal";
 import { chatEventBus } from "@/contexts/ChatContext";
 import axios from "axios";
 import GetFindLocationPicker from "./findedNcpMap";
-
+import { useFindDetail } from "@/hooks/useFindDetail";
+import { useFindUpdate } from "@/hooks/useFindUpdate";
+import { useFindDelete } from "@/hooks/useFindDelete";
 
 const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -27,52 +27,57 @@ const getValidImageUrl = (imageUrl: string | undefined) => {
 
 interface PetCardProps {
   pet: FindPet;
-  // findDetail: findDetail;
 }
 
 export function FindPetCard({ pet }: PetCardProps) {
-  const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
-  const [findDetail, setFindDetail] = useState<findDetail | null>(null);
-  const [member, setMember] = useState(null);
   const { isLoggedIn } = useAuth();
-  // const findLocation = useGeolocation();
+  const [member, setMember] = useState(null);
+  
+  // findpost 모달
+  const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
+
+  // findpost에 담아야 할 정보
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [title, setTitle] = useState<string | "">("제목"); // findpost 제목
+  const [breed, setBreed] = useState("미상"); // findpost 견종
+  const [name, setName] = useState("미상"); // findpost 개 이름
+  const [color, setColor] = useState("미상"); // findpost 개 색상
+  const [situation, setSituation] = useState("발견 상황"); // findpost 발견 상황
+  const [etc, setEtc] = useState("특이 사항"); // findpost 특이 사항
+  const [gender, setGender] = useState(0); // findpost 성별
+  const [age, setAge] = useState(0); // findpost 개 나이
+  const [neutered, setNeutered] = useState(0); // findpost 개 중성화 여부
+  const [geoX, setGeoX] = useState(0); // X 좌표
+  const [geoY, setGeoY] = useState(0); // Y 좌표
+  const [location, setLocation] = useState(""); // 발견 장소
 
-  const { incrementSubmissionCount } = usePetContext();
+  // fondpost hooks
+  const { updateFindPost } = useFindUpdate();
+  const { deleteFindPost } = useFindDelete();
+  const { findDetail, fetchFindDetail, updateFormFields } = useFindDetail({
+    setImagePreview,
+    setTitle,
+    setAge,
+    setBreed,
+    setColor,
+    setEtc,
+    setGender,
+    setSituation,
+    setName,
+    setNeutered,
+    setGeoX,
+    setGeoY,
+    setLocation
+  });
 
-  const [breed, setBreed] = useState("");
-  const [geoX, setGeoX] = useState(0);
-  const [geoY, setGeoY] = useState(0);
-  const [location, setLocation] = useState("");
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("");
-  const [gender, setGender] = useState(0);
-  const [etc, setEtc] = useState("");
-  const [situation, setSituation] = useState("");
-  const [title, setTitle] = useState<string | "">("");
-  const [age, setAge] = useState(0);
-  const [neutered, setNeutered] = useState(0);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [currentChatRoomId, setCurrentChatRoomId] = useState<number | null>(null);
 
   const [targetUserImageUrl, setTargetUserImageUrl] = useState<string | null>(null);
   const [targetUserNickname, setTargetUserNickname] = useState<string | null>(null);
 
-  //   private Long member_id; // 신고한 회원 id
-  //   private Long shelter_id; // 보호소 id
-
-  const handleLocationSelect = (location: {
-    x: number;
-    y: number;
-    address: string;
-  }) => {
-    setGeoX(location.x);
-    setGeoY(location.y);
-    setLocation(location.address);
-
-  };
-
+  // input하면 발생하는 이벤트 ex)제목입력, 견종 입력, ...
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreed(e.target.value);
   };
@@ -109,11 +114,36 @@ export function FindPetCard({ pet }: PetCardProps) {
     setNeutered(parseInt(e.target.value));
   };
 
+  const handleLocationSelect = (location: {
+    x: number;
+    y: number;
+    address: string;
+  }) => {
+    setGeoX(location.x);
+    setGeoY(location.y);
+    setLocation(location.address);
+
+  };
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+          withCredentials: true,
+        });
+        setMember(memberResponse.data.data.id);
+      } catch (error) {
+        console.error("유저 정보 가져오기 실패:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
   // 파일 업로드 핸들러
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log(1234)
       // 파일 객체 자체를 저장
       setImageFile(file);
 
@@ -129,142 +159,52 @@ export function FindPetCard({ pet }: PetCardProps) {
     setImageFile(null);
 
     localStorage.removeItem("uploadedImage");
-};
+  };
+  
+  // findpost 상세보기
+  const openDetailModal = async (postId: number) => {
+    await fetchFindDetail(postId);
+    // console.log("Updated findDetail:", findDetail);
+    updateFormFields();
+    
+  };
 
   useEffect(() => {
-    if (isLoggedIn) {
-      const loginCheck = async () => {
-        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-          withCredentials: true,
-        });
-  
-        setMember(memberResponse.data.data.id);
-      };
-  
-      loginCheck();
-      
+    if (findDetail) {
+      console.log("Uploaded findDetail:", findDetail);
+      setIsFindDetailModalOpen(true);
     }
   }, [findDetail]);
 
-  // find post 단건 조회
-  const handleFindDetail = async (postId: number) => {
-    if (!isLoggedIn) {
-      setMember(null);
-    }
-
-    try {
-      const detailResponse = await axios.get(`${backUrl}api/v1/finding/${postId}`, {});
-      setFindDetail(detailResponse.data);
-      if (findDetail) {
-        setImagePreview(findDetail.path_url);
-        setTitle(findDetail.title);
-        setAge(findDetail.age);
-        setBreed(findDetail.breed);
-        setColor(findDetail.color);
-        setEtc(findDetail.etc);
-        setGender(findDetail.gender);
-        setSituation(findDetail.situation);
-        setName(findDetail.name);
-        setNeutered(findDetail.neutered);
-        // setFindDate();
-      } else {
-        incrementSubmissionCount();
-      }
-    } catch (error) {
-      console.error("Failed to fetch pet details:", error);
-    }
-  };
-
-  const openDetailModal = async (postId: number) => {
-    handleFindDetail(postId);
-    console.log("Updated findDetail:", findDetail);
-    setIsFindDetailModalOpen(true);
-  };
-
-  // find post 수정
+  // findpost 수정
   const handleFindUpdateSubmit = async (postId: number) => {
-    if (isLoggedIn) {
-      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-        withCredentials: true,
-      })
-        ;
-
-      const member_id = memberResponse.data.data.id;
-
-      try {
-
-        const formData = new FormData();
-
-        // 파일 추가
-        if (imageFile) {
-          formData.append("file", imageFile);
-        }
-
-        // JSON 객체의 각 필드를 개별적으로 추가
-        formData.append("title", title);
-        formData.append("situation", situation);
-        formData.append("breed", breed);
-        formData.append("location", location);
-        // Point 객체는 문자열로 변환해서 보내야 함
-        formData.append("x", geoX.toString()); // geo 객체의 x 값
-        formData.append("y", geoY.toString()); // geo 객체의 y 값
-        formData.append("name", name);
-        formData.append("color", color);
-        formData.append("etc", etc);
-        formData.append("gender", gender.toString());
-        formData.append("age", age.toString());
-        formData.append("neutered", neutered.toString());
-        formData.append("find_date", "2025-02-20T00:00:00");
-        formData.append("member_id", member_id);
-        formData.append("shelter_id", "1");
-
-        const response = await axios.put(`${backUrl}api/v1/finding/${postId}`, formData, {
-          withCredentials: true,
-        });
-
-        if (response.status === 200 || response.status === 201) {
-          alert("발견 신고가 성공적으로 수정되었습니다!");
-          incrementSubmissionCount();
-          handleRemoveImage();
-        } else {
-          alert("수정 실패");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("오류가 발생했습니다.");
-        handleRemoveImage();
-      }
-    } else {
-      setMember(null);
-      alert("로그인 후 이용 가능한 서비스 입니다!");
-      return;
+    const formData = new FormData();
+    if (imageFile) {
+      formData.append("file", imageFile);
     }
+    formData.append("title", title);
+    formData.append("situation", situation);
+    formData.append("breed", breed);
+    formData.append("location", location);
+    formData.append("x", geoX.toString());
+    formData.append("y", geoY.toString());
+    formData.append("name", name);
+    formData.append("color", color);
+    formData.append("etc", etc);
+    formData.append("gender", gender.toString());
+    formData.append("age", age.toString());
+    formData.append("neutered", neutered.toString());
+    formData.append("find_date", "2025-02-20T00:00:00");
+    formData.append("shelter_id", "1");
+
+    await updateFindPost(postId, formData);
   };
 
-  // 발견 신고 삭제
+  // findpost 삭제
   const handleFindDeleteSubmit = async (postId: number) => { 
-    if (!isLoggedIn) {
-      alert("로그인 후 이용 가능한 서비스 입니다!");
-      return;
+    if (confirm("정말 삭제하시겠습니까?")) {
+      deleteFindPost(postId);
     }
-
-    try {
-      const response = await axios.delete(`${backUrl}api/v1/finding/${postId}`, {
-        withCredentials: true,
-      });
-  
-      if (response.status === 200 || response.status === 201) {
-        alert("발견 신고가 성공적으로 삭제되었습니다!")
-        incrementSubmissionCount();
-      } else {
-        alert("삭제 실패!");
-      }
-
-    } catch (error) {
-      console.error("Error:", error);
-        alert("오류가 발생했습니다.");
-    }
-
   };
 
   return (

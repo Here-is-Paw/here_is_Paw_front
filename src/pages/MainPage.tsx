@@ -23,14 +23,14 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
   useEffect(() => {
     const fetchPets = async () => {
       try {
-        const response = await fetch(`${backUrl}api/v1/finding`);
+        const response = await fetch(`${backUrl}/api/v1/finding`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         
         const data = await response.json();
-        setFindPets(data);
+        setFindPets(data.data.content);
 
 
       } catch (err) {

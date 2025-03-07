@@ -59,7 +59,7 @@ export function MissingList({ backUrl }: MissingListProps) {
             className="relative" // h-full 제거
           >
             {/* {console.log(pets)} */}
-            {pets.map((pet) => (
+            {/* {pets.map((pet) => (
               <SwiperSlide key={`missing${pet.id}`}>
                 <button
                   type="button"
@@ -80,7 +80,7 @@ export function MissingList({ backUrl }: MissingListProps) {
                   onOpenChange={setIsOpen}
                 />
               </SwiperSlide>
-            ))}
+            ))} */}
           </Swiper>
         </div>
       )}
