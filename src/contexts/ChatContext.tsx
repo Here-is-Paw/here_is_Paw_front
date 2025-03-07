@@ -17,6 +17,24 @@ export const chatEventBus = {
         l => l !== listener
       );
     };
+  },
+  
+  // 새 채팅방 추가 리스너 배열
+  addChatRoomListeners: [] as Array<(chatRoom: any) => void>,
+  
+  // 새 채팅방 추가 이벤트 발행
+  emitAddChatRoom: (chatRoom: any) => {
+    chatEventBus.addChatRoomListeners.forEach(listener => listener(chatRoom));
+  },
+  
+  // 새 채팅방 추가 이벤트 구독
+  onAddChatRoom: (listener: (chatRoom: any) => void) => {
+    chatEventBus.addChatRoomListeners.push(listener);
+    return () => {
+      chatEventBus.addChatRoomListeners = chatEventBus.addChatRoomListeners.filter(
+        l => l !== listener
+      );
+    };
   }
 };
 
