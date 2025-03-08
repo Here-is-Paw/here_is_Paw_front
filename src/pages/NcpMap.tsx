@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
-import { Pet } from "@/types/pet";
+import { useEffect, useRef, useState } from "react";
 import { FindPets } from "@/types/FindPet";
-import {useRadius} from "@/contexts/RadiusContext.tsx";
+import { useRadius } from "@/contexts/RadiusContext.tsx";
+import { MissingData, processMissingData } from "@/types/missing";
+import { PetAlert } from "@/components/petCard/PetAlert";
+// import { MissingDetail } from "@/components/missingPost/missingDetail";
 
 interface NcpMapProps {
   currentLocation: {
@@ -9,11 +11,17 @@ interface NcpMapProps {
     coordinates?: { lat: number; lng: number };
     error?: { code: number; message: string };
   };
-  lostPets: Pet[];
+  lostPets: MissingData[];
   findPets: FindPets[];
 }
 
 const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
+  // missing
+  // const [missingIsOpen, setMissingIsOpen] = useState<boolean>(false);
+  // const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
+
+  const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
+
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
@@ -21,6 +29,12 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   const circleRef = useRef<naver.maps.Circle | null>(null);
 
   const { radius } = useRadius();
+
+  // 펫 선택 핸들러 추가
+  // const handlePetSelect = (pet: MissingData) => {
+  //   setSelectedPet(pet);
+  //   setMissingIsOpen(true);
+  // };
 
   const getPawMarkerIcon = (isLost: boolean) => {
     const color = isLost ? "#EF4444" : "#22C55E"; // red-500 : green-500
@@ -33,7 +47,11 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   };
 
   useEffect(() => {
-    if (circleRef.current && mapInstance.current && currentLocation.coordinates) {
+    if (
+      circleRef.current &&
+      mapInstance.current &&
+      currentLocation.coordinates
+    ) {
       // 지도 중심 및 확대 수준 유지하면서 원 크기만 변경
       circleRef.current.setRadius(radius);
     }
@@ -91,31 +109,53 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
             map: map,
             center: center,
             radius: radius, // Use radius from context
-            strokeColor: '#5F9EA0',
+            strokeColor: "#5F9EA0",
             strokeOpacity: 0.6,
             strokeWeight: 2,
-            fillColor: '#5F9EA0',
-            fillOpacity: 0.2
+            fillColor: "#5F9EA0",
+            fillOpacity: 0.2,
           });
         }
 
         // 잃어버린 반려동물 마커 (빨간색)
-        lostPets.forEach((pet) => {
-          const marker = new window.naver.maps.Marker({
-            position: new window.naver.maps.LatLng(pet.lang, pet.lat),
-            map: map,
-            title: `[실종] ${pet.breed}`,
-            icon: {
-              content: getPawMarkerIcon(true),
-              anchor: new window.naver.maps.Point(12, 12),
-            },
-          });
+        lostPets.map((pet) => {
+          const processedPet = processMissingData(pet);
 
-          window.naver.maps.Event.addListener(marker, "click", () => {
-            alert(
-              `[실종]\n품종: ${pet.breed}\n특징: ${pet.features}\n위치: ${pet.location}\n발견일: ${pet.date}`
+          // console.log("--processed pet---", processedPet);
+
+          // Only create marker if we have valid coordinates
+          if (processedPet.x && processedPet.y) {
+            const marker = new window.naver.maps.Marker({
+              position: new window.naver.maps.LatLng(
+                processedPet.y,
+                processedPet.x
+              ), // Note: Naver maps uses (lat, lng) order
+              map: map,
+              title: `[실종] ${processedPet.breed}`,
+              icon: {
+                content: getPawMarkerIcon(true),
+                anchor: new window.naver.maps.Point(12, 12),
+              },
+            });
+
+            window.naver.maps.Event.addListener(marker, "click", () => {
+              // alert(
+              //   `[실종]\n품종: ${processedPet.breed}\n특징: ${
+              //     processedPet.etc || "정보 없음"
+              //   }\n위치: ${processedPet.location}\n발견일: ${
+              //     processedPet.lostDate || "정보 없음"
+              //   }`
+              // );
+
+              // ✅ 선택한 pet 정보 업데이트 -> React가 다시 렌더링
+              setSelectedPet(processedPet);
+              console.log(processedPet);
+            });
+          } else {
+            console.warn(
+              `No valid coordinates for pet: ${pet.id} - ${pet.name}`
             );
-          });
+          }
         });
 
         // 발견된 반려동물 마커 (초록색)
@@ -163,11 +203,38 @@ const NcpMap = ({ currentLocation, lostPets, findPets }: NcpMapProps) => {
   }, [currentLocation, lostPets, findPets]);
 
   return (
-    <div
-      id="map"
-      ref={mapElement}
-      style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
-    />
+    <>
+      <div
+        id="map"
+        ref={mapElement}
+        style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
+      />
+
+      {/* <p>현재 선택된 Pet: {selectedPet ? selectedPet.name : "없음"}</p> */}
+
+      {/* ✅ 선택한 마커 클릭 시 `PetAlert` 렌더링 */}
+      {selectedPet && (
+        // <PetAlert
+        //   petName={selectedPet.name}
+        //   petImage={selectedPet.image}
+        //   petType={selectedPet.breed}
+        //   location={selectedPet.location}
+        //   date={selectedPet.lostDate}
+        //   position={{
+        //     x: selectedPet.position.lat,
+        //     y: selectedPet.position.lng,
+        //   }}
+        //   onViewDetails={() => {
+        //     console.log("상세 보기 클릭");
+        //     setSelectedPet(null); // 닫기 기능 추가
+        //   }}
+        // />
+
+        <div className="fixed bg-red-500 w-28 h-96 top-0 left-0 z-50">
+          안ㄴ녕
+        </div>
+      )}
+    </>
   );
 };
 

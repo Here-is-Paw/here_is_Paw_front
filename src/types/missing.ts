@@ -39,6 +39,9 @@ export interface MissingData {
   name: string;
   breed: string;
   geo: string;
+  // 좌표값 직접 추가
+  x?: number;
+  y?: number;
   location: string;
   color?: string;
   serialNumber?: string;
@@ -57,6 +60,8 @@ export const defaultMissingValues: MissingData = {
   name: "",
   breed: "",
   geo: "",
+  x: 0,
+  y: 0,
   location: "",
   color: "",
   serialNumber: "",
@@ -112,6 +117,23 @@ export const MissingStateText: Record<MissingState, string> = {
   [MissingState.CANCELED]: "취소됨",
 };
 
+// 데이터 로드/처리 시 x, y 좌표 설정
+export function processMissingData(data: MissingData): MissingData {
+  // 기존 데이터 복사
+  const processedData = { ...data };
+
+  // geo 좌표 추출 및 설정
+  if (data.geo) {
+    const coords = MissingUtils.extractGeoCoordinates(data.geo);
+    if (coords) {
+      processedData.x = coords.x;
+      processedData.y = coords.y;
+    }
+  }
+
+  return processedData;
+}
+
 // 공통으로 사용되는 유틸리티 함수들
 export const MissingUtils = {
   // gender 값에 따른 표시 문자열 결정
@@ -154,5 +176,28 @@ export const MissingUtils = {
   formatReward: (reward?: number): string => {
     if (!reward) return "사례금 없음";
     return `${reward.toLocaleString()}원`;
+  },
+
+  // geo 좌표 추출 함수 추가
+  extractGeoCoordinates: (
+    geoString?: string
+  ): { x: number; y: number } | null => {
+    if (!geoString) return null;
+
+    const regex = /POINT\s*\(([^)]+)\)/;
+    const match = geoString.match(regex);
+
+    if (match && match[1]) {
+      const coordinates = match[1].trim().split(/\s+/);
+
+      if (coordinates.length === 2) {
+        return {
+          x: parseFloat(coordinates[0]),
+          y: parseFloat(coordinates[1]),
+        };
+      }
+    }
+
+    return null;
   },
 };
