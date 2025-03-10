@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { X } from "lucide-react";
 
 import { PetForm } from "@/components/mypage/pet/petForm/PetForm.tsx";
-import { MyPet, PetFormData } from "@/types/pet.ts";
+import { MyPet, PetFormData } from "@/types/mypet.ts";
 
 interface EditPetFormPopupProps {
   open: boolean;

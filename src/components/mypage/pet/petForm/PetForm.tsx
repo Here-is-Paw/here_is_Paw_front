@@ -8,7 +8,7 @@ import { PetBasicInfoForm } from './PetBasicInfoForm.tsx';
 import { PetDetailsForm } from './PetDetailsForm.tsx';
 import { PetAdditionalInfoForm } from './PetAdditionalInfoForm.tsx';
 import { PetImageUploader } from './PetImageUploader.tsx';
-import { PetFormData } from '@/types/pet.ts';
+import { PetFormData } from '@/types/mypet.ts';
 
 interface PetFormProps {
     form: any;

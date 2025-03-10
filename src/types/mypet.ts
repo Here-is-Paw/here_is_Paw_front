@@ -1,20 +1,13 @@
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
-export interface Pet {
-  id: string;
-  imageUrl: string;
-  date: string;
-  breed: string;
-  features: string;
-  location: string;
-  lat: number;
-  lang: number;
-}
-
-export enum PetGender {
-  Unknown = 0,
-  Male = 1,
-  Female = 2
+export interface PetList {
+  id: number;
+  breed: string;  // 견종
+  location: string;  // 지역
+  etc: string;  // 기타 특징
+  x: number;  // Point.getX() 대신 사용
+  y: number;  // Point.getY() 대신 사용
+  pathUrl: string;  // 이미지 경로
 }
 
 export interface MyPet {
@@ -88,4 +81,14 @@ export const defaultValues: PetFormData = {
 export interface GeoPoint {
   x: number;
   y: number;
+}
+
+export interface SearchPet {
+  breed: string;
+  etc: string;
+  id: string;
+  imageUrl: string;
+  location: string;
+  post_id: number;
+  type: number;
 }
