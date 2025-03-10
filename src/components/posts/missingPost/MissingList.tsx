@@ -11,10 +11,9 @@ export function MissingList() {
     // Context에서 데이터와 상태 가져오기
     const {
         missingPets, // filteredPets 대신 missingPets 사용
-        // searchMode,
         activeFilter,
         isLoading,
-        hasMore,
+        missingHasMore,
         loadMorePets
     } = usePetContext();
 
@@ -57,7 +56,8 @@ export function MissingList() {
         // observer 콜백 함수
         const handleObserver = (entries: IntersectionObserverEntry[]) => {
             const [entry] = entries;
-            if (entry.isIntersecting && hasMore && !isLoading && !initialLoad) {
+            console.log("헤스모어 : ", missingHasMore);
+            if (entry.isIntersecting && missingHasMore && !isLoading && !initialLoad) {
                 console.log("Loading more data...");
                 loadMorePets();
             }
@@ -67,7 +67,7 @@ export function MissingList() {
         observerRef.current = new IntersectionObserver(handleObserver, options);
 
         // 로딩 요소 관찰 시작
-        if (loadingRef.current && hasMore) {
+        if (loadingRef.current && missingHasMore) {
             observerRef.current.observe(loadingRef.current);
         }
 
@@ -77,7 +77,7 @@ export function MissingList() {
                 observerRef.current.disconnect();
             }
         };
-    }, [hasMore, isLoading, loadMorePets, initialLoad]);
+    }, [missingHasMore, isLoading, loadMorePets, initialLoad]);
 
     // 펫 선택 핸들러 추가
     const handlePetSelect = (pet: PetList) => {
@@ -99,11 +99,13 @@ export function MissingList() {
     };
 
     const handleSwiperReachEnd = () => {
-        if (hasMore && !isLoading && !initialLoad && activeFilter === "전체") {
+        if (missingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
             console.log("Swiper reached end, loading more data...");
             loadMorePets();
         }
     };
+
+    console.log("missingPet: ", missingPets);
 
     return (
         <>
@@ -175,8 +177,8 @@ export function MissingList() {
 
                                         {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
                                         <div ref={loadingRef} className="py-4 text-center">
-                                            {isLoading && hasMore && <p>더 불러오는 중...</p>}
-                                            {!hasMore && missingPets.length > 0 && (
+                                            {isLoading && missingHasMore && <p>더 불러오는 중...</p>}
+                                            {!missingHasMore && missingPets.length > 0 && (
                                                 <p className="text-gray-500 text-sm">
                                                     모든 데이터를 불러왔습니다
                                                 </p>
