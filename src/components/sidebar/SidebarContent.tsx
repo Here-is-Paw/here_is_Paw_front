@@ -12,7 +12,7 @@ export function SidebarMainContent() {
                 {/* 하단 패딩 제거 */}
                 <h2 className="text-xl font-bold mb-1">잃어버렸개</h2>
                 {/* mb-6에서 mb-4로 변경 */}
-                <MissingList activeFilter={"전체"}/>
+                <MissingList />
             </SidebarGroup>
 
             <SidebarGroup className="p-4 pt-2">
