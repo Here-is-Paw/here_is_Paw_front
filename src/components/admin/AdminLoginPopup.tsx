@@ -44,6 +44,9 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
             navigate('/'); // 필요한 경우 홈페이지로 이동
         } catch (error) {
             console.error('로그인 오류:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                console.error('서버 응답:', error.response.data);
+            }
             alert('로그인 실패');
             setIsLoading(false);
         }
