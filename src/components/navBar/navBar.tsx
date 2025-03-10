@@ -448,7 +448,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     return (
         <>
-            <nav className="mt-5 fixed right-0 z-5 w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
+            <nav className="mt-5 fixed right-0 z-[5] w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
                 <div className="px-4 max-lg:px-1">
                     <div
                         className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
