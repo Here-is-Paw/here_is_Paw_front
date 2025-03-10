@@ -36,10 +36,10 @@ export interface FindingDetailData {
   nickname: string;
 
   // 필수 값
-  breed: string; // 견종
+  breed: string; // 품종
   location: string; // 지역
-  x: number;  // Point.getX() 대신 사용
-  y: number;  // Point.getY() 대신 사용
+  x: number; // Point.getX() 대신 사용
+  y: number; // Point.getY() 대신 사용
   pathUrl: string;
 
   // 선택 값
