@@ -1,6 +1,6 @@
 import { SidebarMainContent } from "./sidebar/SidebarContent";
 import { useState, useEffect } from "react";
-import { Pet } from "@/types/pet";
+import { Pet } from "@/types/mypet.ts";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
 import {
   Drawer,

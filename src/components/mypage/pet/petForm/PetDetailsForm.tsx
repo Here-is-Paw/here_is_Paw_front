@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select.tsx";
-import { FormProps } from '@/types/pet.ts';
+import { FormProps } from '@/types/mypet.ts';
 
 export const PetDetailsForm: React.FC<FormProps> = ({ form }) => {
     return (

@@ -13,7 +13,7 @@ import { backUrl } from "@/constants";
 
 // Types
 import { User } from "@/types/user";
-import { MyPet } from "@/types/pet";
+import { MyPet } from "@/types/mypet.ts";
 
 // Custom Components
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup";
