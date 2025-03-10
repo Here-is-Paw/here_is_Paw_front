@@ -7,7 +7,7 @@ import {
     FormMessage,
 } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { FormProps } from '@/types/pet.ts';
+import { FormProps } from '@/types/mypet.ts';
 
 export const PetBasicInfoForm: React.FC<FormProps> = ({ form }) => {
     return (

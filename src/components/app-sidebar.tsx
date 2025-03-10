@@ -1,45 +1,35 @@
 import { Sidebar } from "@/components/ui/sidebar";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarMainContent } from "./sidebar/SidebarContent";
-import { useState, useEffect } from "react";
-import { Pet } from "@/types/pet";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
-import { MissingList } from "./missingPost/missingList";
-import { backUrl } from "@/constants";
+import { usePetContext } from "@/contexts/PetContext";
+import { MissingList } from "@/components/posts/missingPost/MissingList.tsx";
+import { FindingList } from "@/components/posts/findingPost/FindingList.tsx";
 
-interface AppSidebarProps {
-  lostPets: Pet[];
-  findPets: Pet[];
-}
+export function AppSidebar() {
+    const { activeFilter } = usePetContext();
 
-export function AppSidebar({ lostPets }: AppSidebarProps) {
-  const [activeFilter, setActiveFilter] = useState<string>("전체");
+    // 컴포넌트 렌더링 선택
+    const renderContent = () => {
+        switch (activeFilter) {
+            case "My":
+                return <MyPage />;
+            case "잃어버렸개":
+                return <MissingList/>;
+            case "발견했개":
+                return <FindingList />;
+            default:
+                return <SidebarMainContent />;
+        }
+    };
 
-  // 상태 변경을 감지하는 useEffect 추가
-  useEffect(() => {
-    console.log("activeFilter 상태 변경됨:", activeFilter);
-  }, [activeFilter]);
+    return (
+        <Sidebar className="max-lg:w-[18rem]">
+            {/* 헤더 영역 */}
+            <SidebarHeader />
 
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
-  };
-
-  return (
-    <Sidebar className="max-lg:w-[18rem]">
-      {/* 헤더 영역 */}
-      <SidebarHeader
-        activeFilter={activeFilter}
-        onFilterChange={handleFilterChange}
-      />
-
-      {/* 컨텐츠 영역 */}
-      {activeFilter === "My" ? (
-        <MyPage />
-      ) : activeFilter === "잃어버렸개" ? (
-        <MissingList backUrl={`${backUrl}/api/v1/missings`} />
-      ) : (
-        <SidebarMainContent lostPets={lostPets} />
-      )}
-    </Sidebar>
-  );
+            {/* 컨텐츠 영역 */}
+            {renderContent()}
+        </Sidebar>
+    );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { Button } from "@/components/ui/button.tsx";
-import { FormProps } from '@/types/pet.ts';
+import { FormProps } from '@/types/mypet.ts';
 
 export const PetImageUploader: React.FC<FormProps> = ({ form }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);

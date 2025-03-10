@@ -5,8 +5,8 @@ import {
   DialogHeader,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dialog.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
 
@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.tsx";
 import {
   Form,
   FormControl,
@@ -24,24 +24,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import { useForm } from "react-hook-form";
 import React, { useEffect, useState } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/popover.tsx";
+import { cn } from "@/lib/utils.ts";
 import { format } from "date-fns";
-import { MissingFormData, defaultValues } from "@/types/missing";
-import { Calendar } from "@/components/ui/calendar";
+import { MissingFormData, defaultValues } from "@/types/missing.ts";
+import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "../locaion/locationPicker";
-import useGeolocation from "@/hooks/useGeolocation";
+import LocationPicker from "../../locaion/locationPicker.tsx";
+import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
+import {usePetContext} from "@/contexts/PetContext.tsx";
 
 interface MissingFormPopupProps {
   open: boolean;
@@ -98,6 +99,8 @@ export const MissingFormPopup = ({
       setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
     }
   };
+
+  const { refreshPets } = usePetContext();
 
   // console.log("location", location);
 
@@ -250,6 +253,9 @@ export const MissingFormPopup = ({
       form.reset(defaultValues);
       setImagePreview(null);
       setFile(null);
+
+      await refreshPets();
+
       onOpenChange(false);
 
       // 🔥 모달이 열릴 때 현재 위치를 다시 설정
@@ -632,7 +638,7 @@ export const MissingFormPopup = ({
                     name="etc"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>기타 정보</FormLabel>
+                        <FormLabel>특이사항</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="반려동물에 대한 추가 정보를 입력하세요"

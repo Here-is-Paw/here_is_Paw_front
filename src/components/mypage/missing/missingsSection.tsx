@@ -11,7 +11,7 @@ import { User } from "@/types/user.ts";
 import { useState } from "react";
 import { PetDetailDialog } from "@/components/mypage/pet/PetDetailPopup.tsx";
 
-interface PetsSectionProps {
+interface MissingsSectionProps {
   userPets: MyPet[];
   userData: User | null;
   onAddPetClick: () => void;
@@ -19,9 +19,8 @@ interface PetsSectionProps {
   onUpdatePet?: (pet: MyPet) => void;
 }
 
-export const PetsSection: React.FC<PetsSectionProps> = ({
+export const MissingsSection: React.FC<MissingsSectionProps> = ({
   userPets,
-  onAddPetClick,
   onDeletePet,
   onUpdatePet,
 }) => {
@@ -42,7 +41,7 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
 
   return (
     <>
-      <h2 className="text-xl font-bold mb-1">내 반려동물</h2>
+      <h2 className="text-xl font-bold mb-1">실종 신고한 반려동물</h2>
 
       {userPets.length > 0 ? (
         userPets.map((pet, index) => (
@@ -104,14 +103,14 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
       ) : (
         <Card className="mb-4">
           <CardContent className="p-4 text-center text-gray-500">
-            등록된 반려동물이 없습니다.
+            잃어버린 반려동물이 없습니다.
           </CardContent>
         </Card>
       )}
 
-      <Button className="w-full" variant="outline" onClick={onAddPetClick}>
+      {/* <Button className="w-full" variant="outline" onClick={onAddPetClick}>
         반려동물 추가하기
-      </Button>
+      </Button> */}
 
       {/* AlertDialog를 사용한 상세보기 컴포넌트 */}
       <PetDetailDialog
