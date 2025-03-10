@@ -1,18 +1,19 @@
-import { PetCard } from "./PetCard"
-import { Pet } from "@/types/mypet.ts"
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import './swiper.css'; // 새로운 CSS 파일 추가
+import type { PetList } from "@/types/mypet.ts";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "./swiper.css"; // 새로운 CSS 파일 추가
 
 interface PetListProps {
-  pets: Pet[]
+  pets: PetList[];
 }
 
 export function PetList({ pets }: PetListProps) {
   return (
-    <div className="h-auto"> {/* pb-6에서 pb-2로 변경 */}
+    <div className="h-auto">
+      {" "}
+      {/* pb-6에서 pb-2로 변경 */}
       <Swiper
         slidesPerView={2}
         spaceBetween={5}
@@ -25,12 +26,14 @@ export function PetList({ pets }: PetListProps) {
       >
         {pets.map((pet) => (
           <SwiperSlide key={pet.id}>
-            <div className="p-2"> {/* 카드 주변 패딩 추가 */}
-              <PetCard pet={pet} />
+            <div className="p-2">
+              {" "}
+              {/* 카드 주변 패딩 추가 */}
+              {/* <PetCard pet={pet} /> */}
             </div>
           </SwiperSlide>
         ))}
       </Swiper>
     </div>
-  )
+  );
 }
