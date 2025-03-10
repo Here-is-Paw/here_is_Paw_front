@@ -42,6 +42,9 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
             window.location.href = '/'; // 홈페이지로 완전 새로고침
         } catch (error) {
             console.error('로그인 오류:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                console.error('서버 응답:', error.response.data);
+            }
             alert('로그인 실패');
             setIsLoading(false);
         }
