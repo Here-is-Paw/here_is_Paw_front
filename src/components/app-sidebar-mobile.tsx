@@ -1,6 +1,5 @@
 import { SidebarMainContent } from "./sidebar/SidebarContent";
-import { useState, useEffect } from "react";
-import { Pet } from "@/types/mypet.ts";
+import { useState } from "react";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
 import {
   Drawer,
@@ -12,33 +11,19 @@ import {
 } from "@/components/ui/drawer";
 import { clsx } from "clsx";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
+import {usePetContext} from "@/contexts/PetContext.tsx";
 
-interface AppSidebarProps {
-  lostPets: Pet[];
-  findPets: Pet[];
-}
 
-export function AppSidebarMobile({ lostPets }: AppSidebarProps) {
-  const [activeFilter, setActiveFilter] = useState<string>("전체");
+export function AppSidebarMobile() {
   const [open, setOpen] = useState(true);
   const [snap, setSnap] = useState<number | string | null>("355px");
 
-  // 상태 변경을 감지하는 useEffect 추가
-  useEffect(() => {
-    console.log("activeFilter 상태 변경됨:", activeFilter);
-  }, [activeFilter]);
-
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
-  };
+  const {activeFilter} = usePetContext();
 
   return (
     <>
       <div className="fixed top-0 left-0 z-10 w-full">
-        <SidebarHeader
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
+        <SidebarHeader />
       </div>
       {/* 컨텐츠 영역 */}
       <Drawer
@@ -76,7 +61,7 @@ export function AppSidebarMobile({ lostPets }: AppSidebarProps) {
               {activeFilter === "My" ? (
                 <MyPage />
               ) : (
-                <SidebarMainContent lostPets={lostPets}/>
+                <SidebarMainContent />
               )}
             </div>
           </DrawerContent>
