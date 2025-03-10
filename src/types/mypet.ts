@@ -8,6 +8,7 @@ export interface PetList {
   x: number;  // Point.getX() 대신 사용
   y: number;  // Point.getY() 대신 사용
   pathUrl: string;  // 이미지 경로
+  findDate: string;
 }
 
 export interface MyPet {

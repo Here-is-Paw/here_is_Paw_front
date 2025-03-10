@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 import axios from "axios";
 import { backUrl } from "@/constants";
-
+// import { MyPet, FindPet } from "@/types/mypet";
+import { FindingDetailData } from "@/types/finding.ts";
+type FindIdType = string | number;
 // API 호출 함수 추가
-const writeFindPost = async (formData: FormData) => {
+const writeFindPost = async (formData: FormData, findingId: FindIdType) => {
   try {
-    const response = await axios.post(`${backUrl}/api/v1/finding/write`, formData, {
+    const response = await axios.put(`${backUrl}/api/v1/finding/${findingId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -23,11 +25,13 @@ const writeFindPost = async (formData: FormData) => {
 
 interface FindingFormPopupProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onFindOpenChange: (open: boolean) => void;
+  findId: number;
+  pet: FindingDetailData;
   onSuccess?: () => void;
 }
 
-export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormPopupProps) => {
+export const FindingUpdateFormPopup = ({ open, onFindOpenChange, findId, pet, onSuccess }: FindingFormPopupProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -46,6 +50,22 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   const { refreshPets } = usePetContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    setTitle(pet.title ?? "제목");
+    setSituation(pet.situation ?? "상황");
+    setBreed(pet.breed ?? "품종");
+    setLocation(pet.location ?? "위치");
+    setGeoX(pet.x ?? 0);
+    setGeoY(pet.y ?? 0);
+    setName(pet.name ?? "이름");
+    setColor(pet.color ?? "색상");
+    setEtc(pet.etc ?? "기타 정보");
+    setGender(pet.gender ?? 0);
+    setAge(pet.age ?? 0);
+    setNeutered(pet.neutered ?? 0);
+}, [pet]);
+
 
   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreed(e.target.value);
@@ -104,7 +124,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onOpenChange(false);
+        onFindOpenChange(false);
       }
     };
 
@@ -117,7 +137,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     return () => {
       document.removeEventListener("keydown", handleEscKey);
     };
-  }, [open, onOpenChange]);
+  }, [open, onFindOpenChange]);
 
   const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
     setGeoX(location.x);
@@ -154,6 +174,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   };
 
   const handleFindSubmit = async () => {
+    
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -192,11 +213,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     }
 
     try {
-      await writeFindPost(formData);
+      await writeFindPost(formData, findId);
 
       if (onSuccess) onSuccess();
       await refreshPets();
-      onOpenChange(false);
+      onFindOpenChange(false);
 
       // 성공 후 폼 초기화
       setTitle("");
@@ -232,12 +253,12 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)}></div>
+      <div className="absolute inset-0 bg-black/50" onClick={() => onFindOpenChange(false)}></div>
 
       <div className="relative w-full max-w-[800px] bg-white rounded-lg shadow-lg p-6 z-50 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">반려동물 발견 등록하기</h2>
-          <button onClick={() => onOpenChange(false)} className="text-gray-500 hover:text-gray-700">
+          <button onClick={() => onFindOpenChange(false)} className="text-gray-500 hover:text-gray-700">
             ✕
           </button>
         </div>
@@ -255,7 +276,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                 rows={1}
                 placeholder="게시글의 제목을 입력해주세요."
                 onChange={handleTitle}
-                value={title}
+                defaultValue={pet.title}
               />
             </div>
 
@@ -285,28 +306,28 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                 rows={2}
                 placeholder="발견 당시 상황을 입력해주세요."
                 onChange={handleSituation}
-                value={situation}
+                defaultValue={pet.situation}
               />
             </div>
 
             <div className="mb-4 flex justify-between">
               <div className="mr-4 w-20">
                 <label className="block font-medium mb-2 ">* 견종</label>
-                <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed} value={breed} />
+                <input className="border p-2 w-full bg-white" placeholder="견종" onChange={handleBreed} defaultValue={pet.breed} />
               </div>
               <div className="mr-4 w-20">
                 <label className="block font-medium mb-2 ">색상</label>
-                <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor} value={color} />
+                <input className="border p-2 w-full bg-white" placeholder="색상" onChange={handleColor} defaultValue={pet.color} />
               </div>
               <div className="w-20">
                 <label className="block font-medium mb-2 ">이름</label>
-                <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName} value={name} />
+                <input className="border p-2 w-full bg-white" placeholder="이름" onChange={handleName} defaultValue={pet.name} />
               </div>
             </div>
             <div className="mb-4 flex justify-between">
               <div className="mr-4 w-20">
                 <label className="block font-medium mb-2 ">성별</label>
-                <select className="border p-2 w-full bg-white" onChange={handleGender} value={gender}>
+                <select className="border p-2 w-full bg-white" onChange={handleGender} defaultValue={pet.gender}>
                   <option value="0">미상</option>
                   <option value="1">수컷</option>
                   <option value="2">암컷</option>
@@ -314,7 +335,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
               </div>
               <div className="mr-4 w-20">
                 <label className="block font-medium mb-2 ">중성화</label>
-                <select className="border p-2 w-full bg-white" onChange={handleNeutered} value={neutered}>
+                <select className="border p-2 w-full bg-white" onChange={handleNeutered} defaultValue={pet.neutered}>
                   <option value="0">미상</option>
                   <option value="1">중성화 됌</option>
                   <option value="2">중성화 안됌</option>
@@ -322,15 +343,15 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
               </div>
               <div className="w-20">
                 <label className="block font-medium mb-2 ">나이</label>
-                <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge} value={age} />
+                <input className="border p-2 w-full bg-white" placeholder="추정 나이" onChange={handleAge} defaultValue={pet.age} />
               </div>
             </div>
           </div>
           <div>
             <div className="mb-4">
               <label className="block font-medium mb-2">* 발견 위치</label>
-              <FindLocationPicker onLocationSelect={handleLocationSelect} />
-              {location && <div className="mt-2 text-sm text-gray-600">선택된 위치: {location}</div>}
+              <FindLocationPicker onLocationSelect={handleLocationSelect} initialLocation={{x: pet.x, y: pet.y, location: pet.location}}/>
+              {/* {location && <div className="mt-2 text-sm text-gray-600">선택된 위치: {location}</div>} */}
             </div>
             <div className="mb-4 ">
               <label className="block font-medium mb-2 ">특이 사항</label>
@@ -345,7 +366,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={() => onFindOpenChange(false)} disabled={isSubmitting}>
             취소하기
           </button>
           <button
@@ -353,7 +374,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             onClick={handleFindSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "등록 중..." : "등록하기"}
+            {isSubmitting ? "수정 중..." : "수정하기"}
           </button>
         </div>
       </div>
