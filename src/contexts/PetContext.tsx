@@ -79,9 +79,22 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({children}) => {
     const [findingHasMore, setFindingHasMore] = useState<boolean>(true);
     const [page, setPage] = useState<number>(0);
 
+
     const {userLocation} = useMapLocation();
     const {radius} = useRadius();
 
+    // SearchResponse에서 PetList로 변환하는 함수
+    const convertSearchToPetList = (searchResults: SearchResponse[]): PetList[] => {
+        return searchResults.map(item => ({
+            id: Number(item.postId), // postId를 숫자로 변환하여 PetList의 id에 매핑
+            breed: item.breed,
+            location: item.location,
+            etc: item.etc || '', // etc는 optional이므로 없으면 빈 문자열로 설정
+            x: item.x,
+            y: item.y,
+            pathUrl: item.pathUrl
+        }));
+    };
 
 // 검색 함수 추가
     // searchPets 함수 수정
@@ -118,11 +131,10 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({children}) => {
         }
     };
 
-    // 검색어를 이용한 검색 함수 추가
+    // 검색어를 이용한 검색 함수 수정
     const searchWithKeyword = async (keyword: string, category: SearchCategory) => {
         try {
             // 카테고리 매핑 (genre 파라미터에 맞게 변환)
-            // API에서는 'genre' 파라미터를 사용하지만, 우리 앱에서는 'category'를 사용
             let genre = '';
             if (category === '품종') {
                 genre = 'breed';
@@ -137,7 +149,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({children}) => {
             const searchResponse = await axios.get(`${backUrl}/api/v1/search`, {
                 params: {
                     kw: keyword,
-                    genre: genre || undefined, // 전체 카테고리인 경우 genre 파라미터 생략
+                    genre: genre || undefined,
                     page: 0,
                     size: 10
                 },
@@ -148,45 +160,47 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({children}) => {
 
             // 검색 결과 처리
             const searchResults = searchResponse.data.data || {};
-
-            // API 응답 구조에 따라 처리 (맞춰서 수정 필요할 수 있음)
-            // 예상 응답 구조: { content: [...], last: boolean, ... }
             const results = searchResults.content || [];
-            console.log("results : ", results)
+            console.log("검색 결과:", results);
 
             // activeFilter에 따라 결과 필터링
             if (activeFilter === '전체') {
-                // 결과를 실종/발견으로 분류
+                // 결과를 실종/발견으로 분류 (type에 따라 분류: 1=실종, 0=발견)
                 const missingResults = results.filter((item: SearchResponse) => item.type === 1);
                 const findingResults = results.filter((item: SearchResponse) => item.type === 0);
 
-                setMissingPets(missingResults);
-                setFindingPets(findingResults);
+                // PetList 형식으로 변환
+                const convertedMissingPets = convertSearchToPetList(missingResults);
+                const convertedFindingPets = convertSearchToPetList(findingResults);
+
+                setMissingPets(convertedMissingPets);
+                setFindingPets(convertedFindingPets);
 
             } else if (activeFilter === '잃어버렸개') {
                 const missingResults = results.filter((item: SearchResponse) => item.type === 1);
-                setMissingPets(missingResults);
+                const convertedMissingPets = convertSearchToPetList(missingResults);
+                setMissingPets(convertedMissingPets);
                 setFindingPets([]);
 
-                console.log("검색 결과---------:", missingResults);
+                console.log("변환된 실종 결과:", convertedMissingPets);
             } else if (activeFilter === '발견했개') {
-                const findingResults = results.filter((item:SearchResponse) => item.type === 0);
+                const findingResults = results.filter((item: SearchResponse) => item.type === 0);
+                const convertedFindingPets = convertSearchToPetList(findingResults);
                 setMissingPets([]);
-                setFindingPets(findingResults);
+                setFindingPets(convertedFindingPets);
             }
 
-            // // 더보기 가능 여부 설정
-            // setHasMore(!searchResults.last);
+            // 검색 결과에 더 데이터가 있는지 여부 설정 (API 응답에 따라 조정 필요)
+            if (searchResults.last !== undefined) {
+                setMissingHasMore(!searchResults.last);
+                setFindingHasMore(!searchResults.last);
+            }
 
         } catch (error) {
             console.error('검색 API 오류:', error);
             // 오류 발생 시 빈 결과 표시
-            if (activeFilter === '전체' || activeFilter === '잃어버렸개') {
-                setMissingPets([]);
-            }
-            if (activeFilter === '전체' || activeFilter === '발견했개') {
-                setFindingPets([]);
-            }
+            setMissingPets([]);
+            setFindingPets([]);
             throw error;
         }
     };
@@ -278,7 +292,8 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({children}) => {
             const apiCategory = category === '전체' ? '' : category;
 
             // hasMore 설정 - 반경 검색에서는 페이징이 없으므로 false로 설정
-            setHasMore(false);
+            setMissingHasMore(false);
+            setFindingHasMore(false);
 
             // 실종 동물 반경 검색
             if (activeFilter === "전체" || activeFilter === "잃어버렸개") {
