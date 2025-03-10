@@ -6,6 +6,8 @@ interface MissingCardProps {
 }
 
 export function MissingCard({ activeFilter, pet }: MissingCardProps) {
+  // console.log(pet);
+
   return (
     <>
       <div

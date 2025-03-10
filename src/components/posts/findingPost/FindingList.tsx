@@ -14,7 +14,7 @@ export function FindingList() {
         // searchMode,
         activeFilter,
         isLoading,
-        hasMore,
+        findingHasMore,
         loadMorePets
     } = usePetContext();
 
@@ -57,7 +57,7 @@ export function FindingList() {
         // observer 콜백 함수
         const handleObserver = (entries: IntersectionObserverEntry[]) => {
             const [entry] = entries;
-            if (entry.isIntersecting && hasMore && !isLoading && !initialLoad) {
+            if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
                 console.log("Loading more data...");
                 loadMorePets();
             }
@@ -67,7 +67,7 @@ export function FindingList() {
         observerRef.current = new IntersectionObserver(handleObserver, options);
 
         // 로딩 요소 관찰 시작
-        if (loadingRef.current && hasMore) {
+        if (loadingRef.current && findingHasMore) {
             observerRef.current.observe(loadingRef.current);
         }
 
@@ -77,7 +77,7 @@ export function FindingList() {
                 observerRef.current.disconnect();
             }
         };
-    }, [hasMore, isLoading, loadMorePets, initialLoad]);
+    }, [findingHasMore, isLoading, loadMorePets, initialLoad]);
 
     // 펫 선택 핸들러 추가
     const handlePetSelect = (pet: PetList) => {
@@ -99,7 +99,7 @@ export function FindingList() {
     };
 
     const handleSwiperReachEnd = () => {
-        if (hasMore && !isLoading && !initialLoad && activeFilter === "전체") {
+        if (findingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
             console.log("Swiper reached end, loading more data...");
             loadMorePets();
         }
@@ -175,8 +175,8 @@ export function FindingList() {
 
                                         {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
                                         <div ref={loadingRef} className="py-4 text-center">
-                                            {isLoading && hasMore && <p>더 불러오는 중...</p>}
-                                            {!hasMore && findingPets.length > 0 && (
+                                            {isLoading && findingHasMore && <p>더 불러오는 중...</p>}
+                                            {!findingHasMore && findingPets.length > 0 && (
                                                 <p className="text-gray-500 text-sm">
                                                     모든 데이터를 불러왔습니다
                                                 </p>
