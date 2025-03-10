@@ -69,8 +69,8 @@
 //
 //             <div className="mb-4 flex justify-between">
 //               <div className="mr-4 w-20">
-//                 <label className="block font-medium mb-2">견종</label>
-//                 <input className="border p-2 w-full" placeholder="견종" onChange={(e) => setBreed(e.target.value)} />
+//                 <label className="block font-medium mb-2">품종</label>
+//                 <input className="border p-2 w-full" placeholder="품종" onChange={(e) => setBreed(e.target.value)} />
 //               </div>
 //               <div className="mr-4 w-20">
 //                 <label className="block font-medium mb-2">색상</label>

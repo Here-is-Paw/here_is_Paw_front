@@ -2,12 +2,12 @@ import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
 export interface PetList {
   id: number;
-  breed: string;  // 견종
-  location: string;  // 지역
-  etc: string;  // 기타 특징
-  x: number;  // Point.getX() 대신 사용
-  y: number;  // Point.getY() 대신 사용
-  pathUrl: string;  // 이미지 경로
+  breed: string; // 품종
+  location: string; // 지역
+  etc: string; // 기타 특징
+  x: number; // Point.getX() 대신 사용
+  y: number; // Point.getY() 대신 사용
+  pathUrl: string; // 이미지 경로
 }
 
 export interface MyPet {
@@ -60,7 +60,9 @@ export interface PetFormData {
 export interface FormProps {
   form: {
     control: Control<PetFormData>;
-    handleSubmit: (onValid: (data: PetFormData) => void) => (e?: React.BaseSyntheticEvent) => Promise<void>;
+    handleSubmit: (
+      onValid: (data: PetFormData) => void
+    ) => (e?: React.BaseSyntheticEvent) => Promise<void>;
     setValue: UseFormSetValue<PetFormData>; // 수정된 부분
     watch: UseFormWatch<PetFormData>; // 수정된 부분
   };

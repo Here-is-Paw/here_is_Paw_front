@@ -48,7 +48,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -57,12 +57,12 @@ button {
   background-color: #fff;
 }
 
-.btn-size{
+.btn-size {
   width: 2.25rem;
   height: 2.25rem;
 }
 
-.svg-2{
+.svg-2 {
   width: 2rem !important;
   height: 2rem !important;
 }
@@ -88,7 +88,7 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    /* background-color: #f9f9f9; */
   }
 }
 
@@ -172,8 +172,6 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
-
-
 
 @layer base {
   * {

@@ -40,7 +40,7 @@
 //   const [imagePreview, setImagePreview] = useState<string | null>(null);
 //   const [imageFile, setImageFile] = useState<File | null>(null);
 //   const [title, setTitle] = useState<string | "">("제목"); // findpost 제목
-//   const [breed, setBreed] = useState("미상"); // findpost 견종
+//   const [breed, setBreed] = useState("미상"); // findpost 품종
 //   const [name, setName] = useState("미상"); // findpost 개 이름
 //   const [color, setColor] = useState("미상"); // findpost 개 색상
 //   const [situation, setSituation] = useState("발견 상황"); // findpost 발견 상황
@@ -77,7 +77,7 @@
 //   const [targetUserImageUrl, setTargetUserImageUrl] = useState<string | null>(null);
 //   const [targetUserNickname, setTargetUserNickname] = useState<string | null>(null);
 //
-//   // input하면 발생하는 이벤트 ex)제목입력, 견종 입력, ...
+//   // input하면 발생하는 이벤트 ex)제목입력, 품종 입력, ...
 //   const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
 //     setBreed(e.target.value);
 //   };
@@ -298,8 +298,8 @@
 //
 //                       <div className="mb-4 flex justify-between">
 //                         <div className="mr-4 w-20">
-//                           <label className="block font-medium mb-2 ">견종</label>
-//                           <input className="border p-2 w-full bg-white" placeholder="견종" defaultValue={findDetail.breed} onChange={handleBreed} />
+//                           <label className="block font-medium mb-2 ">품종</label>
+//                           <input className="border p-2 w-full bg-white" placeholder="품종" defaultValue={findDetail.breed} onChange={handleBreed} />
 //                         </div>
 //                         <div className="mr-4 w-20">
 //                           <label className="block font-medium mb-2 ">색상</label>
@@ -404,7 +404,7 @@
 //
 //                       <div className="mb-4 flex justify-between">
 //                         <div className="mr-4 w-20">
-//                           <label className="block font-medium mb-2 ">견종</label>
+//                           <label className="block font-medium mb-2 ">품종</label>
 //                           <div className="w-full bg-white text-gray-500">{findDetail.breed}</div>
 //                         </div>
 //                         <div className="mr-4 w-20">

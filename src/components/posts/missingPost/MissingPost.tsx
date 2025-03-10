@@ -42,7 +42,7 @@ import { CalendarIcon } from "lucide-react";
 import LocationPicker from "../../locaion/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
-import {usePetContext} from "@/contexts/PetContext.tsx";
+import { usePetContext } from "@/contexts/PetContext.tsx";
 
 interface MissingFormPopupProps {
   open: boolean;
@@ -278,7 +278,7 @@ export const MissingFormPopup = ({
   };
 
   /**
-   * 이름, 견종, 유기견 이미지, 지역, 좌표
+   * 이름, 품종, 유기견 이미지, 지역, 좌표
    * 색상, 동물 등록 번호, 성별, 중성화 유무, 나이, 실종 날짜, 기타(특징), 사례금
    */
 
@@ -344,12 +344,12 @@ export const MissingFormPopup = ({
                   <FormField
                     control={form.control}
                     name="breed"
-                    rules={{ required: "견종은 필수입니다" }}
+                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>견종 *</FormLabel>
+                        <FormLabel>품종 *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="견종" {...field} />
+                          <Input type="text" placeholder="품종" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
