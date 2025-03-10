@@ -85,11 +85,50 @@ const NcpMap = ({currentLocation, onLocationSelect}: NcpMapProps) => {
                 },
             });
 
-            window.naver.maps.Event.addListener(marker, "click", () => {
-                alert(
-                    `[발견]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n발견일: ${pet.id}`
-                );
+            // InfoWindow 생성
+            const infoWindow = new window.naver.maps.InfoWindow({
+                content: `
+                    <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #08CF5D;">
+                        <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
+                            
+                            발견했개
+                        </h4>
+                        <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+                            <tr>
+                                <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
+                                <td style="color:#333;">${pet.breed}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; color:#555;">특징:</td>
+                                <td style="color:#333;">${pet.etc}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; color:#555;">위치:</td>
+                                <td style="color:#333;">${pet.location}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; color:#555;">발견일:</td>
+                                <td style="color:#333;">${pet.findDate}</td>
+                            </tr>
+                        </table>
+                        <img src="${pet.pathUrl}" style="height:255px; width:345px; object-fit: cover;"></img>
+                    </div>
+                `,
+                borderWidth: 0,
+                disableAnchor: true,
+                backgroundColor: "white",
+                borderColor: "transparent",
+                anchorSize: new window.naver.maps.Size(0, 0)
             });
+    
+    // 마커 클릭 이벤트 리스너 추가
+    window.naver.maps.Event.addListener(marker, "click", () => {
+        if (infoWindow.getMap()) {
+            infoWindow.close();
+        } else {
+            infoWindow.open(map, marker);
+        }
+    });
 
             return marker;
         });
@@ -101,6 +140,7 @@ const NcpMap = ({currentLocation, onLocationSelect}: NcpMapProps) => {
     // 지도 클릭 이벤트 핸들러
     const handleMapClick = (event: naver.maps.MouseEvent) => {
         const map = mapInstance.current;
+        
         if (!map) return;
 
         // 이전 클릭 마커 제거
