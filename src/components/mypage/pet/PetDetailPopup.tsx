@@ -1,4 +1,4 @@
-import { MyPet } from "@/types/pet.ts";
+import { MyPet } from "@/types/mypet.ts";
 import {
   Avatar,
   AvatarFallback,

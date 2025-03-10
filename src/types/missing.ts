@@ -34,69 +34,33 @@ export const defaultValues: MissingFormData = {
   file: new File([], "placeholder.jpg", { type: "image/jpeg" }),
 };
 
-export interface MissingData {
+export interface MissingDetailData {
   id: number;
+
+  // 유저 정보
+  memberId: number;
+  nickname: string;
+
+  // 필수값
   name: string;
   breed: string;
-  geo: string;
   location: string;
-  color?: string;
-  serialNumber?: string;
-  gender?: number;
-  neutered?: number;
-  age?: number;
-  lostDate?: string;
-  etc?: string;
-  reward?: number;
-  missingState?: number;
+  x: number;  // Point.getX() 대신 사용
+  y: number;  // Point.getY() 대신 사용
   pathUrl: string;
+
+  // 선택 값
+  serialNumber?: string;
+  color?: string;
+  gender?: number;
+  age?: number;
+  neutered?: number;
+  etc?: string;
+  lostDate?: string; // ISO 8601 형식의 문자열로 저장 (ex. "2025-03-09T12:00:00Z")
+
+  // 고유 missing 값
+  reward?: number;
 }
-
-export const defaultMissingValues: MissingData = {
-  id: 0,
-  name: "",
-  breed: "",
-  geo: "",
-  location: "",
-  color: "",
-  serialNumber: "",
-  gender: 0,
-  neutered: 0,
-  age: 0,
-  lostDate: "",
-  etc: "",
-  reward: 0,
-  missingState: 0,
-  pathUrl: "",
-};
-
-// Gender 상수 정의
-export enum Gender {
-  UNKNOWN = 0,
-  MALE = 1,
-  FEMALE = 2,
-}
-
-// Gender 텍스트 매핑
-export const GenderText: Record<Gender, string> = {
-  [Gender.UNKNOWN]: "정보없음",
-  [Gender.MALE]: "수컷",
-  [Gender.FEMALE]: "암컷",
-};
-
-// 중성화 상태 상수 정의
-export enum NeuteredStatus {
-  UNKNOWN = 0,
-  NO = 1,
-  YES = 2,
-}
-
-// 중성화 상태 텍스트 매핑
-export const NeuteredText: Record<NeuteredStatus, string> = {
-  [NeuteredStatus.UNKNOWN]: "정보없음",
-  [NeuteredStatus.NO]: "아니오",
-  [NeuteredStatus.YES]: "예",
-};
 
 // 실종 상태 상수 정의
 export enum MissingState {
@@ -113,19 +77,7 @@ export const MissingStateText: Record<MissingState, string> = {
 };
 
 // 공통으로 사용되는 유틸리티 함수들
-export const MissingUtils = {
-  // gender 값에 따른 표시 문자열 결정
-  getGenderText: (gender: number): string => {
-    return GenderText[gender as Gender] || GenderText[Gender.UNKNOWN];
-  },
-
-  // neutered 값에 따른 표시 문자열 결정
-  getNeuteredText: (neutered: number): string => {
-    return (
-      NeuteredText[neutered as NeuteredStatus] ||
-      NeuteredText[NeuteredStatus.UNKNOWN]
-    );
-  },
+export const missingUtils = {
 
   // missingState 값에 따른 표시 문자열 결정
   getMissingStateText: (state: number): string => {

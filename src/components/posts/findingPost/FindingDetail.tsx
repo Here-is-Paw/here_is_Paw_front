@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,14 @@ import {
   DialogDescription,
   DialogHeader,
   DialogFooter,
-} from "@/components/ui/dialog";
-import React, { useEffect } from "react";
-import { MissingData, MissingUtils } from "@/types/missing";
+} from "@/components/ui/dialog.tsx";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
-import { backUrl } from "@/constants";
-import { useChatContext } from "@/contexts/ChatContext";
-import { chatEventBus } from "@/contexts/ChatContext";
+import { backUrl } from "@/constants.ts";
+import { useChatContext } from "@/contexts/ChatContext.tsx";
+import { chatEventBus } from "@/contexts/ChatContext.tsx";
+import { FindingDetailData } from "@/types/finding.ts";
+import {petUtils} from "@/types/pet.common.ts";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -22,23 +23,55 @@ export interface ChatModalInfo {
   chatRoomId: number | null;
 }
 
-interface MissingDetailProps {
-  pet: MissingData | null;
+interface FindingDetailProps {
+  petId: number | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // ChatModal 관련 정보를 상위 컴포넌트로 전달하는 콜백 함수 추가
   onChatModalOpen: (chatInfo: ChatModalInfo) => void;
 }
 
-export const MissingDetail: React.FC<MissingDetailProps> = ({
-  pet,
+export const FindingDetail: React.FC<FindingDetailProps> = ({
+  petId,
   open,
   onOpenChange,
   onChatModalOpen,
 }) => {
+  const [pet, setPet] = useState<FindingDetailData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
   const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
+
+  useEffect(() => {
+    const fetchPetDetail = async () => {
+      if (!open || !petId) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.get(`${backUrl}/api/v1/finding/${petId}`);
+
+        if (response.data && response.data.data) {
+          setPet(response.data.data);
+          console.log("파인딩 디테일 불러온 데이터:", response.data.data);
+        } else {
+          setError("데이터를 불러올 수 없습니다.");
+        }
+      } catch (err) {
+        console.error("펫 상세 정보 로드 오류:", err);
+        setError("펫 정보를 가져오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPetDetail();
+  }, [petId, open]);
+
 
   // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
   useEffect(() => {
@@ -252,22 +285,58 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     }
   };
 
+  if (loading) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+            <div className="flex justify-center items-center h-full">
+              <p className="text-gray-500">데이터를 불러오는 중...</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+    );
+  }
+
+  if (error || !pet) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+            <div className="flex justify-center items-center h-full flex-col">
+              <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
+              <Button
+                  onClick={() => onOpenChange(false)}
+                  className="mt-4"
+              >
+                닫기
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
         <DialogHeader className="space-y-2 text-center px-6">
           <DialogTitle className="text-2xl font-bold text-primary">
-            잃어버렸개
+            발견했개
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            잃어버렸개 상세정보
+            발견했개 상세정보
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="flex justify-center items-center">
+          <h3 className="text-2xl font-bold text-primary text-center">
+            {pet.title}
+          </h3>
+        </div>
 
         {/* 내용 영역 */}
         <div className="px-6 py-4 overflow-auto">
           <div className="flex flex-col items-center mb-6">
-            <div className="h-60 w-full mb-4">
+          <div className="h-60 w-full mb-4">
               {pet?.pathUrl && (
                 <img
                   src={pet.pathUrl}
@@ -297,11 +366,11 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             </dl>
             <dl>
               <dt className="text-sm font-medium text-gray-500">성별</dt>
-              <dd>{MissingUtils.getGenderText(pet.gender || 0)}</dd>
+              <dd>{petUtils.getGenderText(pet.gender || 0)}</dd>
             </dl>
             <dl>
               <dt className="text-sm font-medium text-gray-500">중성화 여부</dt>
-              <dd>{MissingUtils.getNeuteredText(pet.neutered || 0)}</dd>
+              <dd>{petUtils.getNeuteredText(pet.neutered || 0)}</dd>
             </dl>
             <dl>
               <dt className="text-sm font-medium text-gray-500">등록 번호</dt>
@@ -309,7 +378,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             </dl>
             <dl>
               <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
-              <dd>{pet.lostDate || "실종 날짜 없음"}</dd>
+              <dd>{pet.findDate || "실종 날짜 없음"}</dd>
             </dl>
             <dl className="col-span-2">
               <dt className="text-sm font-medium text-gray-500">지역</dt>
@@ -320,8 +389,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
               <dd>{pet.etc || "특이사항 없음"}</dd>
             </dl>
             <dl className="col-span-2">
-              <dt className="text-sm font-medium text-gray-500">사례금</dt>
-              <dd>{pet.reward || "사례금 없음"}</dd>
+              <dt className="text-sm font-medium text-gray-500">발견 당시 상황</dt>
+              <dd>{pet.situation || "발견 상황 없음"}</dd>
             </dl>
           </div>
         </div>
@@ -329,8 +398,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         <DialogFooter className="px-6">
           <div className="flex justify-end gap-2">
             <Button
-              type="button"
-              className="bg-green-600"
+                type="button"
+                className="bg-green-600"
               onClick={handleContactClick}
             >
               연락하기

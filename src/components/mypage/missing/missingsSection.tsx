@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/avatar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { X, Pencil } from "lucide-react";
-import { MyPet } from "@/types/pet.ts";
+import { MyPet } from "@/types/mypet.ts";
 import { User } from "@/types/user.ts";
 import { useState } from "react";
 import { PetDetailDialog } from "@/components/mypage/pet/PetDetailPopup.tsx";
