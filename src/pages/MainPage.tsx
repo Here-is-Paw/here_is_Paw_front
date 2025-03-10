@@ -1,26 +1,14 @@
-import { useState, useEffect } from 'react'
-import NcpMap from './NcpMap'
+import { useState } from 'react'
+// import NcpMap from './NcpMap'
+import NcpMap from './NcpMap-1'
 import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
-import useGeolocation from '@/hooks/Geolocation'
-import { Pet } from '@/types/pet'
+import useGeolocation from '@/hooks/useGeolocation'
 
-interface MainPageProps {
-  mockLostPets: Pet[];
-  mockFindPets: Pet[];
-}
 
-export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) {
+export default function MainPage() {
   const isMobile = useIsMobile()
   const location = useGeolocation()
-
-  // MainPage에서 props 수신 확인
-  useEffect(() => {
-    console.log('MainPage received:', {
-      mockLostPets,
-      mockFindPets
-    });
-  }, [mockLostPets, mockFindPets]);
 
   const [buttonStates, setButtonStates] = useState({
     lost: false,
@@ -41,8 +29,6 @@ export default function MainPage({ mockLostPets, mockFindPets }: MainPageProps) 
       <div className={`fixed ${isMobile ? 'inset-0 top-[120px]' : 'inset-0'}`}>
         <NcpMap
           currentLocation={location}
-          lostPets={mockLostPets}
-          findPets={mockFindPets}
         />
       </div>
     </div>

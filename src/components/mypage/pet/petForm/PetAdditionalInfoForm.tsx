@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/form.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
-import { FormProps } from '@/types/pet.ts';
+import { FormProps } from '@/types/mypet.ts';
 
 export const PetAdditionalInfoForm: React.FC<FormProps> = ({ form }) => {
     return (

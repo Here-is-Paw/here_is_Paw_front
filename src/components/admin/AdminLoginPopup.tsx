@@ -3,7 +3,6 @@ import axios from "axios";
 import {backUrl} from "@/constants.ts";
 import React, {useState} from "react";
 import {useAuth} from "@/contexts/AuthContext.tsx";
-import {useNavigate} from "react-router-dom";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -27,7 +26,6 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const {login} = useAuth();
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +39,7 @@ export const AdminLoginPopup = ({open, onOpenChange}: AdminLoginPopupProps) => {
             login();
             onOpenChange(false); // 로그인 팝업 닫기
             setIsLoading(false);
-            navigate('/'); // 필요한 경우 홈페이지로 이동
+            window.location.href = '/'; // 홈페이지로 완전 새로고침
         } catch (error) {
             console.error('로그인 오류:', error);
             if (axios.isAxiosError(error) && error.response) {

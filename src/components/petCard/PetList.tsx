@@ -1,5 +1,5 @@
 import { PetCard } from "./PetCard"
-import { Pet } from "@/types/pet"
+import { Pet } from "@/types/mypet.ts"
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
