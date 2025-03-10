@@ -39,7 +39,7 @@ import { format } from "date-fns";
 import { MissingFormData, defaultValues } from "@/types/missing.ts";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "../../locaion/locationPicker.tsx";
+import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
@@ -68,7 +68,7 @@ export const MissingFormPopup = ({
   const [locationInfo, setLocationInfo] = useState({
     x: location.coordinates.lat,
     y: location.coordinates.lng,
-    address: "",
+    address: "서울시 용산구",
   });
   const [date, setDate] = React.useState<Date>();
 
@@ -156,7 +156,11 @@ export const MissingFormPopup = ({
       setReward("");
       setFile(null);
       setImagePreview(null);
-      setLocationInfo({ x: 0, y: 0, address: "" });
+      setLocationInfo({
+        x: location.coordinates.lng,
+        y: location.coordinates.lat,
+        address: "서울시 용산구",
+      });
       setAdditionalAddressDetails("");
 
       // 날짜 초기화
@@ -290,9 +294,9 @@ export const MissingFormPopup = ({
           // 팝업이 닫힐 때 폼 초기화
           form.reset(defaultValues);
           setLocationInfo({
-            x: location.coordinates.lat,
-            y: location.coordinates.lng,
-            address: "",
+            x: location.coordinates.lng,
+            y: location.coordinates.lat,
+            address: "서울시 용산구",
           });
           setAdditionalAddressDetails("");
         }

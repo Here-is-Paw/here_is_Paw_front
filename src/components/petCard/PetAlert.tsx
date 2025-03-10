@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { PawPrint } from "lucide-react";
 
 interface PetAlertProps {
@@ -86,18 +85,21 @@ export const PetMap: React.FC = () => {
       date: string;
       position: { x: number; y: number };
     }>
-  >([
-    {
-      id: "1",
-      name: "믹스견",
-      image: "/api/placeholder/200/150", // Placeholder image
-      type: "갈색/검정",
-      location: "동국대학교 인근",
-      date: "2023-02-18",
-      position: { x: 500, y: 300 },
-    },
-    // Add more sample pets as needed
-  ]);
+  >([]);
+
+  useEffect(() => {
+    setPets([
+      {
+        id: "1",
+        name: "믹스견",
+        image: "/api/placeholder/200/150", // Placeholder image
+        type: "갈색/검정",
+        location: "동국대학교 인근",
+        date: "2023-02-18",
+        position: { x: 500, y: 300 },
+      },
+    ]);
+  }, []);
 
   const handleViewDetails = (id: string) => {
     console.log(`View details for pet ${id}`);

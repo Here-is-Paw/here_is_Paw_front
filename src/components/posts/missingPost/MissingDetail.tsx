@@ -14,6 +14,7 @@ import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
+import LocationViewMap from "@/components/location/locationViewMap";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -372,7 +373,16 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             </dl>
             <dl className="col-span-2">
               <dt className="text-sm font-medium text-gray-500">지역</dt>
-              <dd>{pet.location || "지역 없음"}</dd>
+
+              <dd>
+                {pet.location || "지역 없음"}
+
+                <div className="mt-1">
+                  <LocationViewMap
+                    location={{ x: pet.x, y: pet.y, address: pet.location }}
+                  />
+                </div>
+              </dd>
             </dl>
             <dl className="col-span-2">
               <dt className="text-sm font-medium text-gray-500">특이사항</dt>

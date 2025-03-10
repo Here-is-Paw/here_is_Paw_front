@@ -1,5 +1,5 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Scrollbar } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import { useEffect, useRef, useState } from "react";
 import { MissingCard } from "./MissingCard.tsx";
 import { MissingDetail, ChatModalInfo } from "./MissingDetail.tsx";
