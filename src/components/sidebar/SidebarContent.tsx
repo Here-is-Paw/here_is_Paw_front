@@ -3,6 +3,7 @@ import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
 import {MissingList} from "@/components/posts/missingPost/MissingList.tsx";
+import {FindingList} from "@/components/posts/findingPost/FindingList.tsx";
 
 export function SidebarMainContent() {
 
@@ -19,7 +20,7 @@ export function SidebarMainContent() {
                 {/* 상단 패딩 줄임 */}
                 <h2 className="text-xl font-bold mb-1">발견했개</h2>
                 {/* mb-6에서 mb-4로 변경 */}
-                {/*<FindPetList/>*/}
+                <FindingList/>
             </SidebarGroup>
 
             <SidebarGroup className="p-4 pt-2">
