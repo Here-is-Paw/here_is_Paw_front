@@ -1,6 +1,7 @@
 import { Avatar } from "@/components/ui/avatar";
 import { X } from "lucide-react";
 import { ChatRoom } from "@/types/chat";
+import { useEffect } from "react";
 
 interface ChatRoomListProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface ChatRoomListProps {
     userId: number;
   };
   onLeaveRoom: (roomId: number, e: React.MouseEvent) => void;
+  renderTrigger?: number;
 }
 
 export function ChatRoomList({ 
@@ -29,8 +31,15 @@ export function ChatRoomList({
   formatLastMessage,
   formatTime,
   getOtherUserInfo,
-  onLeaveRoom 
+  onLeaveRoom,
+  renderTrigger
 }: ChatRoomListProps) {
+  useEffect(() => {
+    if (renderTrigger !== undefined) {
+      console.log("ChatRoomList 강제 리렌더링 트리거:", renderTrigger);
+    }
+  }, [renderTrigger]);
+
   if (!isOpen) return null;
 
   console.log("채팅방 목록 정보:", chatRooms);

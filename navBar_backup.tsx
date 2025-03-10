@@ -256,189 +256,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 전역 SSE 이벤트 소스 레퍼런스 추가
-  const sseRef = useRef<EventSource | null>(null);
-
-  // SSE 이벤트 처리 함수
-  const handleSseEvent = (eventData: any) => {
-    console.log("======= SSE 이벤트 처리 =======");
-    
-    // 이벤트 유형에 따른 처리
-    const eventType = eventData.type || eventData.eventType;
-    console.log("SSE 이벤트 유형:", eventType);
-    
-    if (eventType === 'NEW_MESSAGE' || eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE') {
-      console.log("새 메시지 또는 첫 메시지 이벤트 처리:", eventData);
-      
-      // 채팅방 ID 확인
-      const roomId = eventData.chatRoomId || eventData.roomId;
-      if (!roomId) {
-        console.error("이벤트에 채팅방 ID가 없음:", eventData);
-        return;
-      }
-      
-      // 메시지가 내가 보낸 것인지 확인
-      const isMyMessage = eventData.memberId === me_id;
-      if (isMyMessage) {
-        console.log("내가 보낸 메시지 SSE 이벤트, 알림 처리 제외");
-        return;
-      }
-      
-      // 현재 채팅방이 열려있는지 확인
-      const isRoomOpen = openChatRooms.some(room => 
-        room.id === roomId && room.isOpen
-      );
-      
-      if (isRoomOpen) {
-        console.log(`채팅방 ${roomId}가 열려있어 SSE 알림 처리 필요 없음`);
-        return;
-      }
-      
-      // 중요: 채팅방이 닫혀 있고 메시지가 도착한 경우, 즉시 서버에서 최신 데이터 가져오기
-      console.log(`SSE: 채팅방 ${roomId} 닫힘 상태에서 메시지 도착, 즉시 데이터 갱신`);
-      
-      // 메시지 개수 확인을 위한 채팅방 데이터 조회
-      fetch(`${backUrl}/api/v1/chat/${roomId}/messages`, {
-        headers: {
-          Authorization: getCookieValue('accessToken')
-            ? `Bearer ${getCookieValue('accessToken')}`
-            : '',
-        },
-      })
-      .then(response => response.json())
-      .then(data => {
-        // 채팅방의 메시지 개수로 첫 메시지 여부 판단
-        const isFirstMessage = data && data.data && data.data.length === 1;
-        console.log(`채팅방 ${roomId} 메시지 개수:`, data?.data?.length, "첫 메시지 여부:", isFirstMessage);
-        
-        if (isFirstMessage) {
-          console.log(`채팅방 ${roomId}의 첫 번째 메시지 감지 (SSE)`);
-          
-          // 채팅방이 열려있는지 확인
-          const isRoomOpen = openChatRooms.some(room => 
-            room.id === roomId && room.isOpen
-          );
-          
-          if (!isRoomOpen) {
-            console.log("채팅방 닫힘 상태, 첫 메시지 알림 갱신");
-            
-            // UI 상태와 관계없이 채팅방 목록 데이터 갱신
-            console.log("첫 메시지 감지 후 채팅방 목록 데이터 갱신 시작");
-            fetch(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
-              headers: {
-                Authorization: getCookieValue('accessToken')
-                  ? `Bearer ${getCookieValue('accessToken')}`
-                  : '',
-              },
-            })
-            .then(response => response.json())
-            .then(roomListData => {
-              if (roomListData && roomListData.data) {
-                console.log("첫 메시지 감지 후 채팅방 목록 데이터 갱신 성공:", roomListData.data);
-                const filteredRooms = roomListData.data.filter(
-                  (room: ChatRoom) => room.chatUserId === me_id || room.targetUserId === me_id
-                );
-                const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
-                setChatRooms(sortedRooms);
-              }
-            })
-            .catch(error => {
-              console.error("첫 메시지 감지 후 채팅방 목록 갱신 실패:", error);
-            });
-          }
-        }
-      })
-      .catch(err => {
-        console.error("메시지 목록 조회 중 오류:", err);
-      });
-      
-      // SSE 이벤트 수신 직후에도 UI 갱신 트리거 (보험)
-      setTimeout(() => {
-        console.log("SSE 이벤트 수신 후 UI 강제 갱신 트리거 (보험)");
-        forceUpdateChatList();
-      }, 300);
-    }
-  };
-
-  // 전역 SSE 연결 설정 (UI 컴포넌트 상태와 독립적)
-  useEffect(() => {
-    if (isLoggedIn && me_id) {
-      console.log("SSE 연결 설정 시작 (UI와 독립적)");
-      
-      // 기존 연결 정리
-      if (sseRef.current) {
-        console.log("기존 SSE 연결 정리");
-        sseRef.current.close();
-        sseRef.current = null;
-      }
-      
-      try {
-        // SSE 연결 설정
-        const sseUrl = `${backUrl}/api/v1/sse/connect?userId=${me_id}`;
-        console.log("SSE 연결 URL:", sseUrl);
-        
-        const eventSource = new EventSource(sseUrl, { withCredentials: true });
-        sseRef.current = eventSource;
-        
-        // 연결 성공 핸들러
-        eventSource.onopen = () => {
-          console.log("SSE 연결 성공");
-        };
-        
-        // 메시지 핸들러
-        eventSource.onmessage = (event) => {
-          console.log("SSE 메시지 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("SSE 메시지 파싱 오류:", error);
-          }
-        };
-        
-        // 특정 이벤트 타입 핸들러 등록
-        eventSource.addEventListener('message', (event) => {
-          console.log("'message' 이벤트 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("'message' 이벤트 파싱 오류:", error);
-          }
-        });
-        
-        eventSource.addEventListener('new_message', (event) => {
-          console.log("'new_message' 이벤트 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("'new_message' 이벤트 파싱 오류:", error);
-          }
-        });
-        
-        // 오류 핸들러
-        eventSource.onerror = (error) => {
-          console.error("SSE 연결 오류:", error);
-          // 연결이 끊어진 경우 재연결 시도 (필요하면 추가)
-        };
-        
-        console.log("SSE 이벤트 핸들러 등록 완료");
-      } catch (error) {
-        console.error("SSE 설정 중 오류 발생:", error);
-      }
-      
-      // 컴포넌트 언마운트 시 정리
-      return () => {
-        if (sseRef.current) {
-          console.log("SSE 연결 종료");
-          sseRef.current.close();
-          sseRef.current = null;
-        }
-      };
-    }
-  }, [isLoggedIn, me_id]);
-
   // WebSocket 연결 설정 useEffect
   useEffect(() => {
     if (isLoggedIn && isChatListOpen) {
@@ -636,15 +453,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                           if (!isRoomCurrentlyOpen) {
                             unreadCount += 1;
                             console.log(`첫 번째 메시지: 채팅방 닫힘 상태, 안읽음 카운트 증가: ${unreadCount}`);
-                            
-                            // 첫 메시지 후 UI 강제 업데이트
-                            setTimeout(() => {
-                              console.log("첫 메시지 후 UI 강제 갱신 트리거");
-                              forceUpdateChatList();
-                            }, 200);
                           }
                           
-                          console.log(`첫 번째 메시지 도착 - 채팅 목록 상태: ${isChatListOpen ? '열림' : '닫힘'}, 직접 카운트 증가 적용`);
+                          // 중요: 채팅 목록 상태와 관계없이 항상 이벤트 발생시켜 강제 새로고침
+                          console.log(`첫 번째 메시지 도착 - 채팅 목록 상태: ${isChatListOpen ? '열림' : '닫힘'}, 강제 새로고침 실행`);
+                          chatEventBus.emitRefreshChatRooms();
                         }
                       } else {
                         // 일반 메시지 처리 (첫 번째 메시지가 아닌 경우)
@@ -722,6 +535,24 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }
   }, [isLoggedIn, isChatListOpen]);
 
+  // 채팅방 목록 갱신 이벤트 구독 설정 (isChatListOpen 상태와 독립적으로 작동)
+  useEffect(() => {
+    if (isLoggedIn && me_id) {
+      console.log("채팅 목록 갱신 이벤트 구독 설정");
+      
+      // 이벤트 버스 구독
+      const unsubscribe = chatEventBus.onRefreshChatRooms(() => {
+        console.log("채팅방 목록 갱신 이벤트 수신됨, 상태에 관계없이 데이터 새로고침");
+        fetchChatRooms();
+      });
+      
+      // 컴포넌트 언마운트 시 구독 해제
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [isLoggedIn, me_id]);
+
   const handleEnterChatRoom = (room: ChatRoom) => {
     console.log(`채팅방 ${room.id} 입장, 안읽음 카운트 초기화`);
     
@@ -748,8 +579,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }
         return r;
       });
-    });
-    
+      
     // 채팅방 열기
     setOpenChatRooms(prev => {
       const existingRoomIndex = prev.findIndex(r => r.id === room.id);
@@ -774,18 +604,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   };
 
   const handleCloseChatRoom = (roomId: number) => {
-    console.log(`채팅방 ${roomId} 닫기`);
-    // 열린 채팅방 목록에서 제거
     setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
-    
-    // 채팅방을 닫은 후 약간의 지연을 두고 목록 갱신
-    setTimeout(() => {
-      console.log("채팅방 닫은 후 채팅 목록 UI 강제 갱신");
-      // 채팅 목록 데이터 새로 가져오기
-      fetchChatRooms();
-      // UI 강제 갱신 트리거
-      forceUpdateChatList();
-    }, 100);
   };
 
   const fetchChatRooms = async () => {
@@ -834,7 +653,17 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
               console.log(`- ${field}: ${firstMessage[field]}`);
             });
           }
+        } else {
+          console.log("채팅 메시지 없음");
         }
+        
+        // 현재 로그인 사용자와의 관계 확인
+        console.log("====== 사용자 관계 확인 ======");
+        console.log("현재 로그인 사용자 ID:", me_id);
+        console.log("채팅 생성 사용자 ID:", firstRoom.chatUserId);
+        console.log("타겟 사용자 ID:", firstRoom.targetUserId);
+        console.log("현재 사용자가 채팅 생성자인가:", firstRoom.chatUserId === me_id);
+        console.log("현재 사용자가 타겟 사용자인가:", firstRoom.targetUserId === me_id);
       }
       
       // 사용자와 관련된 채팅방만 필터링
@@ -1009,14 +838,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     };
   };
 
-  // 채팅 목록 UI 갱신을 위한 카운터 상태 추가
-  const [chatListRenderTrigger, setChatListRenderTrigger] = useState(0);
-  
-  // 채팅 목록 강제 리렌더링 함수
-  const forceUpdateChatList = () => {
-    setChatListRenderTrigger(prev => prev + 1);
-  };
-
   return (
     <>
       <nav className="mt-5 fixed right-0 z-50 w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
@@ -1136,7 +957,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                         formatTime={formatTime}
                         getOtherUserInfo={getOtherUserInfo}
                         onLeaveRoom={handleLeaveRoom}
-                        renderTrigger={chatListRenderTrigger}
                       />
                     </div>
                     <Button variant="ghost" size="icon">
