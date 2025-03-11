@@ -71,6 +71,7 @@ export function ChatModal({
   const [userId, setUserId] = useState<number | null>(null);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const client = useRef<StompJs.Client | null>(null);
   
@@ -561,6 +562,13 @@ export function ChatModal({
       setChatMessage(chatMessage);
     } finally {
       setIsSending(false);
+      
+      // 메시지 전송 후 입력창에 포커스 설정
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 10);
     }
   };
 
@@ -728,6 +736,7 @@ export function ChatModal({
             onChange={(e) => setChatMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             disabled={isSending || !chatRoomId}
+            ref={inputRef}
           />
           <button 
             className={`ml-2 ${
