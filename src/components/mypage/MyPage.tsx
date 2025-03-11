@@ -13,7 +13,7 @@ import { backUrl } from "@/constants";
 
 // Types
 import { User } from "@/types/user";
-import { MyPet } from "@/types/mypet.ts";
+import {MyPet, PetList} from "@/types/mypet.ts";
 
 // Custom Components
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup";
@@ -26,7 +26,7 @@ import { ProfileSection } from "./profile/ProfileSection.tsx";
 import { PetsSection } from "./pet/PetsSection.tsx";
 import { DeletePetDialog } from "./pet/DeletePetDialog.tsx";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
-import { MissingsSection } from "./missing/missingsSection.tsx";
+import {UserPostsTabs} from "@/components/mypage/posts/UserPostsTabs.tsx";
 
 export function MyPage() {
   const navigate = useNavigate();
@@ -36,6 +36,8 @@ export function MyPage() {
   const { isLoggedIn, logout } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
   const [userPets, setUserPets] = useState<MyPet[]>([]);
+  const [userMissing, setUserMissing] = useState<PetList[]>([]);
+  const [userFinding, setUserFinding] = useState<PetList[]>([]);
   const [loading, setLoading] = useState(true);
   const [points, setPoints] = useState<number>(0);
 
@@ -55,6 +57,7 @@ export function MyPage() {
           fetchUserInfo(),
           fetchUserPets(),
           fetchUserPoints(),
+          fetchUserPost(),
         ]);
       }
       setLoading(false);
@@ -99,6 +102,22 @@ export function MyPage() {
       setUserPets(response.data.data || []);
     } catch (error) {
       console.error("반려동물 정보 가져오기 실패:", error);
+      setUserPets([]);
+    }
+  };
+
+  // 사용자 등록 게시글 가져오기
+  const fetchUserPost = async () => {
+    try {
+      const response = await axios.get(`${backUrl}/api/v1/userPosts`, {
+        withCredentials: true,
+      });
+
+      setUserMissing(response.data.data.missingList);
+      setUserFinding(response.data.data.findingList);
+
+    } catch (error) {
+      console.error("게시글 정보 가져오기 실패:", error);
       setUserPets([]);
     }
   };
@@ -293,12 +312,10 @@ export function MyPage() {
       </SidebarGroup>
 
       <SidebarGroup className="p-4 pt-0">
-        <MissingsSection
-          userPets={userPets}
-          userData={userData}
-          onAddPetClick={() => setIsAddPetOpen(true)}
-          onDeletePet={handleDeleteClick}
-          onUpdatePet={handleEditClick}
+        <UserPostsTabs
+            userMissing={userMissing}
+            userFinding={userFinding}
+            refreshPosts={fetchUserPost}
         />
       </SidebarGroup>
 
