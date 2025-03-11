@@ -185,10 +185,10 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     // 현재 날짜를 ISO 형식으로 생성
     const today = new Date();
     const isoDate = today.toISOString().split("T")[0] + "T00:00:00";
-    formData.append("find_date", isoDate);
+    formData.append("findDate", isoDate);
 
     if (!location) {
-      formData.append("shelter_id", "1");
+      formData.append("shelterId", "1");
     }
 
     try {

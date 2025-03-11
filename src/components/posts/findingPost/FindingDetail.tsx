@@ -9,6 +9,7 @@ import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
 import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdate.tsx";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -30,11 +31,14 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   const [pet, setPet] = useState<FindingDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [member, setMember] = useState(null);
+  // const [member, setMember] = useState(null);
   const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
+  const { userData } = useAuth();
 
   const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
+
+  // console.log(userData);
 
   useEffect(() => {
     const fetchPetDetail = async () => {
@@ -64,20 +68,20 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   }, [petId, open]);
 
   // 로그인 된 회원
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-          withCredentials: true,
-        });
-        setMember(memberResponse.data.data.id);
-      } catch (error) {
-        console.error("유저 정보 가져오기 실패:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchUserInfo = async () => {
+  //     try {
+  //       const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
+  //         withCredentials: true,
+  //       });
+  //       setMember(memberResponse.data.data.id);
+  //     } catch (error) {
+  //       console.error("유저 정보 가져오기 실패:", error);
+  //     }
+  //   };
 
-    fetchUserInfo();
-  }, []);
+  //   fetchUserInfo();
+  // }, []);
 
   // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
   useEffect(() => {
@@ -127,9 +131,6 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
     return imageUrl;
   };
 
-  const handleUpdateClick = async () => {
-    // Dialog 닫기
-  };
 
   // 연락하기 버튼 핸들러
   const handleContactClick = async () => {
@@ -349,8 +350,8 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
                 <dd>{pet.serialNumber || "등록번호 없음"}</dd>
               </dl>
               <dl>
-                <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
-                <dd>{pet.findDate || "실종 날짜 없음"}</dd>
+                <dt className="text-sm font-medium text-gray-500">발견 날짜</dt>
+                <dd>{pet.findDate || "발견 날짜 없음"}</dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
@@ -367,7 +368,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
             </div>
           </div>
 
-          {member === pet.memberId ? (
+          {userData?.id === pet.memberId ? (
             <DialogFooter className="px-6">
               <div className="flex justify-end gap-2">
                 <Button
