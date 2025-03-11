@@ -15,6 +15,7 @@ import {ChatRoom, OpenChatRoom} from "@/types/chat";
 // import { useFindWrite } from "@/hooks/useFindWrite";
 import {useRadius} from "@/contexts/RadiusContext.tsx";
 import {FindingFormPopup} from "@/components/posts/findingPost/FindingPost.tsx";
+import { NotificationBell } from "@/components/notification/Notification";
 
 interface NavBarProps {
     buttonStates: {
@@ -569,9 +570,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                                 onLeaveRoom={handleLeaveRoom}
                                             />
                                         </div>
-                                        <Button variant="ghost" size="icon">
-                                            <Bell className="h-4 w-4"/>
-                                        </Button>
+                                        <NotificationBell />
                                         <Button variant="ghost" onClick={handleLogout}>
                                             <LogOut className="h-4 w-4 mr-2"/>
                                             로그아웃

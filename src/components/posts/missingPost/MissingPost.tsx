@@ -90,13 +90,55 @@ export const MissingFormPopup = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+  //   if (selectedFile) {
+  //     setFile(selectedFile);
+  //     setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+  //   }
+  // };
+  //
+
+  // handleFileChange 함수 수정
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
 
     if (selectedFile) {
       setFile(selectedFile);
-      setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+      setImagePreview(URL.createObjectURL(selectedFile));
+      setIsAnalyzing(true); // 분석 시작
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const response = await axios.post('http://localhost:5010/upload-image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        if (response.data.image_data) {
+          const byteCharacters = atob(response.data.image_data);
+          const byteArrays = [];
+
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteArrays.push(byteCharacters.charCodeAt(i));
+          }
+
+          const blob = new Blob([new Uint8Array(byteArrays)], {
+            type: response.data.image_type
+          });
+
+          const previewUrl = URL.createObjectURL(blob);
+          setImagePreview(previewUrl);
+        }
+      } catch (error) {
+        console.error('이미지 처리 실패:', error);
+        setImagePreview(URL.createObjectURL(selectedFile));
+      } finally {
+        setIsAnalyzing(false); // 분석 완료
+      }
     }
   };
 
@@ -439,7 +481,34 @@ export const MissingFormPopup = ({
                     rules={{ required: "사진은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>반려동물 사진 *</FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>반려동물 사진 *</FormLabel>
+                          {isAnalyzing && (
+                              <div className="flex items-center gap-2 text-green-600 text-sm">
+                                <svg
+                                    className="animate-spin h-5 w-5"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                  />
+                                  <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
+                                </svg>
+                                <span>이미지 분석 중...</span>
+                              </div>
+                          )}
+                        </div>
                         <FormControl>
                           <Input
                             type="file"
