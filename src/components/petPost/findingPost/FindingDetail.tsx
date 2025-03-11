@@ -8,7 +8,7 @@ import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
 
-// import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdateTest.tsx";
+import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdateTest.tsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 // ChatModal에 필요한 정보를 담는 인터페이스
@@ -122,15 +122,15 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
         const response = await axios.delete(`${backUrl}/api/v1/finding/${findId}`, {
           withCredentials: true,
         });
-  
+
         if (response.status === 200 || response.status === 201) {
           alert("발견 신고가 성공적으로 삭제되었습니다!");
 
           await refreshPets();
-          
+
           // 모달 닫기
           onOpenChange(false);
-  
+
           // 삭제 성공 후 실행할 콜백 함수 호출
           if (onSuccess) {
             onSuccess();
@@ -144,7 +144,6 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       }
     }
   };
-  
 
   // 연락하기 버튼 핸들러
   const handleContactClick = async () => {
@@ -365,7 +364,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
               </dl>
               <dl>
                 <dt className="text-sm font-medium text-gray-500">발견 날짜</dt>
-                <dd>{pet.findDate ? pet.findDate.split('T')[0] : "발견 날짜 없음"}</dd>
+                <dd>{pet.findDate ? pet.findDate.split("T")[0] : "발견 날짜 없음"}</dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
@@ -383,13 +382,11 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
           </div>
 
           {userData?.id === pet.memberId ? (
-            
             <DialogFooter className="px-6">
               <div className="flex justify-end gap-2">
-              <Button type="button" className="bg-red-600" onClick={() => handleDeleteClick(pet.id)}>
-                삭제하기
-              </Button>
-
+                <Button type="button" className="bg-red-600" onClick={() => handleDeleteClick(pet.id)}>
+                  삭제하기
+                </Button>
               </div>
               <div className="flex justify-end gap-2">
                 <Button

@@ -626,6 +626,7 @@ export const MissingFormPopup = ({
                                                 </FormControl>
                                                 <LocationPicker
                                                     onLocationSelect={handleLocationSelect}
+                                                    isMissing={true}
                                                 />
                                             </FormItem>
                                         )}
