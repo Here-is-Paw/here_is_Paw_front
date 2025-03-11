@@ -21,6 +21,7 @@ export interface MyPet {
   neutered: number;
   serialNumber: string;
   imageUrl: string;
+  pathUrl?: string; // 이미지 경로 (편집 모드에서 사용)
   location: string;
   geo: GeoPoint;
   find_date: string;
@@ -51,21 +52,24 @@ export interface PetFormData {
   color?: string;
   serialNumber?: string;
   gender: number;
-  neutered?: boolean;
+  neutered?: number;
   age?: number;
   etc?: string;
-  profileImage?: File | null; // 이미지 추가
+  profileImage: File | null; // 이미지 필수값으로 변경
+  pathUrl?: string; // 기존 이미지 URL을 저장하기 위한 필드 추가
 }
 
 export interface FormProps {
   form: {
     control: Control<PetFormData>;
     handleSubmit: (
-      onValid: (data: PetFormData) => void
+        onValid: (data: PetFormData) => void
     ) => (e?: React.BaseSyntheticEvent) => Promise<void>;
-    setValue: UseFormSetValue<PetFormData>; // 수정된 부분
-    watch: UseFormWatch<PetFormData>; // 수정된 부분
+    setValue: UseFormSetValue<PetFormData>;
+    watch: UseFormWatch<PetFormData>;
+    formState?: any; // formState 추가 (에러 상태 확인용)
   };
+  isEditing?: boolean;
 }
 
 export const defaultValues: PetFormData = {
@@ -74,10 +78,11 @@ export const defaultValues: PetFormData = {
   color: "",
   serialNumber: "",
   gender: 0,
-  neutered: false,
+  neutered: 0,
   age: undefined,
   etc: "",
-  profileImage: null, // 기본값 추가
+  profileImage: null,
+  pathUrl: "", // 기본값 추가
 };
 
 export interface GeoPoint {

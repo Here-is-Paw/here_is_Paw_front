@@ -17,12 +17,12 @@ interface PetFormProps {
     isEditing?: boolean;
 }
 
-export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose, isEditing = false }) => {
+export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose, isEditing }) => {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {/* 이미지 업로더 추가 */}
-                <PetImageUploader form={form} />
+                <PetImageUploader form={form} isEditing={isEditing}/>
 
                 <div className="grid grid-cols-2 gap-4">
                     <PetBasicInfoForm form={form} />

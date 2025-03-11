@@ -8,7 +8,8 @@ import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
-import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdate.tsx";
+import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdate.tsx";
+import {useAuth} from "@/contexts/AuthContext.tsx";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -32,9 +33,13 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   const [error, setError] = useState<string | null>(null);
   const [member, setMember] = useState(null);
   const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
+  const { userData } = useAuth();
+
 
   const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
+
+  console.log("사용자 정보 ---------->", userData);
 
   useEffect(() => {
     const fetchPetDetail = async () => {

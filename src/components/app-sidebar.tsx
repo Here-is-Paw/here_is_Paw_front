@@ -3,8 +3,8 @@ import { SidebarHeader } from "./sidebar/SidebarHeader";
 import { SidebarMainContent } from "./sidebar/SidebarContent";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
 import { usePetContext } from "@/contexts/PetContext";
-import { MissingList } from "@/components/posts/missingPost/MissingList.tsx";
-import { FindingList } from "@/components/posts/findingPost/FindingList.tsx";
+import { MissingList } from "@/components/petPost/missingPost/MissingList.tsx";
+import { FindingList } from "@/components/petPost/findingPost/FindingList.tsx";
 
 export function AppSidebar() {
   const { activeFilter } = usePetContext();
