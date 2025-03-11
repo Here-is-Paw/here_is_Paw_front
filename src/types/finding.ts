@@ -47,7 +47,8 @@ export const defaultValues: FindingDetailFormData = {
   nickname: "",
   title: "",
   situation: "",
-  shelterId: 0
+  shelterId: 0,
+  pathUrl: ""
 };
 
 export interface FindingDetailFormData {
@@ -62,8 +63,8 @@ export interface FindingDetailFormData {
   location: string; // 지역
   x: number; // Point.getX() 대신 사용
   y: number; // Point.getY() 대신 사용
-  file: File;
-
+  file: File | string;
+  pathUrl: string;
   // 선택 값
   name: string; // 이름
   serialNumber: string;
