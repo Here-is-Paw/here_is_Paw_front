@@ -7,13 +7,14 @@ import {
   DialogHeader,
   DialogFooter,
 } from "@/components/ui/dialog.tsx";
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { MissingDetailData, missingUtils } from "@/types/missing.ts";
 import { petUtils } from "@/types/pet.common.ts";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
+import LocationViewMap from "@/components/location/locationViewMap";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -71,7 +72,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
     fetchPetDetail();
   }, [petId, open]);
-
 
   // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
   useEffect(() => {
@@ -287,31 +287,28 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
   if (loading) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-            <div className="flex justify-center items-center h-full">
-              <p className="text-gray-500">데이터를 불러오는 중...</p>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-500">데이터를 불러오는 중...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (error || !pet) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-            <div className="flex justify-center items-center h-full flex-col">
-              <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
-              <Button
-                  onClick={() => onOpenChange(false)}
-                  className="mt-4"
-              >
-                닫기
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+          <div className="flex justify-center items-center h-full flex-col">
+            <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
+            <Button onClick={() => onOpenChange(false)} className="mt-4">
+              닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
@@ -347,8 +344,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
               <dd>{pet.name || "이름 없음"}</dd>
             </dl>
             <dl>
-              <dt className="text-sm font-medium text-gray-500">견종</dt>
-              <dd>{pet.breed || "견종 미상"}</dd>
+              <dt className="text-sm font-medium text-gray-500">품종</dt>
+              <dd>{pet.breed || "품종 미상"}</dd>
             </dl>
             <dl>
               <dt className="text-sm font-medium text-gray-500">색상</dt>
@@ -376,7 +373,16 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             </dl>
             <dl className="col-span-2">
               <dt className="text-sm font-medium text-gray-500">지역</dt>
-              <dd>{pet.location || "지역 없음"}</dd>
+
+              <dd>
+                {pet.location || "지역 없음"}
+
+                <div className="mt-1">
+                  <LocationViewMap
+                    location={{ x: pet.x, y: pet.y, address: pet.location }}
+                  />
+                </div>
+              </dd>
             </dl>
             <dl className="col-span-2">
               <dt className="text-sm font-medium text-gray-500">특이사항</dt>

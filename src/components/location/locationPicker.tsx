@@ -81,7 +81,7 @@ const LocationPicker = ({
         const mapOptions = {
           center: new window.naver.maps.LatLng(37.52133, 126.9522),
           zoom: 15,
-          minZoom: 10,
+          minZoom: 5,
           tileDuration: 300,
           zoomControl: true,
           zoomControlOptions: {
@@ -142,6 +142,7 @@ const LocationPicker = ({
         setInfoContent(contentEl);
 
         // 초기 위치 주소 가져오기
+        map.setOptions("zoom", 16);
         reverseGeocode(initialCenter.y, initialCenter.x);
 
         // 지도 이동 완료 이벤트 등록

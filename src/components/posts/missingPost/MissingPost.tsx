@@ -39,10 +39,10 @@ import { format } from "date-fns";
 import { MissingFormData, defaultValues } from "@/types/missing.ts";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "../../locaion/locationPicker.tsx";
+import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
-import {usePetContext} from "@/contexts/PetContext.tsx";
+import { usePetContext } from "@/contexts/PetContext.tsx";
 
 interface MissingFormPopupProps {
   open: boolean;
@@ -68,7 +68,7 @@ export const MissingFormPopup = ({
   const [locationInfo, setLocationInfo] = useState({
     x: location.coordinates.lat,
     y: location.coordinates.lng,
-    address: "",
+    address: "서울시 용산구",
   });
   const [date, setDate] = React.useState<Date>();
 
@@ -156,7 +156,11 @@ export const MissingFormPopup = ({
       setReward("");
       setFile(null);
       setImagePreview(null);
-      setLocationInfo({ x: 0, y: 0, address: "" });
+      setLocationInfo({
+        x: location.coordinates.lng,
+        y: location.coordinates.lat,
+        address: "서울시 용산구",
+      });
       setAdditionalAddressDetails("");
 
       // 날짜 초기화
@@ -278,7 +282,7 @@ export const MissingFormPopup = ({
   };
 
   /**
-   * 이름, 견종, 유기견 이미지, 지역, 좌표
+   * 이름, 품종, 유기견 이미지, 지역, 좌표
    * 색상, 동물 등록 번호, 성별, 중성화 유무, 나이, 실종 날짜, 기타(특징), 사례금
    */
 
@@ -290,9 +294,9 @@ export const MissingFormPopup = ({
           // 팝업이 닫힐 때 폼 초기화
           form.reset(defaultValues);
           setLocationInfo({
-            x: location.coordinates.lat,
-            y: location.coordinates.lng,
-            address: "",
+            x: location.coordinates.lng,
+            y: location.coordinates.lat,
+            address: "서울시 용산구",
           });
           setAdditionalAddressDetails("");
         }
@@ -344,12 +348,12 @@ export const MissingFormPopup = ({
                   <FormField
                     control={form.control}
                     name="breed"
-                    rules={{ required: "견종은 필수입니다" }}
+                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>견종 *</FormLabel>
+                        <FormLabel>품종 *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="견종" {...field} />
+                          <Input type="text" placeholder="품종" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
