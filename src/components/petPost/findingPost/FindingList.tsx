@@ -5,7 +5,7 @@ import {FindingCard} from "./FindingCard.tsx";
 import {ChatModal} from "@/components/chat/ChatModal.tsx";
 import {usePetContext} from "@/contexts/PetContext.tsx";
 import {PetList} from "@/types/mypet.ts";
-import {ChatModalInfo, FindingDetail} from "@/components/posts/findingPost/FindingDetail.tsx";
+import {ChatModalInfo, FindingDetail} from "@/components/petPost/findingPost/FindingDetail.tsx";
 
 export function FindingList() {
     // Context에서 데이터와 상태 가져오기

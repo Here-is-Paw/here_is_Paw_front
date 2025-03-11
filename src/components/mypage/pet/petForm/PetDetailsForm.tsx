@@ -87,6 +87,31 @@ export const PetDetailsForm: React.FC<FormProps> = ({ form }) => {
                     </FormItem>
                 )}
             />
+
+            <FormField
+                control={form.control}
+                name="neutered"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>중성화 여부</FormLabel>
+                        <Select
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            defaultValue={field.value?.toString()}
+                        >
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="중성화 여부" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="0">선택 안함</SelectItem>
+                                <SelectItem value="1">유</SelectItem>
+                                <SelectItem value="2">무</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </FormItem>
+                )}
+            />
         </>
     );
 };

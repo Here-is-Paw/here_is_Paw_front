@@ -3,7 +3,7 @@ import { Plus, MessageSquare, Bell, LogOut, Minus } from "lucide-react";
 import { FilterButton } from "./filterButton";
 import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
 import { useAuth } from "@/contexts/AuthContext";
-import { MissingFormPopup } from "@/components/posts/missingPost/MissingPost.tsx";
+import { MissingFormPopup } from "@/components/petPost/missingPost/MissingPost.tsx";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useState, useEffect, useRef } from "react";
@@ -14,7 +14,7 @@ import { chatEventBus } from "@/contexts/ChatContext";
 import { ChatRoom, OpenChatRoom } from "@/types/chat";
 // import { useFindWrite } from "@/hooks/useFindWrite";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
-import { FindingFormPopup } from "@/components/posts/findingPost/FindingPost.tsx";
+import { FindingFormPopup } from "@/components/petPost/findingPost/FindingPost.tsx";
 
 interface NavBarProps {
   buttonStates: {

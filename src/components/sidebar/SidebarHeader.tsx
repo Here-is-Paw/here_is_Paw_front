@@ -1,5 +1,4 @@
 import { FC } from "react";
-import { Menu } from "lucide-react";
 import paw from "../../assets/paw.svg";
 import { IntegratedSearch } from "./IntegratedSearch";
 import { SearchResult } from "@/services/searchService";
@@ -19,34 +18,6 @@ export const SidebarHeader: FC<SidebarHeaderProps> = () => {
   const { activeFilter, searchMode, setActiveFilter, setSearchMode } =
     usePetContext();
 
-  // const [isSearching, setIsSearching] = useState(false);
-  // const { toast } = useToast();
-
-  // const handleSearchResults = (missingResults: Pet[], findResults: Pet[]) => {
-  //     만약 결과가 없다면 토스트 메시지 표시
-  //     if (results.totalCount === 0) {
-  //         toast({
-  //             title: "검색 결과 없음",
-  //             description: "검색 결과가 없습니다. 다른 키워드로 검색해 보세요.",
-  //             variant: "destructive",
-  //         });
-  //     }
-  //
-  //     // 상위 컴포넌트로 검색 결과 전달
-  //     if (resultLost || resultFind) {
-  //         if (resultLost) resultLost = missingResults;
-  //         if (resultFind) resultFind = findResults;
-  //     }
-  // };
-
-  // const handleSearchError = (error: Error) => {
-  //     toast({
-  //         title: "검색 오류",
-  //         description: error.message || "검색 중 오류가 발생했습니다.",
-  //         variant: "destructive",
-  //     });
-  // };
-
   const handleSearchStart = () => {
     // setIsSearching(true);
   };
@@ -54,7 +25,6 @@ export const SidebarHeader: FC<SidebarHeaderProps> = () => {
   return (
     <div className="p-4 max-lg:px-2 border-b bg-green-600 text-white">
       <div className="flex items-center gap-2 mb-4">
-        <Menu className="w-6 h-6" />
         <div className="text-2xl font-bold">Here'sPaw</div>
         <img src={paw} alt="Logo" className="w-8 h-8" />
       </div>
