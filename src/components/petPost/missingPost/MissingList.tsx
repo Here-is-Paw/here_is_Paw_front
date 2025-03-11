@@ -1,25 +1,25 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { MissingData } from "@/types/missing";
-import { MissingCard } from "./missingCard";
-import axios from "axios";
-import { MissingDetail, ChatModalInfo } from "./missingDetail";
-import { ChatModal } from "@/components/chat/ChatModal";
+import { useEffect, useRef, useState } from "react";
+import { MissingCard } from "./MissingCard.tsx";
+import { MissingDetail, ChatModalInfo } from "./MissingDetail.tsx";
+import { ChatModal } from "@/components/chat/ChatModal.tsx";
+import { usePetContext } from "@/contexts/PetContext.tsx";
+import { PetList } from "@/types/mypet.ts";
 
-interface MissingListProps {
-  activeFilter: string;
-  backUrl: string;
-}
+export function MissingList() {
+  // Context에서 데이터와 상태 가져오기
+  const {
+    missingPets, // filteredPets 대신 missingPets 사용
+    activeFilter,
+    isLoading,
+    missingHasMore,
+    loadMorePets,
+  } = usePetContext();
 
-export function MissingList({ activeFilter, backUrl }: MissingListProps) {
-  const [pets, setPets] = useState<MissingData[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [hasMore, setHasMore] = useState<boolean>(true); // 추가 데이터 존재 여부
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedPet, setSelectedPet] = useState<MissingData | null>(null);
-  const [initialLoad, setInitialLoad] = useState<boolean>(true); // 초기 로딩 상태
+  const [selectedPet, setSelectedPet] = useState<PetList | null>(null);
 
   const swiperRef = useRef<any>(null);
 
@@ -34,59 +34,16 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
     targetUserNickname: null,
     chatRoomId: null,
   });
+
   const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
-  // 데이터 가져오기 함수
-  const fetchMissingPets = useCallback(
-    async (pageNum: number) => {
-      try {
-        setLoading(true);
-
-        const response = await axios.get(
-          `${backUrl}/api/v1/missings?page=${pageNum}&size=10`,
-          {
-            withCredentials: true,
-          }
-        );
-
-        console.log(page)
-        const newPets = response.data.data.content || [];
-        const isLast = response.data.data.last || false;
-
-        console.log("Fetched page:", pageNum, "Data:", newPets);
-
-        if (pageNum === 0) {
-          setPets(newPets); // 첫 페이지면 데이터 교체
-        } else {
-          setPets((prevPets) => [...prevPets, ...newPets]); // 기존 데이터에 추가
-        }
-
-        // 마지막 페이지인지 확인
-        setHasMore(!isLast);
-
-        return newPets;
-      } catch (error) {
-        console.error("실종 동물 정보 가져오기 실패:", error);
-        if (pageNum === 0) {
-          setPets([]);
-        }
-        setHasMore(false);
-        return [];
-      } finally {
-        setLoading(false);
-        setInitialLoad(false);
-      }
-    },
-    [backUrl]
-  );
-
-  // 초기 데이터 로드
+  // 초기 로드 상태 업데이트
   useEffect(() => {
-    fetchMissingPets(0);
-    // 페이지 초기화
-    setPage(0);
-  }, [fetchMissingPets]);
+    if (!isLoading) {
+      setInitialLoad(false);
+    }
+  }, [isLoading]);
 
   // Intersection Observer 설정
   useEffect(() => {
@@ -99,13 +56,15 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
     // observer 콜백 함수
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !loading && !initialLoad) {
+      console.log("헤스모어 : ", missingHasMore);
+      if (
+        entry.isIntersecting &&
+        missingHasMore &&
+        !isLoading &&
+        !initialLoad
+      ) {
         console.log("Loading more data...");
-        setPage((prevPage) => {
-          const nextPage = prevPage + 1;
-          fetchMissingPets(nextPage);
-          return nextPage;
-        });
+        loadMorePets();
       }
     };
 
@@ -113,7 +72,7 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
     observerRef.current = new IntersectionObserver(handleObserver, options);
 
     // 로딩 요소 관찰 시작
-    if (loadingRef.current && hasMore) {
+    if (loadingRef.current && missingHasMore) {
       observerRef.current.observe(loadingRef.current);
     }
 
@@ -123,10 +82,10 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, loading, fetchMissingPets, initialLoad]);
+  }, [missingHasMore, isLoading, loadMorePets, initialLoad]);
 
   // 펫 선택 핸들러 추가
-  const handlePetSelect = (pet: MissingData) => {
+  const handlePetSelect = (pet: PetList) => {
     setSelectedPet(pet);
     setIsOpen(true);
   };
@@ -145,15 +104,18 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
   };
 
   const handleSwiperReachEnd = () => {
-    if (hasMore && !loading && !initialLoad && activeFilter === "전체") {
+    if (
+      missingHasMore &&
+      !isLoading &&
+      !initialLoad &&
+      activeFilter === "전체"
+    ) {
       console.log("Swiper reached end, loading more data...");
-      setPage((prevPage) => {
-        const nextPage = prevPage + 1;
-        fetchMissingPets(nextPage);
-        return nextPage;
-      });
+      loadMorePets();
     }
   };
+
+  console.log("missingPet: ", missingPets);
 
   return (
     <>
@@ -163,7 +125,7 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
         </div>
       ) : (
         <>
-          {pets.length > 0 ? (
+          {missingPets.length > 0 ? (
             <>
               <div
                 className={`h-auto ${
@@ -180,7 +142,7 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
                     navigation={true}
                     modules={[Pagination, Navigation]}
                     // scrollbar={{
-                    //   el: ".swiper-scrollbar",
+                    //   hide: false,
                     //   draggable: true,
                     // }}
                     // modules={[Scrollbar]}
@@ -190,17 +152,17 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
                     }}
                     className="relative"
                   >
-                    {pets.map((pet, index) => (
+                    {missingPets.map((pet, index) => (
                       <SwiperSlide
                         key={`missing-slide${pet.id}${index}`}
                         className="w-40 pb-2"
                       >
                         <button
                           type="button"
-                          className="text-left"
+                          className="text-left p-0"
                           onClick={() => handlePetSelect(pet)}
                         >
-                          <div className="p-2">
+                          <div>
                             <MissingCard activeFilter={"전체"} pet={pet} />
                           </div>
                         </button>
@@ -210,11 +172,11 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
                 ) : (
                   <div className="p-2">
                     <ul className="grid grid-cols-2 gap-2">
-                      {pets.map((pet, index) => (
+                      {missingPets.map((pet, index) => (
                         <li key={`missing-list${pet.id}${index}`}>
                           <button
                             type="button"
-                            className="text-left w-full"
+                            className="text-left w-full p-0"
                             onClick={() => handlePetSelect(pet)}
                           >
                             <div className="w-full">
@@ -230,8 +192,8 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
 
                     {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
                     <div ref={loadingRef} className="py-4 text-center">
-                      {loading && hasMore && <p>더 불러오는 중...</p>}
-                      {!hasMore && pets.length > 0 && (
+                      {isLoading && missingHasMore && <p>더 불러오는 중...</p>}
+                      {!missingHasMore && missingPets.length > 0 && (
                         <p className="text-gray-500 text-sm">
                           모든 데이터를 불러왔습니다
                         </p>
@@ -242,7 +204,7 @@ export function MissingList({ activeFilter, backUrl }: MissingListProps) {
 
                 {/* 모달은 한 번만 렌더링 */}
                 <MissingDetail
-                  pet={selectedPet}
+                  petId={selectedPet?.id}
                   open={isOpen}
                   onOpenChange={(open) => {
                     setIsOpen(open);

@@ -1,4 +1,4 @@
-import { FindPet } from "@/types/FindPet";
+import { Finding } from "@/types/Finding";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { backUrl } from "@/constants";
@@ -26,13 +26,13 @@ const getValidImageUrl = (imageUrl: string | undefined) => {
 };
 
 interface PetCardProps {
-  pet: FindPet;
+  pet: Finding;
 }
 
 export function FindPetCard({ pet }: PetCardProps) {
   const { isLoggedIn } = useAuth();
   const [member, setMember] = useState(null);
-  
+
   // findpost 모달
   const [isFindDetailModalOpen, setIsFindDetailModalOpen] = useState(false);
 
@@ -160,13 +160,13 @@ export function FindPetCard({ pet }: PetCardProps) {
 
     localStorage.removeItem("uploadedImage");
   };
-  
+
   // findpost 상세보기
   const openDetailModal = async (postId: number) => {
     await fetchFindDetail(postId);
     // console.log("Updated findDetail:", findDetail);
     updateFormFields();
-    
+
   };
 
   useEffect(() => {
@@ -201,7 +201,7 @@ export function FindPetCard({ pet }: PetCardProps) {
   };
 
   // findpost 삭제
-  const handleFindDeleteSubmit = async (postId: number) => { 
+  const handleFindDeleteSubmit = async (postId: number) => {
     if (confirm("정말 삭제하시겠습니까?")) {
       deleteFindPost(postId);
     }
@@ -470,13 +470,13 @@ export function FindPetCard({ pet }: PetCardProps) {
 
                           const chatRoomId = response.data.data.id;
                           setCurrentChatRoomId(chatRoomId);
-                          
+
                           // 중요: 채팅방 데이터 메시지 배열 초기화 확인
                           if (!response.data.data.chatMessages) {
                             console.log("채팅 메시지 배열 초기화");
                             response.data.data.chatMessages = [];
                           }
-                          
+
                           // 채팅방 목록에 새 채팅방 추가 이벤트 발행
                           chatEventBus.emitAddChatRoom({
                             id: chatRoomId,
@@ -489,39 +489,39 @@ export function FindPetCard({ pet }: PetCardProps) {
                             chatMessages: [],
                             modifiedDate: new Date().toISOString()
                           });
-                          
+
                           // 채팅 모달 표시
                           setIsChatModalOpen(true);
                           setIsFindDetailModalOpen(false);
-                          
+
                           // 채팅방 목록 갱신 이벤트 발행 (기존 코드)
                           chatEventBus.emitRefreshChatRooms();
                           console.log("채팅방 목록 갱신 이벤트 발행됨");
 
                         } catch (err: any) {
                           console.error("채팅방 생성 오류:", err);
-                          
+
                           // 이미 존재하는 채팅방인 경우 (HTTP 409 Conflict)
                           if (err.response && err.response.status === 409) {
                             console.log("이미 존재하는 채팅방:", err.response.data);
-                            
+
                             // 이미 존재하는 채팅방 데이터가 있는 경우
                             if (err.response.data && err.response.data.data && err.response.data.data.id) {
                               const existingChatRoom = err.response.data.data;
                               const chatRoomId = existingChatRoom.id;
-                              
+
                               // 기존 채팅방 정보 활용하여 채팅방 열기
                               const validImageUrl = getValidImageUrl(existingChatRoom.targetUserImageUrl);
                               setTargetUserImageUrl(validImageUrl);
                               setTargetUserNickname(existingChatRoom.targetUserNickname);
                               setCurrentChatRoomId(chatRoomId);
-                              
+
                               // 중요: 채팅방 데이터 메시지 배열 초기화 확인
                               if (!existingChatRoom.chatMessages) {
                                 console.log("기존 채팅방 메시지 배열 초기화");
                                 existingChatRoom.chatMessages = [];
                               }
-                              
+
                               // 채팅방 목록에 추가
                               chatEventBus.emitAddChatRoom({
                                 id: chatRoomId,
@@ -534,19 +534,19 @@ export function FindPetCard({ pet }: PetCardProps) {
                                 chatMessages: existingChatRoom.chatMessages || [],
                                 modifiedDate: existingChatRoom.modifiedDate || new Date().toISOString()
                               });
-                              
+
                               setIsChatModalOpen(true);
                               setIsFindDetailModalOpen(false);
-                              
+
                               // 채팅방 목록 갱신
                               chatEventBus.emitRefreshChatRooms();
                               return;
                             }
                           }
-                          
+
                           // 오류 메시지 구성
                           let errorMessage = "채팅방을 생성하는 중 오류가 발생했습니다.";
-                          
+
                           if (err.response) {
                             if (err.response.status === 400) {
                               errorMessage = "잘못된 요청입니다. 입력한 정보를 확인해주세요.";
@@ -557,13 +557,13 @@ export function FindPetCard({ pet }: PetCardProps) {
                             } else if (err.response.status === 500) {
                               errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
                             }
-                            
+
                             // 서버 응답에 메시지가 있으면 사용
                             if (err.response.data && err.response.data.message) {
                               errorMessage = err.response.data.message;
                             }
                           }
-                          
+
                           alert(errorMessage);
                         }
                       }}

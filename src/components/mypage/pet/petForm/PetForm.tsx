@@ -8,7 +8,7 @@ import { PetBasicInfoForm } from './PetBasicInfoForm.tsx';
 import { PetDetailsForm } from './PetDetailsForm.tsx';
 import { PetAdditionalInfoForm } from './PetAdditionalInfoForm.tsx';
 import { PetImageUploader } from './PetImageUploader.tsx';
-import { PetFormData } from '@/types/pet.ts';
+import { PetFormData } from '@/types/mypet.ts';
 
 interface PetFormProps {
     form: any;
@@ -17,12 +17,12 @@ interface PetFormProps {
     isEditing?: boolean;
 }
 
-export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose, isEditing = false }) => {
+export const PetForm: React.FC<PetFormProps> = ({ form, onSubmit, onClose, isEditing }) => {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {/* 이미지 업로더 추가 */}
-                <PetImageUploader form={form} />
+                <PetImageUploader form={form} isEditing={isEditing}/>
 
                 <div className="grid grid-cols-2 gap-4">
                     <PetBasicInfoForm form={form} />

@@ -11,7 +11,7 @@ import {
     AlertDialogOverlay,
     AlertDialogPortal,
 } from "@/components/ui/alert-dialog.tsx";
-import { MyPet } from "@/types/pet.ts";
+import { MyPet } from "@/types/mypet.ts";
 
 interface DeletePetDialogProps {
     isOpen: boolean;

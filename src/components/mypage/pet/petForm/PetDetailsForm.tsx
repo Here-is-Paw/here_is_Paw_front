@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select.tsx";
-import { FormProps } from '@/types/pet.ts';
+import { FormProps } from '@/types/mypet.ts';
 
 export const PetDetailsForm: React.FC<FormProps> = ({ form }) => {
     return (
@@ -84,6 +84,31 @@ export const PetDetailsForm: React.FC<FormProps> = ({ form }) => {
                                 onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                             />
                         </FormControl>
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="neutered"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>중성화 여부</FormLabel>
+                        <Select
+                            onValueChange={(value) => field.onChange(parseInt(value))}
+                            defaultValue={field.value?.toString()}
+                        >
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="중성화 여부" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="0">선택 안함</SelectItem>
+                                <SelectItem value="1">유</SelectItem>
+                                <SelectItem value="2">무</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </FormItem>
                 )}
             />

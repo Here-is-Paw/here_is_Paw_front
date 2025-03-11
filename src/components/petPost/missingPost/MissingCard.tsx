@@ -1,11 +1,13 @@
-import { MissingData } from "@/types/missing";
+import {PetList} from "@/types/mypet.ts";
 
 interface MissingCardProps {
   activeFilter: string;
-  pet: MissingData;
+  pet: PetList;
 }
 
 export function MissingCard({ activeFilter, pet }: MissingCardProps) {
+  // console.log(pet);
+
   return (
     <>
       <div

@@ -2,29 +2,15 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { backUrl } from "@/constants.ts";
-
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card.tsx";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogCancel,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { X } from "lucide-react";
-
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog.tsx";
 import { PetForm } from "./PetForm.tsx";
-import { PetFormData, defaultValues } from "@/types/pet.ts";
+import { PetFormData, defaultValues } from "@/types/mypet.ts";
 
 interface AddPetFormPopupProps {
   open: boolean;
@@ -33,13 +19,14 @@ interface AddPetFormPopupProps {
 }
 
 export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
-  open,
-  onOpenChange,
-  onSuccess,
-}) => {
+                                                                  open,
+                                                                  onOpenChange,
+                                                                  onSuccess,
+                                                                }) => {
   // Initialize the form with default values
   const form = useForm<PetFormData>({
     defaultValues,
+    mode: "onChange", // 입력 변경시마다 유효성 검사
   });
 
   // Reset form when popup closes
@@ -57,6 +44,15 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
 
   // Submit handler
   const handleSubmit = async (data: PetFormData) => {
+    // 이미지가 없으면 제출 중단
+    if (!data.profileImage) {
+      form.setError("profileImage", {
+        type: "required",
+        message: "반려동물 이미지는 필수입니다"
+      });
+      return;
+    }
+
     try {
       // FormData 생성
       const formData = new FormData();
@@ -103,52 +99,38 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
   };
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(newOpen) => {
-        if (!newOpen) {
-          // 팝업이 닫힐 때 폼 초기화
-          form.reset(defaultValues);
-        }
-        onOpenChange(newOpen);
-      }}
-    >
-      <AlertDialogPortal>
-        <AlertDialogOverlay className="bg-black/50" />
-        <AlertDialogHeader>
-          <AlertDialogTitle></AlertDialogTitle>
-          <AlertDialogDescription></AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogContent className="max-w-[500px] h-5/6 p-6 rounded-xl bg-white shadow-lg">
-          <AlertDialogCancel asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={handleClose}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </AlertDialogCancel>
+      <Dialog
+          open={open}
+          onOpenChange={(newOpen) => {
+            if (!newOpen) {
+              // 팝업이 닫힐 때 폼 초기화
+              form.reset(defaultValues);
+            }
+            onOpenChange(newOpen);
+          }}
+      >
+        <DialogContent
+            onInteractOutside={(e) => e.preventDefault()}
+            className="max-w-[500px] h-5/6 py-6 px-0 bg-white"
+        >
+          <DialogHeader className="space-y-2 text-center px-6">
+            <DialogTitle className="text-2xl font-bold text-primary">
+              반려동물 등록
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              반려동물 정보를 입력해주세요
+            </DialogDescription>
+          </DialogHeader>
 
-          <Card className="flex-1 overflow-auto border-none shadow-none">
-            <CardHeader className="space-y-2 text-center px-0 pt-0">
-              <CardTitle className="text-2xl font-bold text-primary">
-                반려동물 등록
-              </CardTitle>
-              <CardDescription>반려동물 정보를 입력해주세요</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-              <PetForm
+          <div className="flex-1 overflow-auto px-6">
+            <PetForm
                 form={form}
                 onSubmit={handleSubmit}
                 onClose={handleClose}
-              />
-            </CardContent>
-          </Card>
-        </AlertDialogContent>
-      </AlertDialogPortal>
-    </AlertDialog>
+            />
+          </div>
+
+        </DialogContent>
+      </Dialog>
   );
 };
