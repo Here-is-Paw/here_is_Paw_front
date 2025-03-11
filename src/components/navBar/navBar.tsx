@@ -313,13 +313,54 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         return;
       }
 
-      // 현재 채팅방이 열려있는지 확인
-      const isRoomOpen = roomId ? openChatRooms.some(room =>
-        room.id === roomId && room.isOpen
-      ) : false;
+      // 상세 로깅 추가
+      console.log("수신된 메시지 상세 정보:", {
+        eventType,
+        roomId,
+        senderId: eventData.memberId,
+        currentUserId: me_id,
+        isMyMessage,
+        messageContent: eventData.content?.substring(0, 20) || '내용 없음'
+      });
+
+      // 현재 채팅방이 열려있는지 확인 (상세 로깅 추가)
+      console.log("현재 열린 채팅방 목록:", openChatRooms.map(r => ({id: r.id, isOpen: r.isOpen})));
+      
+      // 채팅방 열림 상태 확인 로직 개선 (명시적인 비교)
+      const isRoomOpen = roomId ? openChatRooms.some(room => {
+        const isOpen = room.id === Number(roomId) && room.isOpen === true;
+        console.log(`채팅방 ${room.id} 비교 결과: 대상 채팅방=${roomId}, 일치=${room.id === Number(roomId)}, 열림=${room.isOpen}, 최종=${isOpen}`);
+        return isOpen;
+      }) : false;
+
+      console.log(`채팅방 ${roomId} 열림 상태 확인:`, isRoomOpen);
 
       if (isRoomOpen) {
-        console.log(`채팅방 ${roomId}가 열려있어 SSE 알림 처리 필요 없음`);
+        console.log(`채팅방 ${roomId}가 열려있어 SSE 알림 처리 필요 없음, 읽음 처리 API 호출`);
+        
+        // 열린 채팅방은 읽음 처리 API 호출 (백업) - 동기적으로 실행
+        try {
+          // axios로 변경하여 동기적으로 실행
+          axios.post(`${backUrl}/api/v1/chat/${roomId}/read`, {}, {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: getCookieValue('accessToken')
+                ? `Bearer ${getCookieValue('accessToken')}`
+                : '',
+            },
+            withCredentials: true
+          }).then(() => {
+            console.log(`채팅방 ${roomId} 자동 읽음 처리 API 호출 완료`);
+            
+            // 추가: 채팅방 목록 즉시 갱신하여 UI에 반영
+            fetchChatRooms().catch(err => {
+              console.error("읽음 처리 후 채팅방 목록 갱신 실패:", err);
+            });
+          });
+        } catch (error) {
+          console.error(`채팅방 ${roomId} 자동 읽음 처리 API 호출 오류:`, error);
+        }
+        
         return;
       }
 
@@ -455,6 +496,104 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       
       window.addEventListener('check_sse_connection', checkSSEConnection);
 
+      // 채팅방 열림 상태 확인 이벤트 리스너 추가 (MissingDetail에서 발생)
+      const handleChatRoomOpened = (event: Event) => {
+        console.log("채팅방 열림 상태 이벤트 수신:", event);
+        
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail) {
+          const { roomId, isOpen } = customEvent.detail;
+          console.log(`채팅방 ${roomId} 열림 상태: ${isOpen}`);
+          
+          // openChatRooms 상태 업데이트 (기존 방식 재사용)
+          if (isOpen) {
+            const chatRoom = chatRooms.find(room => room.id === roomId);
+            if (chatRoom) {
+              console.log(`채팅방 ${roomId} 열기 처리 (MissingDetail에서 요청)`);
+              
+              // 이미 있는지 확인
+              const isAlreadyOpen = openChatRooms.some(room => room.id === roomId);
+              
+              if (isAlreadyOpen) {
+                // 이미 열려있는 채팅방의 isOpen 상태만 true로 설정
+                setOpenChatRooms(prev => prev.map(r => ({
+                  ...r,
+                  isOpen: r.id === roomId
+                })));
+              } else {
+                // 새로운 채팅방 열기
+                const openRoom: OpenChatRoom = {
+                  ...chatRoom,
+                  isOpen: true
+                };
+                
+                // 다른 채팅방은 isOpen을 false로 설정하고 새 채팅방 추가
+                setOpenChatRooms(prev => [
+                  ...prev.map(r => ({ ...r, isOpen: false })),
+                  openRoom
+                ]);
+              }
+              
+              // 읽음 처리 API 호출 (백업)
+              fetch(`${backUrl}/api/v1/chat/${roomId}/read`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: getCookieValue('accessToken')
+                    ? `Bearer ${getCookieValue('accessToken')}`
+                    : '',
+                }
+              }).catch(error => {
+                console.error(`채팅방 ${roomId} 읽음 처리 API 호출 오류:`, error);
+              });
+            }
+          }
+        }
+        
+        return true;
+      };
+      
+      window.addEventListener('chat_room_opened', handleChatRoomOpened);
+
+      // 연락하기에서 열린 채팅방 이벤트 처리 (새로 추가)
+      const handleContactChatOpened = (event: Event) => {
+        console.log("연락하기에서 채팅방 열림 이벤트 수신:", event);
+        
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail) {
+          const { roomId, chatRoom, source } = customEvent.detail;
+          console.log(`연락하기(${source})에서 채팅방 ${roomId} 열림`);
+          
+          // 채팅방 목록 갱신
+          fetchChatRooms().then(() => {
+            // 해당 채팅방 찾기
+            const existingRoom = chatRooms.find(r => r.id === roomId);
+            
+            if (existingRoom) {
+              // 읽음 처리 API 호출
+              axios.post(`${backUrl}/api/v1/chat/${roomId}/read`, {}, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: getCookieValue('accessToken')
+                    ? `Bearer ${getCookieValue('accessToken')}`
+                    : '',
+                },
+                withCredentials: true
+              }).then(() => {
+                console.log(`연락하기: 채팅방 ${roomId} 읽음 처리 성공`);
+              });
+              
+              // 로컬 상태에서 카운트 초기화
+              setChatRooms(prevRooms => 
+                prevRooms.map(r => r.id === roomId ? { ...r, unreadCount: 0 } : r)
+              );
+            }
+          });
+        }
+      };
+      
+      window.addEventListener('contact_chat_opened', handleContactChatOpened);
+
       // 컴포넌트 언마운트 시 정리
       return () => {
         if (sseRef.current) {
@@ -465,9 +604,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         
         // 이벤트 리스너 제거
         window.removeEventListener('check_sse_connection', checkSSEConnection);
+        window.removeEventListener('chat_room_opened', handleChatRoomOpened);
+        window.removeEventListener('contact_chat_opened', handleContactChatOpened);
       };
     }
-  }, [isLoggedIn, me_id]);
+  }, [isLoggedIn, me_id, chatRooms, openChatRooms]);
 
   // 채팅 목록 열기/닫기 시 초기 데이터 로드
   useEffect(() => {
@@ -480,48 +621,39 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const handleEnterChatRoom = (room: ChatRoom) => {
     console.log(`채팅방 ${room.id} 입장, 안읽음 카운트: ${room.unreadCount || 0}`);
 
-    // 즉시 UI 업데이트 (사용자 경험 향상)
-    if ((room.unreadCount || 0) > 0) {
-      console.log(`채팅방 ${room.id} 안읽음 카운트 즉시 0으로 설정 (UI 업데이트)`);
-      setChatRooms(prevRooms => {
-        return prevRooms.map(r => {
-          if (r.id === room.id) {
-            return { ...r, unreadCount: 0 } as ChatRoom;
-          }
-          return r;
-        });
-      });
-    }
-
-    // 서버 API 호출 - 읽음 처리 요청
-    const accessToken = getCookieValue('accessToken');
-    if (!accessToken) {
-      console.error("인증 토큰이 없어 읽음 처리를 할 수 없습니다.");
-      return;
-    }
-
-    // 채팅방 읽음 처리 API 호출
-    fetch(`${backUrl}/api/v1/chat/${room.id}/read`, {
-      method: 'POST',
+    // 읽음 처리 API 호출 - axios로 변경하여 동기적으로 실행
+    console.log(`채팅방 ${room.id} 읽음 처리 API 호출`);
+    axios.post(`${backUrl}/api/v1/chat/${room.id}/read`, {}, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        Authorization: getCookieValue('accessToken')
+          ? `Bearer ${getCookieValue('accessToken')}`
+          : '',
       },
-      credentials: 'include'
-    })
-      .then(response => {
-        if (response.ok) {
-          console.log(`채팅방 ${room.id} 읽음 처리 API 호출 성공`);
-          // SSE 이벤트가 오면 추가 처리됨 (백업)
-        } else {
-          console.error(`채팅방 ${room.id} 읽음 처리 API 호출 실패:`, response.status);
-        }
-      })
-      .catch(error => {
-        console.error(`채팅방 ${room.id} 읽음 처리 API 호출 오류:`, error);
+      withCredentials: true
+    }).then((response) => {
+      console.log(`채팅방 ${room.id} 읽음 처리 API 응답:`, response.data);
+      
+      // 채팅방 목록 즉시 갱신
+      fetchChatRooms().catch(err => {
+        console.error("채팅방 읽음 처리 후 목록 갱신 실패:", err);
       });
+    }).catch(error => {
+      console.error(`채팅방 ${room.id} 읽음 처리 API 오류:`, error);
+    });
+    
+    // 즉시 로컬 상태 업데이트 - 카운트 증가 로직과 동일한 패턴 사용
+    setChatRooms(prevRooms => {
+      return prevRooms.map(r => {
+        if (r.id === room.id) {
+          console.log(`채팅방 ${r.id} 안읽음 카운트를 0으로 설정`);
+          return { ...r, unreadCount: 0 } as ChatRoom;
+        }
+        return r;
+      });
+    });
 
-    // 채팅방이 이미 열려있는지 확인
+    // 이미 열려있는 채팅방인지 확인
     const isAlreadyOpen = openChatRooms.some(openRoom => openRoom.id === room.id);
 
     if (isAlreadyOpen) {
@@ -592,18 +724,47 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         console.log("채팅방 목록 응답:", response.data);
         
         if (response.data && response.data.data) {
+          // 서버 응답 데이터 전체 구조 로깅
+          console.log("서버 응답 첫 번째 채팅방 전체 데이터:", response.data.data[0]);
+          
           // 필터링 및 정렬 로직
           const filteredRooms = response.data.data.filter(
             (room: ChatRoom) => room.chatUserId === me_id || room.targetUserId === me_id
           );
           
-          const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
+          // 서버 응답의 unreadCount 또는 unreadMessageCount 필드 확인 및 로깅
+          console.log("서버 응답의 안 읽은 메시지 카운트:", filteredRooms.map((r: ChatRoom) => ({
+            id: r.id, 
+            unreadCount: r.unreadCount, 
+            unreadMessageCount: (r as any).unreadMessageCount
+          })));
+          
+          // 서버 응답에서 안 읽은 메시지 카운트 필드 적용
+          const roomsWithUnreadCount = filteredRooms.map((room: ChatRoom) => {
+            // 서버 응답에서 unreadCount 또는 unreadMessageCount 필드 확인
+            const serverUnreadCount = room.unreadCount !== undefined 
+              ? room.unreadCount 
+              : (room as any).unreadMessageCount || 0;
+            
+            // 기존 채팅방 객체에 안 읽은 메시지 카운트 추가
+            return { 
+              ...room, 
+              unreadCount: serverUnreadCount
+            };
+          });
+          
+          // 최종 채팅방 목록 로깅
+          console.log("처리된 안 읽은 메시지 카운트:", roomsWithUnreadCount.map((r: ChatRoom) => ({
+            id: r.id, 
+            unreadCount: r.unreadCount
+          })));
+          
+          const sortedRooms = sortChatRoomsByLastMessageTime(roomsWithUnreadCount);
           setChatRooms(sortedRooms);
         } else {
           console.log("응답 데이터가 없거나 형식이 올바르지 않습니다:", response.data);
           setChatRooms([]);
         }
-        
       } catch (error: unknown) {
         console.error("API 요청 오류:", error);
         
@@ -1040,12 +1201,41 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       console.log(`채팅방 ${room.id} 최종 안읽음 메시지 수: ${unreadCount}`);
                     }
 
+                    // 현재 열려있는 모든 채팅방 로깅
+                    console.log("현재 열린 채팅방 목록:", openChatRooms.map(r => `${r.id}:${r.isOpen}`).join(', '));
+                    
+                    // 채팅방이 열려있는지 명시적으로 다시 확인 (OpenChatRoom 상태 확인)
+                    const isThisRoomOpen = openChatRooms.some(openRoom => 
+                      openRoom.id === room.id && openRoom.isOpen
+                    );
+                    
+                    // 채팅방이 열려있으면 메시지를 수신한 즉시 읽음 처리 API 호출
+                    if (isThisRoomOpen && !isMessageFromCurrentUser) {
+                      console.log(`열린 채팅방 ${room.id}에 메시지 도착, 즉시 읽음 처리 API 호출`);
+                      try {
+                        fetch(`${backUrl}/api/v1/chat/${room.id}/read`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: getCookieValue('accessToken')
+                              ? `Bearer ${getCookieValue('accessToken')}`
+                              : '',
+                          }
+                        });
+                        
+                        // 열린 채팅방에서는 unreadCount를 0으로 강제 설정
+                        unreadCount = 0;
+                      } catch (error) {
+                        console.error(`채팅방 ${room.id} 읽음 처리 API 호출 오류:`, error);
+                      }
+                    }
+                    
                     // 업데이트된 채팅방 반환
                     return {
                       ...room,
                       chatMessages: updatedMessages,
                       modifiedDate: messageData.createdDate || new Date().toISOString(),
-                      unreadCount: unreadCount
+                      unreadCount: isThisRoomOpen ? 0 : unreadCount // 열린 채팅방은 항상 unreadCount를 0으로 설정
                     };
                   }
                   return room;
