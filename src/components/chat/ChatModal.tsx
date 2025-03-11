@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Send } from "lucide-react";
+import { X, Send, ChevronLeft } from "lucide-react";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -25,6 +25,15 @@ interface WebSocketMessage {
   content: string;
 }
 
+interface ChatRoom {
+  chatUserId: number;
+  targetUserId: number;
+  chatUserNickname: string;
+  chatUserImageUrl: string;
+  targetUserNickname: string;
+  targetUserImageUrl: string;
+}
+
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,7 +42,18 @@ interface ChatModalProps {
   initialMessages?: ChatMessage[];
   targetUserImageUrl?: string | null;
   targetUserNickname?: string | null;
+  chatRoom?: ChatRoom | null;
 }
+
+// 쿠키값을 가져오는 유틸리티 함수
+const getCookieValue = (name: string): string | null => {
+  const cookieString = document.cookie;
+  const match = cookieString.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) {
+    return match[2];
+  }
+  return null;
+};
 
 export function ChatModal({ 
   isOpen, 
@@ -42,7 +62,8 @@ export function ChatModal({
   targetUserNickname,
   defaultImageUrl,
   chatRoomId,
-  initialMessages = []
+  initialMessages = [],
+  chatRoom
 }: ChatModalProps) {
   const { addChatRoom, removeChatRoom, refreshChatRooms } = useChatContext();
   const [chatMessage, setChatMessage] = useState("");
@@ -69,6 +90,17 @@ export function ChatModal({
   const [size, setSize] = useState({ width: 400, height: 500 });
   const resizeRef = useRef<{ x: number; y: number } | null>(null);
   
+  // 상대방 정보 상태 추가
+  const [otherUserInfo, setOtherUserInfo] = useState<{
+    nickname: string;
+    imageUrl: string;
+    userId: number | null;
+  }>({
+    nickname: targetUserNickname || '사용자',
+    imageUrl: targetUserImageUrl || defaultImageUrl,
+    userId: null
+  });
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -181,14 +213,7 @@ export function ChatModal({
         },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        webSocketFactory: () => {
-          const ws = new WebSocket(`${backUrl.replace('http', 'ws')}/ws`);
-          ws.onerror = (err) => {
-            console.error('WebSocket 에러:', err);
-          };
-          return ws;
-        }
+        heartbeatOutgoing: 4000
       });
 
       client.current = stompClient;
@@ -327,7 +352,10 @@ export function ChatModal({
       }, 10000); // 10초마다 갱신
 
       return () => {
-        console.log('Cleaning up WebSocket connection...');
+        console.log(`채팅방 ${chatRoomId} WebSocket 연결 해제`);
+        if (client.current && client.current.active) {
+          client.current.deactivate();
+        }
         if (subscription) {
           try {
             subscription.unsubscribe();
@@ -335,13 +363,62 @@ export function ChatModal({
             console.error('구독 해제 오류:', error);
           }
         }
-        if (stompClient.active) {
-          stompClient.deactivate();
-        }
         clearInterval(readInterval); // 인터벌 정리
       };
     }
   }, [isVisible, chatRoomId, userId]);
+
+  // 상대방 정보 가져오는 함수
+  const getOtherUserInfo = useCallback(() => {
+    console.log('[ChatModal] 상대방 정보 계산:', {
+      userId,
+      chatRoom,
+      targetUserNickname,
+      targetUserImageUrl
+    });
+    
+    if (!chatRoom || !userId) {
+      console.warn('[ChatModal] 채팅방 정보나 사용자 ID가 없어 기본값 사용');
+      return {
+        nickname: targetUserNickname || '사용자',
+        imageUrl: targetUserImageUrl || defaultImageUrl,
+        userId: null
+      };
+    }
+    
+    // NavBar의 getOtherUserInfo와 유사한 로직
+    const myId = Number(userId);
+    const chatUserId = Number(chatRoom.chatUserId);
+    const targetUserId = Number(chatRoom.targetUserId);
+    
+    const isMyChat = myId === chatUserId;
+    console.log(`[ChatModal] 내가 채팅 시작자인지: ${isMyChat}, 비교: ${myId} === ${chatUserId}`);
+    
+    const validImageUrl = (imageUrl: string | undefined) => {
+      if (!imageUrl || imageUrl === 'profile' || imageUrl === 'null' || imageUrl === 'undefined') {
+        return defaultImageUrl;
+      }
+      return imageUrl;
+    };
+    
+    const result = {
+      nickname: isMyChat ? chatRoom.targetUserNickname : chatRoom.chatUserNickname,
+      imageUrl: validImageUrl(isMyChat ? chatRoom.targetUserImageUrl : chatRoom.chatUserImageUrl),
+      userId: isMyChat ? chatRoom.targetUserId : chatRoom.chatUserId
+    };
+    
+    console.log('[ChatModal] 계산된 상대방 정보:', result);
+    return result;
+  }, [userId, chatRoom, targetUserNickname, targetUserImageUrl, defaultImageUrl]);
+  
+  // 사용자 ID가 설정되거나 채팅방이 변경될 때 상대방 정보 업데이트
+  useEffect(() => {
+    if (userId || chatRoom) {
+      const info = getOtherUserInfo();
+      setOtherUserInfo(info);
+      console.log('[ChatModal] 상대방 정보 업데이트:', info);
+    }
+  }, [userId, chatRoom, getOtherUserInfo]);
 
   // 채팅방 닫기 핸들러
   const handleClose = () => {
@@ -437,30 +514,51 @@ export function ChatModal({
 
   // 채팅 메시지 전송 함수
   const handleSendMessage = async () => {
-    if (!chatMessage.trim() || !chatRoomId || isSending) return;
-    
-    // 낙관적 업데이트는 하지 않음 (WebSocket을 통해 받을 예정)
-    setChatMessage("");
-    setIsSending(true);
+    if (!chatMessage.trim()) return;
     
     try {
-      // 백엔드 API를 통해 메시지 전송
-      const response = await axios.post(
-        `${backUrl}/api/v1/chat/${chatRoomId}/messages`, 
-        {
-          content: chatMessage,
-          chatMessageId: null
-        },
-        {
-          withCredentials: true
-        }
-      );
-
-      console.log("메시지 전송 응답:", response.data);
+      setIsSending(true);
+      const currentMessage = chatMessage;
+      setChatMessage("");
       
+      console.log(`메시지 전송 - 채팅방 ID: ${chatRoomId}, 내용: ${currentMessage}`);
+      
+      // 백엔드로 메시지 전송
+      const response = await fetch(`${backUrl}/api/v1/chat/${chatRoomId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getCookieValue('accessToken')}`,
+        },
+        body: JSON.stringify({
+          content: currentMessage,
+          // memberId는 백엔드에서 @LoginUser로 처리하므로 생략
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`메시지 전송 실패: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("메시지 전송 성공:", data);
+      
+      // 새 메시지 로컬에 추가 (필요한 경우)
+      const newMessage = data.data;
+      
+      // 필요하다면 새 메시지를 로컬 상태에 추가
+      if (newMessage) {
+        setChatMessages(prev => [...prev, newMessage]);
+        // 메시지 전송 시 스크롤 아래로 이동
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      }
     } catch (error) {
       console.error("메시지 전송 오류:", error);
-      alert("메시지 전송 중 오류가 발생했습니다.");
+      alert("메시지를 전송하지 못했습니다.");
+      // 실패한 경우 입력창에 메시지 복원
+      setChatMessage(chatMessage);
     } finally {
       setIsSending(false);
     }
@@ -468,11 +566,25 @@ export function ChatModal({
 
   // 프로필 이미지 가져오는 함수
   const getValidUserImage = useCallback(() => {
-    if (!targetUserImageUrl || targetUserImageUrl === 'profile') {
+    console.log('[ChatModal] 이미지 URL 검증:', {
+      imageUrl: otherUserInfo.imageUrl,
+      defaultImageUrl,
+      chatRoomId
+    });
+    
+    if (!otherUserInfo.imageUrl) {
+      console.warn('[ChatModal] 대상 사용자 이미지 URL이 없습니다. 기본 이미지를 사용합니다.');
       return defaultImageUrl;
     }
-    return targetUserImageUrl;
-  }, [targetUserImageUrl, defaultImageUrl]);
+    
+    if (otherUserInfo.imageUrl === 'profile' || otherUserInfo.imageUrl === 'null' || otherUserInfo.imageUrl === 'undefined') {
+      console.warn('[ChatModal] 대상 사용자 이미지 URL이 유효하지 않습니다:', otherUserInfo.imageUrl);
+      return defaultImageUrl;
+    }
+    
+    console.log('[ChatModal] 유효한 이미지 URL 반환:', otherUserInfo.imageUrl);
+    return otherUserInfo.imageUrl;
+  }, [otherUserInfo.imageUrl, defaultImageUrl, chatRoomId]);
 
   if (!isVisible) return null;
 
@@ -536,7 +648,7 @@ export function ChatModal({
               }}
             />
             <div>
-              <h3 className="font-medium select-none text-white">{targetUserNickname || "사용자"}</h3>
+              <h3 className="font-medium select-none text-white">{otherUserInfo.nickname}</h3>
             </div>
           </div>
           <button 
@@ -576,7 +688,7 @@ export function ChatModal({
                     )}
                     <div className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
                       {msg.sender !== 'me' && (
-                        <span className="text-xs text-gray-600 mb-1">{targetUserNickname}</span>
+                        <span className="text-xs text-gray-600 mb-1">{otherUserInfo.nickname}</span>
                       )}
                       <div className="flex flex-row items-end">
                         {msg.sender === 'me' && (

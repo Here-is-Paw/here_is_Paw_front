@@ -142,22 +142,63 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     }
 
     try {
-      // 펫 데이터 확인
+      // 펫 데이터 확인 - 상세 로깅
       console.log("채팅 대상 펫 데이터:", pet);
-
-      // 작성자 ID를 targetUserId로 사용
+      
+      // 작성자 ID를 targetUserId로 사용 - 명확한 검사 추가
       const petAny = pet as any;
-      const targetUserId = petAny.authorId || pet.id; // authorId가 없으면 기본값으로 pet.id 사용
-
-      console.log("채팅 요청 targetUserId:", targetUserId);
-
+      let targetUserId;
+      
+      // authorId 확인 및 로깅
+      console.log("작성자 ID(authorId):", petAny.authorId);
+      console.log("작성자 ID 타입:", typeof petAny.authorId);
+      
+      if (petAny.authorId && typeof petAny.authorId === 'number' && petAny.authorId > 0) {
+        targetUserId = petAny.authorId;
+      } else if (petAny.member && petAny.member.id && typeof petAny.member.id === 'number' && petAny.member.id > 0) {
+        targetUserId = petAny.member.id;
+      } else {
+        targetUserId = pet.id; // 최후의 수단으로 pet.id 사용
+      }
+      
+      // 최종 targetUserId 로깅
+      console.log("최종 선택된 targetUserId:", targetUserId);
+      console.log("targetUserId 타입:", typeof targetUserId);
+      
+      // NavBar의 SSE 연결 상태 확인 또는 트리거 - 중요!
+      console.log("연락하기 - NavBar SSE 연결 상태 확인");
+      const sseConnected = window.dispatchEvent(new CustomEvent('check_sse_connection', {
+        detail: {
+          userId: targetUserId,
+          source: 'contact_button'
+        }
+      }));
+      console.log("SSE 연결 확인 이벤트 발생:", sseConnected);
+      
+      // API 요청 - targetUserId를 명시적으로 숫자로 변환하여 전송
+      const requestParams = { targetUserId: Number(targetUserId) };
+      console.log("채팅방 생성 API 요청 파라미터:", requestParams);
+      
+      // NavBar의 createChatRoom 함수와 유사한 방식으로 구현
       const response = await axios.post(
         `${backUrl}/api/v1/chat/rooms`,
-        { targetUserId },
-        { withCredentials: true }
+        requestParams,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: document.cookie.includes("accessToken")
+              ? `Bearer ${document.cookie.split('accessToken=')[1].split(';')[0]}`
+              : '',
+          },
+          withCredentials: true,
+        }
       );
-
+      
+      // 응답 로깅
       console.log("채팅방 생성/조회 응답:", response.data);
+      console.log("생성된 채팅방 ID:", response.data.data.id);
+      console.log("채팅 사용자 ID:", response.data.data.chatUserId);
+      console.log("타겟 사용자 ID:", response.data.data.targetUserId);
 
       // 타켓 유저 프로필 사진 처리
       const validImageUrl = getValidImageUrl(

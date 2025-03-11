@@ -10,7 +10,6 @@ import {useState, useEffect, useRef} from "react";
 import {ChatRoomList} from "@/components/chat/ChatRoomList";
 import {ChatModal} from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
-import {chatEventBus} from "@/contexts/ChatContext";
 import {ChatRoom, OpenChatRoom} from "@/types/chat";
 // import { useFindWrite } from "@/hooks/useFindWrite";
 import {useRadius} from "@/contexts/RadiusContext.tsx";
@@ -102,8 +101,11 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   const [gender, setGender] = useState(0);
   const [neutered, setNeutered] = useState(0);
   const [me_id, setMe_id] = useState(0);
+  const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
+  const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
 
-  const { incrementSubmissionCount } = usePetContext();
+  // usePetContext가 정의되지 않았으므로 이 줄을 주석 처리합니다
+  // const { incrementSubmissionCount } = usePetContext();
 
   const handleLocationSelect = (location: {
     x: number;
@@ -232,7 +234,6 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
         if (response.status === 200 || response.status === 201) {
           alert("발견 신고가 성공적으로 저장되었습니다!");
-          incrementSubmissionCount();
           handleRemoveImage();
         } else {
           alert("저장 실패");
@@ -267,16 +268,44 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     const eventType = eventData.type || eventData.eventType;
     console.log("SSE 이벤트 유형:", eventType);
 
-    if (eventType === 'NEW_MESSAGE' || eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE') {
-      console.log("새 메시지 또는 첫 메시지 이벤트 처리:", eventData);
+    if (eventType === 'READ_STATUS') {
+      console.log("읽음 상태 변경 이벤트 감지:", eventData);
+      
+      // 채팅방 ID 확인
+      const roomId = eventData.chatRoomId || eventData.roomId;
+      
+      if (!roomId) {
+        console.log("읽음 상태 이벤트에 채팅방 ID가 없어 처리 무시");
+        return;
+      }
+      
+      // 읽음 처리한 사용자 확인
+      const readById = eventData.readBy || eventData.userId;
+      
+      console.log(`채팅방 ${roomId} 읽음 처리 이벤트, 처리 사용자: ${readById}`);
+      
+      // 채팅방 목록 상태 업데이트 (unreadCount를 0으로)
+      setChatRooms(prevRooms => {
+        return prevRooms.map(room => {
+          if (room.id === roomId) {
+            console.log(`채팅방 ${roomId} 읽음 상태 업데이트 (unreadCount: 0)`);
+            return { ...room, unreadCount: 0 } as ChatRoom;
+          }
+          return room;
+        });
+      });
+      
+      return;
+    }
+
+    if (eventType === 'unreadMessages' || eventType === 'NEW_MESSAGE' || 
+        eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE' || 
+        eventType === 'CHAT_UPDATED') {
+      console.log("채팅 관련 이벤트 감지:", eventData);
 
       // 채팅방 ID 확인
       const roomId = eventData.chatRoomId || eventData.roomId;
-      if (!roomId) {
-        console.error("이벤트에 채팅방 ID가 없음:", eventData);
-        return;
-      }
-
+      
       // 메시지가 내가 보낸 것인지 확인
       const isMyMessage = eventData.memberId === me_id;
       if (isMyMessage) {
@@ -285,78 +314,20 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       }
 
       // 현재 채팅방이 열려있는지 확인
-      const isRoomOpen = openChatRooms.some(room =>
+      const isRoomOpen = roomId ? openChatRooms.some(room =>
         room.id === roomId && room.isOpen
-      );
+      ) : false;
 
       if (isRoomOpen) {
         console.log(`채팅방 ${roomId}가 열려있어 SSE 알림 처리 필요 없음`);
         return;
       }
 
-      // 중요: 채팅방이 닫혀 있고 메시지가 도착한 경우, 즉시 서버에서 최신 데이터 가져오기
-      console.log(`SSE: 채팅방 ${roomId} 닫힘 상태에서 메시지 도착, 즉시 데이터 갱신`);
-
-      // 메시지 개수 확인을 위한 채팅방 데이터 조회
-      fetch(`${backUrl}/api/v1/chat/${roomId}/messages`, {
-        headers: {
-          Authorization: getCookieValue('accessToken')
-            ? `Bearer ${getCookieValue('accessToken')}`
-            : '',
-        },
-      })
-      .then(response => response.json())
-      .then(data => {
-        // 채팅방의 메시지 개수로 첫 메시지 여부 판단
-        const isFirstMessage = data && data.data && data.data.length === 1;
-        console.log(`채팅방 ${roomId} 메시지 개수:`, data?.data?.length, "첫 메시지 여부:", isFirstMessage);
-
-        if (isFirstMessage) {
-          console.log(`채팅방 ${roomId}의 첫 번째 메시지 감지 (SSE)`);
-
-          // 채팅방이 열려있는지 확인
-          const isRoomOpen = openChatRooms.some(room =>
-            room.id === roomId && room.isOpen
-          );
-
-          if (!isRoomOpen) {
-            console.log("채팅방 닫힘 상태, 첫 메시지 알림 갱신");
-
-            // UI 상태와 관계없이 채팅방 목록 데이터 갱신
-            console.log("첫 메시지 감지 후 채팅방 목록 데이터 갱신 시작");
-            fetch(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
-              headers: {
-                Authorization: getCookieValue('accessToken')
-                  ? `Bearer ${getCookieValue('accessToken')}`
-                  : '',
-              },
-            })
-            .then(response => response.json())
-            .then(roomListData => {
-              if (roomListData && roomListData.data) {
-                console.log("첫 메시지 감지 후 채팅방 목록 데이터 갱신 성공:", roomListData.data);
-                const filteredRooms = roomListData.data.filter(
-                  (room: ChatRoom) => room.chatUserId === me_id || room.targetUserId === me_id
-                );
-                const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
-                setChatRooms(sortedRooms);
-              }
-            })
-            .catch(error => {
-              console.error("첫 메시지 감지 후 채팅방 목록 갱신 실패:", error);
-            });
-          }
-        }
-      })
-      .catch(err => {
-        console.error("메시지 목록 조회 중 오류:", err);
+      // 중요: 채팅방이 닫혀 있거나 전체 알림인 경우, 즉시 서버에서 최신 데이터 가져오기
+      console.log(`SSE: 채팅 관련 이벤트 감지, 즉시 데이터 갱신`);
+      fetchChatRooms().catch(err => {
+        console.error("SSE 이벤트 후 채팅방 목록 갱신 실패:", err);
       });
-
-      // SSE 이벤트 수신 직후에도 UI 갱신 트리거 (보험)
-      setTimeout(() => {
-        console.log("SSE 이벤트 수신 후 UI 강제 갱신 트리거 (보험)");
-        forceUpdateChatList();
-      }, 300);
     }
   };
 
@@ -372,61 +343,117 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         sseRef.current = null;
       }
 
-      try {
-        // SSE 연결 설정
-        const sseUrl = `${backUrl}/api/v1/sse/connect?userId=${me_id}`;
-        console.log("SSE 연결 URL:", sseUrl);
+      // SSE 연결 설정 함수
+      const setupSSEConnection = () => {
+        try {
+          // SSE 연결 설정
+          const sseUrl = `${backUrl}/api/v1/sse/connect?userId=${me_id}`;
+          console.log("SSE 연결 URL:", sseUrl);
 
-        const eventSource = new EventSource(sseUrl, { withCredentials: true });
-        sseRef.current = eventSource;
+          const eventSource = new EventSource(sseUrl, { withCredentials: true });
+          sseRef.current = eventSource;
 
-        // 연결 성공 핸들러
-        eventSource.onopen = () => {
-          console.log("SSE 연결 성공");
-        };
+          // 연결 성공 핸들러
+          eventSource.onopen = () => {
+            console.log("SSE 연결 성공");
+          };
 
-        // 메시지 핸들러
-        eventSource.onmessage = (event) => {
-          console.log("SSE 메시지 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("SSE 메시지 파싱 오류:", error);
+          // 메시지 핸들러
+          eventSource.onmessage = (event) => {
+            console.log("SSE 메시지 수신:", event.data);
+            try {
+              const eventData = JSON.parse(event.data);
+              handleSseEvent(eventData);
+            } catch (error) {
+              console.error("SSE 메시지 파싱 오류:", error);
+            }
+          };
+
+          // 특정 이벤트 타입 핸들러 등록
+          eventSource.addEventListener('message', (event) => {
+            console.log("'message' 이벤트 수신:", event.data);
+            try {
+              const eventData = JSON.parse(event.data);
+              handleSseEvent(eventData);
+            } catch (error) {
+              console.error("'message' 이벤트 파싱 오류:", error);
+            }
+          });
+
+          eventSource.addEventListener('new_message', (event) => {
+            console.log("'new_message' 이벤트 수신:", event.data);
+            try {
+              const eventData = JSON.parse(event.data);
+              handleSseEvent(eventData);
+            } catch (error) {
+              console.error("'new_message' 이벤트 파싱 오류:", error);
+            }
+          });
+
+          // 읽음 상태 이벤트 핸들러 등록 (추가)
+          eventSource.addEventListener('read_status', (event) => {
+            console.log("'read_status' 이벤트 수신:", event.data);
+            try {
+              const eventData = JSON.parse(event.data);
+              // READ_STATUS 이벤트 타입 명시
+              eventData.eventType = 'READ_STATUS';
+              handleSseEvent(eventData);
+            } catch (error) {
+              console.error("'read_status' 이벤트 파싱 오류:", error);
+            }
+          });
+
+          // 오류 핸들러
+          eventSource.onerror = (error) => {
+            console.error("SSE 연결 오류:", error);
+            // 연결이 끊어진 경우 재연결 시도 (필요하면 추가)
+          };
+
+          console.log("SSE 이벤트 핸들러 등록 완료");
+        } catch (error) {
+          console.error("SSE 설정 중 오류 발생:", error);
+        }
+      };
+
+      // 초기 SSE 연결 설정
+      setupSSEConnection();
+
+      // SSE 연결 확인 이벤트 리스너 추가
+      const checkSSEConnection = (event: Event) => {
+        console.log("SSE 연결 확인 이벤트 수신:", event);
+        
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail && customEvent.detail.source === 'contact_button') {
+          console.log("연락하기 버튼에서 SSE 연결 확인 요청 수신");
+          
+          // SSE 연결 상태 확인
+          const isConnected = sseRef.current && sseRef.current.readyState === EventSource.OPEN;
+          console.log("현재 SSE 연결 상태:", isConnected ? "연결됨" : "연결되지 않음");
+          
+          // 연결이 끊어진 경우 재연결
+          if (!isConnected) {
+            console.log("SSE 연결이 없거나 끊어짐, 재연결 시도");
+            
+            // 기존 연결 정리
+            if (sseRef.current) {
+              sseRef.current.close();
+              sseRef.current = null;
+            }
+            
+            // 연결 재설정
+            setupSSEConnection();
           }
-        };
-
-        // 특정 이벤트 타입 핸들러 등록
-        eventSource.addEventListener('message', (event) => {
-          console.log("'message' 이벤트 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("'message' 이벤트 파싱 오류:", error);
-          }
-        });
-
-        eventSource.addEventListener('new_message', (event) => {
-          console.log("'new_message' 이벤트 수신:", event.data);
-          try {
-            const eventData = JSON.parse(event.data);
-            handleSseEvent(eventData);
-          } catch (error) {
-            console.error("'new_message' 이벤트 파싱 오류:", error);
-          }
-        });
-
-        // 오류 핸들러
-        eventSource.onerror = (error) => {
-          console.error("SSE 연결 오류:", error);
-          // 연결이 끊어진 경우 재연결 시도 (필요하면 추가)
-        };
-
-        console.log("SSE 이벤트 핸들러 등록 완료");
-      } catch (error) {
-        console.error("SSE 설정 중 오류 발생:", error);
-      }
+          
+          // 데이터 갱신 트리거
+          fetchChatRooms().catch(err => {
+            console.error("SSE 연결 확인 후 채팅방 목록 갱신 실패:", err);
+          });
+        }
+        
+        return true;
+      };
+      
+      window.addEventListener('check_sse_connection', checkSSEConnection);
 
       // 컴포넌트 언마운트 시 정리
       return () => {
@@ -435,9 +462,344 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           sseRef.current.close();
           sseRef.current = null;
         }
+        
+        // 이벤트 리스너 제거
+        window.removeEventListener('check_sse_connection', checkSSEConnection);
       };
     }
   }, [isLoggedIn, me_id]);
+
+  // 채팅 목록 열기/닫기 시 초기 데이터 로드
+  useEffect(() => {
+    if (isLoggedIn && isChatListOpen) {
+      console.log("채팅 목록 열림, 초기 데이터 로드");
+      fetchChatRooms();
+    }
+  }, [isLoggedIn, isChatListOpen]);
+
+  const handleEnterChatRoom = (room: ChatRoom) => {
+    console.log(`채팅방 ${room.id} 입장, 안읽음 카운트: ${room.unreadCount || 0}`);
+
+    // 즉시 UI 업데이트 (사용자 경험 향상)
+    if ((room.unreadCount || 0) > 0) {
+      console.log(`채팅방 ${room.id} 안읽음 카운트 즉시 0으로 설정 (UI 업데이트)`);
+      setChatRooms(prevRooms => {
+        return prevRooms.map(r => {
+          if (r.id === room.id) {
+            return { ...r, unreadCount: 0 } as ChatRoom;
+          }
+          return r;
+        });
+      });
+    }
+
+    // 서버 API 호출 - 읽음 처리 요청
+    const accessToken = getCookieValue('accessToken');
+    if (!accessToken) {
+      console.error("인증 토큰이 없어 읽음 처리를 할 수 없습니다.");
+      return;
+    }
+
+    // 채팅방 읽음 처리 API 호출
+    fetch(`${backUrl}/api/v1/chat/${room.id}/read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      credentials: 'include'
+    })
+      .then(response => {
+        if (response.ok) {
+          console.log(`채팅방 ${room.id} 읽음 처리 API 호출 성공`);
+          // SSE 이벤트가 오면 추가 처리됨 (백업)
+        } else {
+          console.error(`채팅방 ${room.id} 읽음 처리 API 호출 실패:`, response.status);
+        }
+      })
+      .catch(error => {
+        console.error(`채팅방 ${room.id} 읽음 처리 API 호출 오류:`, error);
+      });
+
+    // 채팅방이 이미 열려있는지 확인
+    const isAlreadyOpen = openChatRooms.some(openRoom => openRoom.id === room.id);
+
+    if (isAlreadyOpen) {
+      console.log(`채팅방 ${room.id}이 이미 열려있습니다. 포커스만 이동합니다.`);
+      // 이미 열려있는 채팅방의 isOpen 상태만 true로 설정
+      setOpenChatRooms(prev => prev.map(r => ({
+        ...r,
+        isOpen: r.id === room.id
+      })));
+    } else {
+      console.log(`채팅방 ${room.id} 새로 열기`);
+      // 새로운 채팅방 열기
+      const openRoom: OpenChatRoom = {
+        ...room,
+        isOpen: true
+      };
+
+      // 다른 채팅방은 isOpen을 false로 설정하고 새 채팅방 추가
+      setOpenChatRooms(prev => [
+        ...prev.map(r => ({ ...r, isOpen: false })),
+        openRoom
+      ]);
+    }
+  };
+
+  const handleCloseChatRoom = (roomId: number) => {
+    console.log(`채팅방 ${roomId} 닫기`);
+    // 열린 채팅방 목록에서 제거
+    setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
+
+    // 채팅방을 닫은 후 약간의 지연을 두고 목록 갱신
+    setTimeout(() => {
+      console.log("채팅방 닫은 후 채팅 목록 UI 강제 갱신");
+      // 채팅 목록 데이터 새로 가져오기
+      fetchChatRooms();
+      // UI 강제 갱신 트리거
+      forceUpdateChatList();
+    }, 100);
+  };
+
+  const fetchChatRooms = async () => {
+    try {
+      console.log("===== 채팅방 목록 로드 시작 =====");
+      setLoading(true);
+      setError(null);
+  
+      // 인증 토큰 확인
+      const accessToken = getCookieValue('accessToken');
+      if (!accessToken) {
+        console.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+        setError("인증 정보가 만료되었습니다. 다시 로그인해주세요.");
+        setLoading(false);
+        return;
+      }
+  
+      try {
+        // axios로 요청 전환 (fetch API 대신)
+        console.log("axios로 채팅방 목록 요청...");
+        const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true,
+          timeout: 10000 // 10초 타임아웃 설정
+        });
+        
+        console.log("채팅방 목록 응답:", response.data);
+        
+        if (response.data && response.data.data) {
+          // 필터링 및 정렬 로직
+          const filteredRooms = response.data.data.filter(
+            (room: ChatRoom) => room.chatUserId === me_id || room.targetUserId === me_id
+          );
+          
+          const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
+          setChatRooms(sortedRooms);
+        } else {
+          console.log("응답 데이터가 없거나 형식이 올바르지 않습니다:", response.data);
+          setChatRooms([]);
+        }
+        
+      } catch (error: unknown) {
+        console.error("API 요청 오류:", error);
+        
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED') {
+            setError("요청 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
+          } else if (error.response) {
+            // 서버가 응답을 반환했지만 2xx 범위가 아닌 경우
+            setError(`서버 오류: ${error.response.status} - ${error.response.data?.message || '알 수 없는 오류'}`);
+            console.error("상세 응답:", error.response.data);
+          } else if (error.request) {
+            // 요청이 전송되었지만 응답이 없는 경우
+            setError("서버로부터 응답이 없습니다. 백엔드 서버가 실행 중인지 확인하세요.");
+          } else {
+            setError(`요청 설정 중 오류: ${error.message}`);
+          }
+        } else {
+          const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+          setError(`채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
+        }
+        
+        setChatRooms([]);
+      }
+      
+      setLoading(false);
+    } catch (error: unknown) {
+      console.error("채팅방 목록 로드 오류:", error);
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      setError(`채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
+      setLoading(false);
+    }
+  };
+
+    const handleLeaveRoom = async (roomId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        if (!confirm("정말 채팅방을 나가시겠습니까?")) return;
+
+        try {
+            console.log(`채팅방 ${roomId} 나가기 요청 - 사용자 ID: ${me_id}`);
+            
+            const response = await axios.post(
+                `${backUrl}/api/v1/chat/rooms/${roomId}/leave`,
+                {}, // 본문 데이터 없음 - 백엔드에서 @LoginUser로 현재 사용자 식별
+                {
+                    headers: {
+                        Authorization: getCookieValue('accessToken')
+                            ? `Bearer ${getCookieValue('accessToken')}`
+                            : '',
+                    },
+                    withCredentials: true
+                }
+            );
+
+            console.log("채팅방 나가기 응답:", response.data);
+
+            if (response.status === 200) {
+                setChatRooms(prev => prev.filter(room => room.id !== roomId));
+                setOpenChatRooms(prev => prev.filter(room => room.id !== roomId));
+            } else {
+                alert("채팅방 나가기에 실패했습니다.");
+            }
+        } catch (err) {
+            console.error("채팅방 나가기 오류:", err);
+            alert("채팅방 나가기 중 오류가 발생했습니다.");
+        }
+    };
+
+    const formatLastMessage = (room: ChatRoom) => {
+        try {
+            if (!room.chatMessages || !Array.isArray(room.chatMessages) || room.chatMessages.length === 0) {
+                return "새로운 채팅방이 열렸습니다.";
+            }
+
+            const sortedMessages = [...room.chatMessages].sort((a, b) => {
+                const dateA = a.createDate || a.createdDate || "";
+                const dateB = b.createDate || b.createdDate || "";
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+            });
+
+            const lastMessage = sortedMessages[0];
+
+            if (!lastMessage || !lastMessage.content) {
+                return "새로운 메시지가 없습니다.";
+            }
+
+            return lastMessage.content;
+        } catch (error) {
+            console.error("채팅방 마지막 메시지 형식화 오류:", error);
+            return "메시지를 불러올 수 없습니다.";
+        }
+    };
+
+    const formatTime = (dateString: string) => {
+        if (!dateString) return "";
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+
+        if (isToday) {
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
+        } else {
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+    };
+
+    const getValidImageUrl = (imageUrl: string | undefined) => {
+        const isKakaoDefaultProfile = (url: string) => {
+            return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+        };
+
+        if (
+            !imageUrl ||
+            imageUrl === "profile" ||
+            isKakaoDefaultProfile(imageUrl)
+        ) {
+            return DEFAULT_IMAGE_URL;
+        }
+        return imageUrl;
+    };
+
+    const getOtherUserInfo = (room: ChatRoom) => {
+        console.log(`[getOtherUserInfo] 채팅방 정보:`, room);
+        console.log(`[getOtherUserInfo] 현재 사용자 ID: ${me_id}, 채팅 사용자 ID: ${room.chatUserId}, 대상 사용자 ID: ${room.targetUserId}`);
+        
+        // me_id가 없는 경우 기본값 설정
+        if (!me_id) {
+            console.warn('[getOtherUserInfo] 현재 사용자 ID가 없습니다. 기본값으로 처리합니다.');
+            return {
+                nickname: room.targetUserNickname || '사용자',
+                imageUrl: getValidImageUrl(room.targetUserImageUrl) || DEFAULT_IMAGE_URL,
+                userId: room.targetUserId
+            };
+        }
+        
+        // 명확한 숫자 비교를 위해 변환
+        const myId = Number(me_id);
+        const chatUserId = Number(room.chatUserId);
+        const targetUserId = Number(room.targetUserId);
+        
+        // 내가 채팅 시작자인지 여부 확인
+        const isMyChat = myId === chatUserId;
+        console.log(`[getOtherUserInfo] 내가 채팅 시작자인지: ${isMyChat}, 비교: ${myId} === ${chatUserId}`);
+        
+        // 상대방 정보 반환
+        const result = {
+            nickname: isMyChat ? room.targetUserNickname : room.chatUserNickname,
+            imageUrl: getValidImageUrl(isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl),
+            userId: isMyChat ? room.targetUserId : room.chatUserId
+        };
+        
+        console.log(`[getOtherUserInfo] 결과:`, result);
+        return result;
+    };
+
+  // 채팅 목록 UI 갱신을 위한 카운터 상태 추가
+  const [chatListRenderTrigger, setChatListRenderTrigger] = useState(0);
+
+  // 채팅 목록 강제 리렌더링 함수
+  const forceUpdateChatList = () => {
+    console.log("채팅방 목록 강제 갱신");
+    fetchChatRooms().catch(err => {
+      console.error("채팅방 목록 강제 갱신 실패:", err);
+    });
+  };
+
+  // 주기적 채팅방 목록 갱신 설정 추가
+  useEffect(() => {
+    // 로그인 상태 확인
+    const accessToken = getCookieValue('accessToken');
+    if (!accessToken) return;
+    
+    console.log("주기적 채팅방 목록 갱신 설정");
+    
+    // 10분마다 채팅방 목록 갱신 (30초에서 10분으로 변경)
+    const intervalId = setInterval(() => {
+      console.log("주기적 채팅방 목록 갱신 실행");
+      
+      // 채팅방 목록이 열려있는 경우에만 갱신
+      if (isChatListOpen) {
+        fetchChatRooms().catch(err => {
+          console.error("주기적 채팅방 목록 갱신 실패:", err);
+        });
+      }
+    }, 600000); // 30,000ms(30초)에서 600,000ms(10분)으로 변경
+    
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      console.log("주기적 채팅방 목록 갱신 해제");
+      clearInterval(intervalId);
+    };
+  }, [isChatListOpen, backUrl, me_id]); // 의존성 배열에 isChatListOpen, backUrl, me_id 추가
 
   // WebSocket 연결 설정 useEffect
   useEffect(() => {
@@ -712,309 +1074,95 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }
       };
     }
-  }, [isLoggedIn, isChatListOpen, chatRooms, me_id]);
+  }, [isLoggedIn, isChatListOpen, chatRooms, me_id, openChatRooms]);
 
-  // 채팅 목록 열기/닫기 시 초기 데이터 로드
-  useEffect(() => {
-    if (isLoggedIn && isChatListOpen) {
-      console.log("채팅 목록 열림, 초기 데이터 로드");
-      fetchChatRooms();
-    }
-  }, [isLoggedIn, isChatListOpen]);
-
-  const handleEnterChatRoom = (room: ChatRoom) => {
-    console.log(`채팅방 ${room.id} 입장, 안읽음 카운트 초기화`);
-
-    // 서버 API 호출 - 읽음 처리 요청
-    fetch(`${backUrl}/api/v1/chat/${room.id}/read`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: getCookieValue('accessToken')
-          ? `Bearer ${getCookieValue('accessToken')}`
-          : '',
-      },
-    });
-
-    // 즉시 로컬 상태 업데이트 - 카운트 증가 로직과 동일한 패턴 사용
-    setChatRooms(prevRooms => {
-      return prevRooms.map(r => {
-        if (r.id === room.id) {
-          console.log(`채팅방 ${r.id} 안읽음 카운트를 0으로 설정`);
-          return {
-            ...r,
-            unreadCount: 0
-          } as any;
-        }
-        return r;
-      });
-    });
-
-    // 채팅방 열기
-    setOpenChatRooms(prev => {
-      const existingRoomIndex = prev.findIndex(r => r.id === room.id);
-
-      if (existingRoomIndex >= 0) {
-        return prev.map((r, index) => ({
-          ...r,
-          isOpen: index === existingRoomIndex,
-        }));
-      } else {
-        const otherUser = getOtherUserInfo(room);
-        return [...prev, { 
-          ...room, 
-          isOpen: true,
-          targetUserNickname: otherUser.nickname,
-          targetUserImageUrl: otherUser.imageUrl,
-          targetUserId: otherUser.userId,
-          unreadCount: 0 // 열 때 unreadCount 초기화
-        }];
-      }
-    });
-  };
-
-  const handleCloseChatRoom = (roomId: number) => {
-    console.log(`채팅방 ${roomId} 닫기`);
-    // 열린 채팅방 목록에서 제거
-    setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
-
-    // 채팅방을 닫은 후 약간의 지연을 두고 목록 갱신
-    setTimeout(() => {
-      console.log("채팅방 닫은 후 채팅 목록 UI 강제 갱신");
-      // 채팅 목록 데이터 새로 가져오기
-      fetchChatRooms();
-      // UI 강제 갱신 트리거
-      forceUpdateChatList();
-    }, 100);
-  };
-
-  const fetchChatRooms = async () => {
+  // 채팅방 생성 함수 (ID 기반으로 수정)
+  const createChatRoom = async (targetUserId: number) => {
     try {
-      setLoading(true);
-      setError(null);
+      console.log(`채팅방 생성 요청 - 대상 사용자 ID: ${targetUserId}, 현재 사용자 ID: ${me_id}`);
+      const response = await axios.post(
+        `${backUrl}/api/v1/chat/rooms`,
+        { targetUserId: targetUserId }, // targetUserId만 전송
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: getCookieValue('accessToken')
+              ? `Bearer ${getCookieValue('accessToken')}`
+              : '',
+          },
+          withCredentials: true,
+        }
+      );
 
-      console.log("======= 채팅방 목록 데이터 로드 시작 =======");
-      console.log("현재 사용자 ID(me_id):", me_id);
-
-      // list-with-unread 엔드포인트 사용
-      const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
-        withCredentials: true,
-      });
-
-      console.log("====== 원본 API 응답 데이터 ======");
-      console.log("채팅방 목록 데이터(읽지 않은 메시지 포함):", response.data.data);
-
-      // 첫 번째 채팅방 상세 정보 (있는 경우)
-      if (response.data.data && response.data.data.length > 0) {
-        const firstRoom = response.data.data[0];
-        console.log("====== 첫 번째 채팅방 상세 구조 ======");
-        console.log("채팅방 ID:", firstRoom.id);
-        console.log("채팅방 객체 키 목록:", Object.keys(firstRoom));
-
-        // 메시지 데이터 확인
-        if (firstRoom.chatMessages && firstRoom.chatMessages.length > 0) {
-          const firstMessage = firstRoom.chatMessages[0];
-          console.log("====== 첫 번째 메시지 상세 구조 ======");
-          console.log("메시지 객체 키 목록:", Object.keys(firstMessage));
-          console.log("메시지 JSON 전체 데이터:", JSON.stringify(firstMessage, null, 2));
-
-          // 메시지에 읽음 상태 필드가 있는지 확인
-          const hasReadField = Object.keys(firstMessage).some(key =>
-            key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
-          );
-          console.log("메시지에 읽음 상태 관련 필드 존재:", hasReadField);
-
-          // 읽음 상태 관련 필드 찾기
-          const readFields = Object.keys(firstMessage).filter(key =>
-            key.toLowerCase().includes('read') || key.toLowerCase().includes('unread')
-          );
-          if (readFields.length > 0) {
-            console.log("읽음 상태 관련 필드:", readFields);
-            readFields.forEach(field => {
-              console.log(`- ${field}: ${firstMessage[field]}`);
-            });
+      console.log("채팅방 생성 응답:", response.data);
+      
+      if (response.data && response.data.data) {
+        const newRoom = response.data.data;
+        console.log("생성된 채팅방 ID:", newRoom.id);
+        
+        // 채팅방 목록 갱신
+        fetchChatRooms().then(() => {
+          // 생성된 채팅방으로 이동
+          const createdRoom = chatRooms.find(room => room.id === newRoom.id);
+          if (createdRoom) {
+            handleEnterChatRoom(createdRoom);
           }
-        }
+        });
       }
-
-      // 사용자와 관련된 채팅방만 필터링
-      let filteredRooms;
-
-      if (me_id === 0 || !me_id) {
-        console.log("사용자 ID가 아직 로드되지 않아 필터링을 적용하지 않습니다.");
-        filteredRooms = response.data.data;
-      } else {
-        console.log(`현재 사용자 ID(${me_id})와 관련된 채팅방만 필터링합니다.`);
-        filteredRooms = response.data.data.filter(
-          (room: ChatRoom) =>
-            room.chatUserId === me_id || room.targetUserId === me_id
-        );
-      }
-
-      console.log(`필터링 후 채팅방 수: ${filteredRooms.length}`);
-
-      // 최근 메시지 순으로 정렬
-      const sortedRooms = sortChatRoomsByLastMessageTime(filteredRooms);
-
-      console.log("======= 안 읽은 메시지 수 계산 =======");
-      // 각 채팅방의 안 읽은 메시지 수 계산
-      sortedRooms.forEach((room: any) => {
-        // 현재 사용자가 채팅 사용자인지 대상 사용자인지 확인
-        const isCurrentUserChatUser = room.chatUserId === me_id;
-        const isCurrentUserTargetUser = room.targetUserId === me_id;
-
-        console.log(`[채팅방 ${room.id}] 현재 사용자는 채팅 사용자=${isCurrentUserChatUser}, 대상 사용자=${isCurrentUserTargetUser}`);
-
-        // 안 읽은 메시지 수 계산
-        let unreadCount = 0;
-
-        if (room.chatMessages && room.chatMessages.length > 0) {
-          console.log(`[채팅방 ${room.id}] 메시지 총 개수: ${room.chatMessages.length}`);
-
-          // 메시지 객체에 어떤 읽음 상태 필드가 있는지 확인
-          const lastMessage = room.chatMessages[room.chatMessages.length - 1];
-          const readFields = Object.keys(lastMessage).filter(key =>
-            key.toLowerCase().includes('read')
-          );
-          console.log(`[채팅방 ${room.id}] 메시지의 읽음 상태 필드:`, readFields);
-
-          // 각 메시지의 읽음 상태를 확인하여 안 읽은 메시지 수 계산
-          room.chatMessages.forEach((msg: any, index: number) => {
-            let isRead = false;
-
-            // 현재 사용자가 채팅 사용자인 경우 chatUserRead 필드를 확인
-            if (isCurrentUserChatUser) {
-              isRead = msg.chatUserRead === true;
-              if (!isRead) {
-                unreadCount++;
-                console.log(`  - 메시지 ${index + 1} (${msg.content.substring(0, 10)}...): chatUserRead = ${msg.chatUserRead}, 안 읽음`);
-              }
-            }
-            // 현재 사용자가 대상 사용자인 경우 targetUserRead 필드를 확인
-            else if (isCurrentUserTargetUser) {
-              isRead = msg.targetUserRead === true;
-              if (!isRead) {
-                unreadCount++;
-                console.log(`  - 메시지 ${index + 1} (${msg.content.substring(0, 10)}...): targetUserRead = ${msg.targetUserRead}, 안 읽음`);
-              }
-            }
-          });
-        }
-
-        // 계산된 안 읽은 메시지 수 설정
-        room.unreadCount = unreadCount;
-        console.log(`[채팅방 ${room.id}] 계산된 안 읽은 메시지 수: ${unreadCount}`);
-      });
-
-      console.log("======= 채팅방 목록 데이터 로드 완료 =======");
-
-      setChatRooms(sortedRooms);
-      setLoading(false);
     } catch (error) {
-      console.error("채팅방 목록 로드 오류:", error);
-      setError("채팅방 목록을 불러오는 중 오류가 발생했습니다.");
-      setLoading(false);
+      console.error("채팅방 생성 오류:", error);
+      alert("채팅방을 생성할 수 없습니다.");
     }
   };
 
-    const handleLeaveRoom = async (roomId: number, e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        if (!confirm("정말 채팅방을 나가시겠습니까?")) return;
-
-        try {
-            const response = await axios.post(
-                `${backUrl}/api/v1/chat/rooms/${roomId}/leave`,
-                {},
-                {withCredentials: true}
-            );
-
-            console.log("채팅방 나가기 응답:", response.data);
-
-            if (response.status === 200) {
-                setChatRooms(prev => prev.filter(room => room.id !== roomId));
-            } else {
-                alert("채팅방 나가기에 실패했습니다.");
-            }
-        } catch (err) {
-            console.error("채팅방 나가기 오류:", err);
-            alert("채팅방 나가기 중 오류가 발생했습니다.");
+  // 채팅 메시지 전송 함수 (ID 기반으로 수정)
+  const sendChatMessage = async (roomId: number, content: string) => {
+    try {
+      console.log(`메시지 전송 - 채팅방 ID: ${roomId}, 내용: ${content}, 사용자 ID: ${me_id}`);
+      const response = await axios.post(
+        `${backUrl}/api/v1/chat/${roomId}/messages`,
+        {
+          content: content,
+          // memberId 필드는 백엔드에서 @LoginUser로 처리하므로 따로 전송 불필요
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: getCookieValue('accessToken')
+              ? `Bearer ${getCookieValue('accessToken')}`
+              : '',
+          },
+          withCredentials: true,
         }
-    };
+      );
 
-    const formatLastMessage = (room: ChatRoom) => {
-        try {
-            if (!room.chatMessages || !Array.isArray(room.chatMessages) || room.chatMessages.length === 0) {
-                return "새로운 채팅방이 열렸습니다.";
-            }
+      console.log("메시지 전송 응답:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("메시지 전송 오류:", error);
+      throw error;
+    }
+  };
 
-            const sortedMessages = [...room.chatMessages].sort((a, b) => {
-                const dateA = a.createDate || a.createdDate || "";
-                const dateB = b.createDate || b.createdDate || "";
-                return new Date(dateB).getTime() - new Date(dateA).getTime();
-            });
-
-            const lastMessage = sortedMessages[0];
-
-            if (!lastMessage || !lastMessage.content) {
-                return "새로운 메시지가 없습니다.";
-            }
-
-            return lastMessage.content;
-        } catch (error) {
-            console.error("채팅방 마지막 메시지 형식화 오류:", error);
-            return "메시지를 불러올 수 없습니다.";
-        }
-    };
-
-    const formatTime = (dateString: string) => {
-        if (!dateString) return "";
-
-        const date = new Date(dateString);
-        const now = new Date();
-        const isToday = date.toDateString() === now.toDateString();
-
-        if (isToday) {
-            const hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
-        } else {
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-        }
-    };
-
-    const getValidImageUrl = (imageUrl: string | undefined) => {
-        const isKakaoDefaultProfile = (url: string) => {
-            return url && url.includes('kakaocdn.net') && url.includes('default_profile');
-        };
-
-        if (
-            !imageUrl ||
-            imageUrl === "profile" ||
-            isKakaoDefaultProfile(imageUrl)
-        ) {
-            return DEFAULT_IMAGE_URL;
-        }
-        return imageUrl;
-    };
-
-    const getOtherUserInfo = (room: ChatRoom) => {
-        const isMyChat = me_id === room.chatUserId;
-
-        return {
-            nickname: isMyChat ? room.targetUserNickname : room.chatUserNickname,
-            imageUrl: getValidImageUrl(isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl),
-            userId: isMyChat ? room.targetUserId : room.chatUserId
-        };
-    };
-
-  // 채팅 목록 UI 갱신을 위한 카운터 상태 추가
-  const [chatListRenderTrigger, setChatListRenderTrigger] = useState(0);
-
-  // 채팅 목록 강제 리렌더링 함수
-  const forceUpdateChatList = () => {
-    setChatListRenderTrigger(prev => prev + 1);
+  // 채팅 목록 아이콘 클릭 이벤트 처리 - 상세 로깅 추가
+  const handleChatListToggle = () => {
+    console.log(`===== 채팅 목록 ${!isChatListOpen ? '열기' : '닫기'} =====`);
+    
+    // 토글 상태 변경
+    setIsChatListOpen(!isChatListOpen);
+    
+    // 채팅 목록을 열 때만 데이터 로드
+    if (!isChatListOpen) {
+      console.log("채팅 목록을 열었습니다. 데이터 로드를 시작합니다.");
+      
+      // 액세스 토큰 확인 및 로깅
+      const accessToken = getCookieValue('accessToken');
+      console.log("채팅 목록 데이터 요청 전 토큰 확인:", !!accessToken);
+      console.log("현재 사용자 ID:", me_id);
+      
+      // 채팅방 목록 데이터 로드 요청
+      fetchChatRooms();
+    }
   };
 
     return (
@@ -1123,7 +1271,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setIsChatListOpen(!isChatListOpen)}
+                        onClick={handleChatListToggle}
                       >
                         <MessageSquare className="h-4 w-4" />
                       </Button>
@@ -1170,6 +1318,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                     chatRoomId={room.id}
                     targetUserImageUrl={room.targetUserImageUrl}
                     targetUserNickname={room.targetUserNickname}
+                    chatRoom={chatRooms.find(cr => cr.id === room.id) || null}
                 />
             ))}
         </>
