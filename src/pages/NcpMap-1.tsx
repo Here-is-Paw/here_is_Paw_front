@@ -98,18 +98,20 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
                         <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
                             <tr>
                                 <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
-                                <td style="color:#333;">${pet.breed}</td>
+                                <td style="color:#333;">${pet.breed ? pet.breed : "미상"}</td>
                             </tr>
                             <tr>
                                 <td style="font-weight:bold; color:#555;">특징:</td>
-                                <td style="color:#333;">${pet.etc}</td>
+                                <td style="color:#333;">${pet.etc ? pet.etc : "미상"}</td>
                             </tr>
                             <tr>
                                 <td style="font-weight:bold; color:#555;">위치:</td>
                                 <td style="color:#333;">${pet.location}</td>
                             </tr>
                         </table>
-                        <img src="${pet.pathUrl}" style="height:255px; width:345px; object-fit: cover;"></img>
+                        <div style="width:100%; height: 300px; margin-bottom:5px;">
+                          <img src="${pet.pathUrl}" style="height:100%; width:100%; object-fit: contain;"></img>
+                        </div>
                     </div>
                 `,
         borderWidth: 0,

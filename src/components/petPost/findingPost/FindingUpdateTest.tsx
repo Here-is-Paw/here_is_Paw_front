@@ -11,21 +11,72 @@ import React, { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
 import { cn } from "@/lib/utils.ts";
 import { format } from "date-fns";
-import { FindingDetailFormData, defaultValues } from "@/types/finding";
+import { FindingDetailFormData } from "@/types/finding";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "@/components/location/locationPicker.tsx";
+import LocationPicker from "@/components/location/locationPickerTest.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
+import { FindingDetailData } from "@/types/finding.ts";
 
-interface FindingFormPopup {
+interface FindingUpdateFormPopup {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  findId: number;
+  pet: FindingDetailData;
   onSuccess?: () => void;
 }
 
-export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormPopup) => {
+export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSuccess }: FindingUpdateFormPopup) => {
+  const defaultValues: FindingDetailFormData = {
+    id: pet.id,
+    name: pet.name,
+    breed: pet.breed,
+    x: pet.x,
+    y: pet.y,
+    location: pet.location,
+    color: pet.color,
+    serialNumber: pet.serialNumber,
+    gender: pet.gender,
+    neutered: pet.neutered,
+    age: pet.age,
+    findDate: pet.findDate,
+    etc: pet.etc,
+    file: pet.pathUrl,
+    pathUrl: pet.pathUrl,
+    memberId: pet.memberId,
+    nickname: "",
+    title: pet.title,
+    situation: pet.situation,
+    shelterId: pet.shelterId,
+  };
+
+  useEffect(() => {
+    form.setValue("id", pet.id);
+    form.setValue("name", pet.name);
+    form.setValue("breed", pet.breed);
+    form.setValue("x", pet.x);
+    form.setValue("y", pet.y);
+    form.setValue("location", pet.location);
+    form.setValue("color", pet.color);
+    form.setValue("serialNumber", pet.serialNumber);
+    form.setValue("gender", pet.gender);
+    form.setValue("neutered", pet.neutered);
+    form.setValue("age", pet.age);
+    form.setValue("findDate", pet.findDate);
+    form.setValue("etc", pet.etc);
+    form.setValue("file", pet.pathUrl);
+    form.setValue("memberId", pet.memberId);
+    form.setValue("nickname", pet.nickname);
+    form.setValue("title", pet.title);
+    form.setValue("situation", pet.situation);
+    form.setValue("shelterId", pet.shelterId);
+    setTimeout(() => {
+      setImagePreview(pet.pathUrl);
+    }, 100);
+  }, []);
+
   const form = useForm<FindingDetailFormData>({
     defaultValues,
   });
@@ -37,10 +88,12 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   });
   const [date, setDate] = React.useState<Date>();
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(pet.pathUrl);
+  const [file, setFile] = useState<File | string>("");
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
-  
+  const [fileUrl, setFileUrl] = useState<string | "">(pet.pathUrl);
+  // const [gender, setGender] = useState("");
+  // const [neutered, setNeutered] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
@@ -48,6 +101,9 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     if (selectedFile) {
       setFile(selectedFile);
       setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+    } else {
+      setFileUrl(pet.pathUrl);
+      setImagePreview(fileUrl);
     }
   };
 
@@ -56,7 +112,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
     if (location.loaded && !location.error) {
-
       // geo 필드 업데이트 (JSON 문자열로 저장)
       form.setValue("x", location.coordinates.lng);
       form.setValue("y", location.coordinates.lat);
@@ -92,7 +147,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
-      setFile(null);
+      setFile("");
       setImagePreview(null);
       setLocationInfo({
         x: location.coordinates.lng,
@@ -127,7 +182,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // 팝업 닫기 핸들러
   const handleClose = () => {
     form.reset(defaultValues);
-    setFile(null);
+    setFile("");
     setImagePreview(null);
     onOpenChange(false);
 
@@ -151,6 +206,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       alert("발견 날짜를 선택해주세요.");
       return;
     }
+    console.log(data.findDate);
     try {
       const formData = new FormData();
       formData.append("name", data.name);
@@ -161,7 +217,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         formData.append("x", locationInfo.x.toString());
         formData.append("y", locationInfo.y.toString());
       } else {
-        alert("발견 위치를 지도에서 선택해주세요.");
+        alert("실종 위치를 지도에서 선택해주세요.");
         return;
       }
 
@@ -174,24 +230,23 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("findDate", new Date(data.findDate).toISOString().split("Z")[0]);
+      formData.append("findDate", data.findDate);
       formData.append("etc", data.etc || "");
 
       if (file) {
         formData.append("file", file);
       } else {
-        alert("반려동물 사진은 필수입니다.");
-        return;
+        formData.append("pathUrl", pet.pathUrl);
       }
 
-      await axios.post(`${backUrl}/api/v1/finding/write`, formData, {
+      await axios.put(`${backUrl}/api/v1/finding/${findId}`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       form.reset(defaultValues);
       setImagePreview(null);
-      setFile(null);
+      setFile("");
 
       await refreshPets();
 
@@ -240,7 +295,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     >
       <DialogContent onInteractOutside={(e) => e.preventDefault()} className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white">
         <DialogHeader className="space-y-2 text-center px-6">
-          <DialogTitle className="text-2xl font-bold text-primary">반려동물 발견 신고</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-primary">반려동물 실종 신고</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">반려동물 정보를 입력해주세요</DialogDescription>
         </DialogHeader>
 
@@ -396,7 +451,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   onClick={() => setCalendarIsOpen((open) => !open)}
                                 >
                                   <CalendarIcon />
-                                  {date ? format(date, "yyyy-MM-dd") : <span>Pick a date</span>}
+                                  {
+                                    date
+                                      ? format(date, "yyyy-MM-dd") // date가 있다면 날짜 포맷 적용
+                                      : format(new Date(pet.findDate), "yyyy-MM-dd") // pet.findDate를 Date 객체로 변환 후 포맷 적용
+                                  }
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
@@ -412,7 +471,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   onSelect={(newDate) => {
                                     setDate(newDate);
                                     if (newDate) {
-                                      field.onChange(newDate.toISOString().split("Z")[0]);
+                                      // 선택한 날짜의 23:59:59로 시간 설정
+                                      const dateWith2359 = new Date(newDate);
+                                      dateWith2359.setHours(23, 59, 59);
+
+                                      // ISO 문자열로 변환하되 타임존 오프셋 고려
+                                      const isoString = dateWith2359.toISOString().split("Z")[0];
+                                      field.onChange(isoString);
                                     }
                                   }}
                                   initialFocus
@@ -460,7 +525,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                         <FormControl>
                           <Input type="text" placeholder="geo" className="sr-only" {...field} readOnly disabled />
                         </FormControl>
-                        <LocationPicker onLocationSelect={handleLocationSelect} isMissing={false} />
+                        <LocationPicker
+                          onLocationSelect={handleLocationSelect}
+                          isMissing={false}
+                          initialLocation={{ x: pet.x, y: pet.y, location: pet.location }}
+                        />
                       </FormItem>
                     )}
                   />

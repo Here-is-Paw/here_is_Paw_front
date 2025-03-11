@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog.tsx";
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
-import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdate.tsx";
-import {useAuth} from "@/contexts/AuthContext.tsx";
 
+// import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdateTest.tsx";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePetContext } from "@/contexts/PetContext.tsx";
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
   isOpen: boolean;
@@ -25,21 +25,21 @@ interface FindingDetailProps {
   onOpenChange: (open: boolean) => void;
   // ChatModal 관련 정보를 상위 컴포넌트로 전달하는 콜백 함수 추가
   onChatModalOpen: (chatInfo: ChatModalInfo) => void;
+  onSuccess?: () => void;
 }
 
-export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpenChange, onChatModalOpen }) => {
+export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpenChange, onChatModalOpen, onSuccess }) => {
   const [pet, setPet] = useState<FindingDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [member, setMember] = useState(null);
+  // const [member, setMember] = useState(null);
   const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
   const { userData } = useAuth();
-
-
+  const { refreshPets } = usePetContext();
   const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
 
-  console.log("사용자 정보 ---------->", userData);
+  // console.log(userData);
 
   useEffect(() => {
     const fetchPetDetail = async () => {
@@ -68,26 +68,10 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
     fetchPetDetail();
   }, [petId, open]);
 
-  // 로그인 된 회원
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-          withCredentials: true,
-        });
-        setMember(memberResponse.data.data.id);
-      } catch (error) {
-        console.error("유저 정보 가져오기 실패:", error);
-      }
-    };
-
-    fetchUserInfo();
-  }, []);
-
   // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
   useEffect(() => {
     if (open && pet) {
-      console.log("미씽 디테일 불러온 데이터:", {
+      console.log("파인드 디테일 불러온 데이터:", {
         이름: pet.name,
         품종: pet.breed,
         나이: pet.age,
@@ -132,9 +116,35 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
     return imageUrl;
   };
 
-  const handleUpdateClick = async () => {
-    // Dialog 닫기
+  const handleDeleteClick = async (findId: number) => {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      try {
+        const response = await axios.delete(`${backUrl}/api/v1/finding/${findId}`, {
+          withCredentials: true,
+        });
+  
+        if (response.status === 200 || response.status === 201) {
+          alert("발견 신고가 성공적으로 삭제되었습니다!");
+
+          await refreshPets();
+          
+          // 모달 닫기
+          onOpenChange(false);
+  
+          // 삭제 성공 후 실행할 콜백 함수 호출
+          if (onSuccess) {
+            onSuccess();
+          }
+        } else {
+          alert("삭제 실패!");
+        }
+      } catch (err) {
+        console.error("Failed to delete pet details:", err);
+        alert("오류가 발생했습니다.");
+      }
+    }
   };
+  
 
   // 연락하기 버튼 핸들러
   const handleContactClick = async () => {
@@ -354,8 +364,8 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
                 <dd>{pet.serialNumber || "등록번호 없음"}</dd>
               </dl>
               <dl>
-                <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
-                <dd>{pet.findDate || "실종 날짜 없음"}</dd>
+                <dt className="text-sm font-medium text-gray-500">발견 날짜</dt>
+                <dd>{pet.findDate ? pet.findDate.split('T')[0] : "발견 날짜 없음"}</dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
@@ -372,8 +382,15 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
             </div>
           </div>
 
-          {member === pet.memberId ? (
+          {userData?.id === pet.memberId ? (
+            
             <DialogFooter className="px-6">
+              <div className="flex justify-end gap-2">
+              <Button type="button" className="bg-red-600" onClick={() => handleDeleteClick(pet.id)}>
+                삭제하기
+              </Button>
+
+              </div>
               <div className="flex justify-end gap-2">
                 <Button
                   onClick={(e) => {
@@ -398,7 +415,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
           )}
         </DialogContent>
       </Dialog>
-      <FindingUpdateFormPopup open={isFindingAddOpen} onFindOpenChange={setIsFindingAddOpen} findId={pet.id} pet={pet} />
+      <FindingUpdateFormPopup open={isFindingAddOpen} onOpenChange={setIsFindingAddOpen} findId={pet.id} pet={pet} />
     </>
   );
 };
