@@ -15,7 +15,8 @@ import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import LocationViewMap from "@/components/location/locationViewMap";
-import { UserSearchPopup } from "@/components/petPost/missingPost/reward/UserSearchPopup.tsx"; // 새 컴포넌트 임포트
+import { UserSearchPopup } from "@/components/petPost/missingPost/reward/UserSearchPopup.tsx";
+import {usePetContext} from "@/contexts/PetContext.tsx"; // 새 컴포넌트 임포트
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -43,6 +44,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showUserSearchPopup, setShowUserSearchPopup] = useState<boolean>(false);
+
+  const {refreshPets} = usePetContext();
 
   const DEFAULT_IMAGE_URL =
       "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -302,7 +305,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
     // 사례금이 0원이면 알림
     if (!pet.reward || pet.reward <= 0) {
-      alert("설정된 사례금이 없습니다.");
+      handleRewardSuccess();
       return;
     }
 
@@ -314,14 +317,18 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   const handleRewardSuccess = () => {
     // 필요한 경우 서버에서 새로운 데이터 로드
     if (petId) {
-      axios.get(`${backUrl}/api/v1/missings/${petId}`)
+      axios.patch(`${backUrl}/api/v1/missings/${petId}/done`,
+          { "state": 2 },
+          { withCredentials: true }
+      )
           .then(response => {
-            if (response.data && response.data.data) {
-              setPet(response.data.data);
+            if (response.data.statusCode === 200) {
+              onOpenChange(false);
+              refreshPets();
             }
           })
           .catch(err => {
-            console.error("데이터 갱신 오류:", err);
+            console.error("게시글 비활성화 중 오류:", err);
           });
     }
   };
