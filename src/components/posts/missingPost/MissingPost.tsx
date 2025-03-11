@@ -579,9 +579,7 @@ export const MissingFormPopup = ({
                             disabled
                           />
                         </FormControl>
-                        <LocationPicker
-                          onLocationSelect={handleLocationSelect}
-                        />
+                        <LocationPicker onLocationSelect={handleLocationSelect} isMissing={true} />
                       </FormItem>
                     )}
                   />

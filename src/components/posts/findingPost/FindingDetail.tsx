@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog.tsx";
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
