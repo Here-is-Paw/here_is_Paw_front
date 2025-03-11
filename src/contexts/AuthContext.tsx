@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 setUserData(null);
             }
-
             return isAuthenticated;
         } catch (error) {
             console.log(error)

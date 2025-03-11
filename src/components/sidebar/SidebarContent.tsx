@@ -2,8 +2,8 @@ import {SidebarGroup} from "@/components/ui/sidebar";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
-import {MissingList} from "@/components/posts/missingPost/MissingList.tsx";
-import {FindingList} from "@/components/posts/findingPost/FindingList.tsx";
+import {MissingList} from "@/components/petPost/missingPost/MissingList.tsx";
+import {FindingList} from "@/components/petPost/findingPost/FindingList.tsx";
 
 export function SidebarMainContent() {
 

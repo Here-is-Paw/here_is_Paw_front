@@ -7,7 +7,8 @@ import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
-import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdateTest.tsx";
+
+// import { FindingUpdateFormPopup } from "@/components/posts/findingPost/FindingUpdateTest.tsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 // ChatModal에 필요한 정보를 담는 인터페이스
