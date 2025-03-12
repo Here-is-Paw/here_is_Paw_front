@@ -267,9 +267,10 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                   <FormField
                     control={form.control}
                     name="breed"
+                    rules={{required: "품종은 필수입니다"}}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>품종</FormLabel>
+                        <FormLabel>품종 *</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder="품종" {...field} />
                         </FormControl>

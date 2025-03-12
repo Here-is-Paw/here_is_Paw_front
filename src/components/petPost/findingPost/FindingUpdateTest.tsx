@@ -202,13 +202,12 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   };
 
   const handleSubmit = async (data: FindingDetailFormData) => {
-    if (!data.findDate) {
-      alert("발견 날짜를 선택해주세요.");
-      return;
+    const formData = new FormData();
+    if (pet.findDate) {
+      formData.append("findDate", pet.findDate)
     }
-    console.log(data.findDate);
+
     try {
-      const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
 
@@ -230,7 +229,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("findDate", data.findDate);
+      formData.append("findDate", data.findDate ? data.findDate : pet.findDate);
       formData.append("etc", data.etc || "");
 
       if (file) {
