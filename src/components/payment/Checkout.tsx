@@ -74,14 +74,6 @@ export const CheckoutPage: React.FC = () => {
     setAmount({ currency: "KRW", value: parsedValue });
   };
 
-  const updateAmount = async (newAmount: Amount) => {
-    setAmount(newAmount);
-
-    // 결제 위젯의 setAmount() 호출로 결제 금액 세팅
-    // 쿠폰 등으로 결제 금액 업데이트 시에도 setAmount() 호출
-    await widgets.setAmount(newAmount);
-  };
-
   return (
     <div className="payment-container" style={{ 
       position: "absolute", 
@@ -137,31 +129,6 @@ export const CheckoutPage: React.FC = () => {
           <div id="payment-method" />
           <div id="agreement" />
           
-          {amount.value >= 5000 && (
-            <div style={{ paddingLeft: isMobile ? "10px" : "24px" }}>
-              <div className="checkable typography--p">
-                <label htmlFor="coupon-box" className="checkable__label typography--regular">
-                  <input
-                    id="coupon-box"
-                    className="checkable__input"
-                    type="checkbox"
-                    aria-checked="true"
-                    disabled={!ready || amount.value < 5000}
-                    onChange={async (event) => {
-                      const newValue = event.target.checked ? amount.value - 5000 : amount.value + 5000;
-                      setCustomAmount(newValue.toString());
-                      await updateAmount({
-                        currency: amount.currency,
-                        value: newValue
-                      });
-                    }}
-                  />
-                  <span className="checkable__label-text">5,000원 쿠폰 적용</span>
-                </label>
-              </div>
-            </div>
-          )}
-    
           {/* 버튼 컨테이너 - 가로/세로 배치 */}
           <div style={{ 
             display: "flex", 
