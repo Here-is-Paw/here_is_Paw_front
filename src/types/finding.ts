@@ -48,7 +48,8 @@ export const defaultValues: FindingDetailFormData = {
   title: "",
   situation: "",
   shelterId: 0,
-  pathUrl: ""
+  pathUrl: "",
+  detailAddr: ""
 };
 
 export interface FindingDetailFormData {
@@ -74,7 +75,7 @@ export interface FindingDetailFormData {
   neutered: number; // 중성화 유무
   etc: string; // 기타 특징
   findDate: string; // 발견 시간 (ISO 문자열: "YYYY-MM-DDTHH:mm:ss")
-
+  detailAddr: string;
   // 고유 finding 값
   title: string; // 제목
   situation: string; // 발견 상황
@@ -104,6 +105,7 @@ export interface FindingDetailData {
   neutered: number; // 중성화 유무
   etc: string; // 기타 특징
   findDate: string; // 발견 시간 (ISO 문자열: "YYYY-MM-DDTHH:mm:ss")
+  detailAddr: string;
 
   // 고유 finding 값
   title: string; // 제목
