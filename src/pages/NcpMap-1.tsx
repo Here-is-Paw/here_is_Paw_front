@@ -21,10 +21,10 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
   const { radius } = useRadius();
   const [selectedLocation, setSelectedLocation] =
-    useState<naver.maps.LatLng | null>(null);
+      useState<naver.maps.LatLng | null>(null);
   const { setUserLocation } = useMapLocation();
   const { refreshPets, setSearchMode, findingPets, missingPets } =
-    usePetContext(); // PetContext에서 필요한 함수 가져오기
+      usePetContext(); // PetContext에서 필요한 함수 가져오기
 
   // 마커 레퍼런스 배열 추가
   const missingMarkersRef = useRef<naver.maps.Marker[]>([]);
@@ -66,7 +66,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
       window.naver.maps.Event.addListener(marker, "click", () => {
         alert(
-          `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
+            `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
         );
       });
 
@@ -90,33 +90,37 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
       // InfoWindow 생성
       const infoWindow = new window.naver.maps.InfoWindow({
         content: `
-                    <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #08CF5D;">
-                        <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
-                            
-                            발견했개
-                        </h4>
-                        <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-                            <tr>
-                                <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
-                                <td style="color:#333;">${pet.breed}</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:bold; color:#555;">특징:</td>
-                                <td style="color:#333;">${pet.etc}</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:bold; color:#555;">위치:</td>
-                                <td style="color:#333;">${pet.location}</td>
-                            </tr>
-                        </table>
-                        <img src="${pet.pathUrl}" style="height:255px; width:345px; object-fit: cover;"></img>
-                    </div>
-                `,
-        borderWidth: 0,
-        disableAnchor: true,
+          <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; ">
+            <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
+              발견했개
+            </h4>
+            <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+              <tr>
+                <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
+                <td style="color:#333;">${pet.breed ? pet.breed : "미상"}</td>
+              </tr>
+              <tr>
+                <td style="font-weight:bold; color:#555;">특징:</td>
+                <td style="color:#333;">${pet.etc ? pet.etc : "없음"}</td>
+              </tr>
+              <tr>
+                <td style="font-weight:bold; color:#555;">위치:</td>
+                <td style="color:#333;">${pet.location}</td>
+              </tr>
+            </table>
+            <div style="width:100%; height: 300px; margin-bottom:5px;">
+              <img src="${pet.pathUrl}" style="height:100%; width:100%; object-fit: contain;"></img>
+            </div>
+          </div>
+        `,
+        borderWidth: 1,
+        disableAnchor: false, // 앵커 활성화
         backgroundColor: "white",
-        borderColor: "transparent",
-        anchorSize: new window.naver.maps.Size(0, 0),
+        borderColor: "#08CF5D", // 테두리 색상을 컨텐츠와 일치시킴
+        anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
+        anchorSkew: true, // 앵커 기울임 효과 활성화
+        anchorColor: "white", // 앵커 색상
+
       });
 
       // 마커 클릭 이벤트 리스너 추가
@@ -135,7 +139,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   };
 
   // 지도 클릭 이벤트 핸들러
-  const handleMapClick = (event: naver.maps.MouseEvent) => {
+  const handleMapClick = (event: any) => {
     const map = mapInstance.current;
 
     if (!map) return;
@@ -234,11 +238,11 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
       try {
         const defaultCenter = new window.naver.maps.LatLng(37.52133, 126.9522);
         const center = currentLocation.coordinates
-          ? new window.naver.maps.LatLng(
-              currentLocation.coordinates.lat,
-              currentLocation.coordinates.lng
+            ? new window.naver.maps.LatLng(
+                currentLocation.coordinates.lat,
+                currentLocation.coordinates.lng
             )
-          : defaultCenter;
+            : defaultCenter;
 
         const mapOptions = {
           center: center,
@@ -294,7 +298,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     } else {
       const script = document.createElement("script");
       script.src =
-        "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
+          "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
       script.onload = initializeMap;
       document.head.appendChild(script);
     }
@@ -309,36 +313,36 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
   useEffect(() => {
     if (
-      mapInstance.current &&
-      (missingPets.length > 0 || findingPets.length > 0)
+        mapInstance.current &&
+        (missingPets.length > 0 || findingPets.length > 0)
     ) {
       createPetMarkers();
     }
   }, [missingPets, findingPets, mapInstance.current]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <div
-        id="map"
-        ref={mapElement}
-        style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
-      />
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <div
+            id="map"
+            ref={mapElement}
+            style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
+        />
 
-      {/* 검색 버튼 */}
-      <div className="absolute bottom-5 left-[calc(100%-24.5rem)] -translate-x-1/2 z-50">
-        <button
-          onClick={handleSearchClick}
-          disabled={!selectedLocation}
-          className="bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center"
-          style={{
-            minWidth: "180px",
-            opacity: selectedLocation ? 1 : 0.6,
-          }}
-        >
-          현재 반경에서 검색
-        </button>
+        {/* 검색 버튼 */}
+        <div className="absolute bottom-5 left-[calc(100%-24.5rem)] -translate-x-1/2 z-50">
+          <button
+              onClick={handleSearchClick}
+              disabled={!selectedLocation}
+              className="bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center"
+              style={{
+                minWidth: "180px",
+                opacity: selectedLocation ? 1 : 0.6,
+              }}
+          >
+            현재 반경에서 검색
+          </button>
+        </div>
       </div>
-    </div>
   );
 };
 

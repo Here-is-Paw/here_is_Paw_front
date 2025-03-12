@@ -1,4 +1,4 @@
-import useGeolocation from "@/hooks/useGeolocation";
+// import useGeolocation from "@/hooks/useGeolocation";
 import { useEffect, useRef, useState } from "react";
 
 interface LocationPickerProps {
@@ -7,7 +7,7 @@ interface LocationPickerProps {
     y: number;
     address: string;
   }) => void;
-  initialLocation?: { x: number; y: number };
+  initialLocation?: { x: number; y: number, location: string };
   isMissing: boolean;
 }
 
@@ -18,11 +18,9 @@ const LocationPicker = ({
 }: LocationPickerProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState<string>(initialLocation?.location ?? "주소를 선택해주세요.");
   const [naverMapsLoaded, setNaverMapsLoaded] = useState<boolean>(false);
   const [infoContent, setInfoContent] = useState<HTMLDivElement | null>(null);
-
-  const location = useGeolocation();
 
   useEffect(() => {
     // 네이버 지도 API 로드 여부 확인
@@ -59,20 +57,22 @@ const LocationPicker = ({
     // 2. useGeolocation으로 가져온 현재 위치
     // 3. 서울 기본 좌표
     const getInitialCenter = () => {
-      console.log("--->", location);
       if (initialLocation) {
+        console.log(123);
         return new window.naver.maps.LatLng(
           initialLocation.y,
           initialLocation.x
         );
+      } else {
+        return new window.naver.maps.LatLng(37.52133, 126.9522); // 서울 기본 좌표
       }
-      if (location.loaded && !location.error) {
-        return new window.naver.maps.LatLng(
-          location.coordinates.lat,
-          location.coordinates.lng
-        );
-      }
-      return new window.naver.maps.LatLng(37.52133, 126.9522); // 서울 기본 좌표
+      // if (location.loaded && !location.error) {
+      //   return new window.naver.maps.LatLng(
+      //     location.coordinates.lat,
+      //     location.coordinates.lng
+      //   );
+      // }
+      // return new window.naver.maps.LatLng(37.52133, 126.9522); // 서울 기본 좌표
     };
 
     const initializeMap = () => {
@@ -83,7 +83,7 @@ const LocationPicker = ({
         const mapOptions = {
           center: new window.naver.maps.LatLng(37.52133, 126.9522),
           zoom: 15,
-          minZoom: 6,
+          minZoom: 5,
           tileDuration: 300,
           zoomControl: true,
           zoomControlOptions: {
@@ -198,7 +198,7 @@ const LocationPicker = ({
       }
       mapInstance.current = null;
     };
-  }, [naverMapsLoaded, initialLocation]);
+  }, [naverMapsLoaded]);
 
   // 위도, 경도로 주소 가져오기 (역지오코딩)
   const reverseGeocode = (lat: number, lng: number) => {
