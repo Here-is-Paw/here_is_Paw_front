@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
-import { MissingList } from "@/components/posts/missingPost/MissingList.tsx";
-import { FindingList } from "@/components/posts/findingPost/FindingList.tsx";
+import { MissingList } from "@/components/petPost/missingPost/MissingList.tsx";
+import { FindingList } from "@/components/petPost/findingPost/FindingList.tsx";
 import {
   Drawer,
   DrawerContent,

@@ -74,7 +74,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
     const [isResistModalOpen, setIsResistModalOpen] = useState(false);
 
-    const [me_id, setMe_id] = useState(0);
+    const {userData} = useAuth();
+    const me_id = userData?.id;
+    console.log ("userData------------------------------", userData)
     // const { writeFindPost } = useFindWrite();
 
   const [isChatListOpen, setIsChatListOpen] = useState(false);
@@ -198,6 +200,17 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         console.error("SSE 이벤트 후 채팅방 목록 갱신 실패:", err);
       });
     }
+  };
+
+  const getCookieValue = (name: string): string | null => {
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.split('=');
+      if (cookieName === name) {
+        return decodeURIComponent(cookieValue);
+      }
+    }
+    return null;
   };
 
   // 전역 SSE 연결 설정 (UI 컴포넌트 상태와 독립적)
