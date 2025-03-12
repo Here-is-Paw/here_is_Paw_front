@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl } from "@/constants.ts";
+import { backUrl, aiUrl } from "@/constants";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -18,6 +18,7 @@ import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 interface FindingFormPopup {
   open: boolean;
@@ -36,20 +37,26 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     address: "서울시 용산구",
   });
   const [date, setDate] = React.useState<Date>();
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
   
+  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
-
-    if (selectedFile) {
-      setFile(selectedFile);
-      setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+  const {
+    file,
+    imagePreview,
+    isAnalyzing,
+    hasExistingImage,
+    handleFileChange,
+    resetFileUpload,
+    removeImage
+  } = useFileUpload({
+    aiUrl, // 상수에서 가져온 AI API URL
+    initialImageUrl: null,
+    onFileChangeCallback: (selectedFile) => {
+      if (selectedFile) {
+        form.setValue("file", selectedFile);
+      }
     }
-  };
+  });
 
   const { refreshPets } = usePetContext();
 
@@ -63,7 +70,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     }
   }, [location, form]);
 
-  // 기존 코드는 그대로 유지...
 
   // 추가 상세 주소 입력을 위한 상태 추가
   const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
@@ -92,8 +98,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
-      setFile(null);
-      setImagePreview(null);
+      resetFileUpload();
       setLocationInfo({
         x: location.coordinates.lng,
         y: location.coordinates.lat,
@@ -127,8 +132,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // 팝업 닫기 핸들러
   const handleClose = () => {
     form.reset(defaultValues);
-    setFile(null);
-    setImagePreview(null);
+    resetFileUpload();
     onOpenChange(false);
 
     // 날짜 초기화
@@ -190,8 +194,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       });
 
       form.reset(defaultValues);
-      setImagePreview(null);
-      setFile(null);
+      resetFileUpload();
 
       await refreshPets();
 
@@ -346,38 +349,80 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                   </div>
 
                   <FormField
-                    control={form.control}
-                    name="file"
-                    rules={{ required: "사진은 필수입니다" }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>반려동물 사진 *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            id="file01"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={(e) => {
-                              handleFileChange(e);
-                              field.onChange(e.target.files?.[0]);
-                            }}
-                          />
-                        </FormControl>
+                      control={form.control}
+                      name="file"
+                      rules={{
+                        required: hasExistingImage ? false : "사진은 필수입니다"
+                      }}
+                      render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-2">
+                              <FormLabel>반려동물 사진 *</FormLabel>
+                              {isAnalyzing && (
+                                  <div className="flex items-center gap-2 text-green-600 text-sm">
+                                    <svg
+                                        className="animate-spin h-5 w-5"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                      />
+                                      <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                      />
+                                    </svg>
+                                    <span>이미지 분석 중...</span>
+                                  </div>
+                              )}
+                            </div>
+                            <FormControl>
+                              <Input
+                                  type="file"
+                                  id="file01"
+                                  accept="image/*"
+                                  className="sr-only"
+                                  onChange={handleFileChange}
+                                  // onChange={(e) => {
+                                  //     handleFileChange(e);
+                                  //     field.onChange(e.target.files?.[0]);
+                                  // }}
+                              />
+                            </FormControl>
 
-                        {/* 미리보기 (이미지 선택 시만 표시) */}
-                        <label
-                          htmlFor="file01"
-                          className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
-                        >
-                          {imagePreview ? (
-                            <img src={imagePreview} alt="미리보기" className="w-full h-full object-contain m-auto" />
-                          ) : (
-                            <span className="text-sm text-muted-foreground p-2">반려견 사진을 첨부해주세요.</span>
-                          )}
-                        </label>
-                      </FormItem>
-                    )}
+                            {/* 미리보기 (이미지 선택 시만 표시) */}
+                            <label
+                                htmlFor="file01"
+                                className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                            >
+                              {imagePreview ? (
+                                  <img
+                                      src={imagePreview}
+                                      alt="미리보기"
+                                      className="w-full h-full object-contain m-auto"
+                                  />
+                              ) : (
+                                  <span className="text-sm text-muted-foreground p-2">
+                                                            반려견 사진을 첨부해주세요.
+                                                        </span>
+                              )}
+                            </label>
+                            {hasExistingImage && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  * 이미 등록된 사진이 있습니다. 새 사진을 선택하지 않으면 기존 사진이 사용됩니다.
+                                </p>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                      )}
                   />
 
                   <div className="grid grid-cols-2 gap-4">
