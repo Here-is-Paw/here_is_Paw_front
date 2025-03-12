@@ -12,6 +12,7 @@ import {
   MissingDetailData,
   // MissingFormData,
   missingUtils,
+  parseLocation,
 } from "@/types/missing.ts";
 import { petUtils } from "@/types/pet.common.ts";
 import axios from "axios";
@@ -60,6 +61,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     useState<boolean>(false);
 
   const { refreshPets } = usePetContext();
+  const { mainAddress, detailAddress } = parseLocation(pet?.location || "");
 
   const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -613,7 +615,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
 
                 <dd>
-                  {pet.location || "지역 없음"}
+                  {`${mainAddress} ${detailAddress || ""}`}
 
                   <div className="mt-1">
                     <LocationViewMap

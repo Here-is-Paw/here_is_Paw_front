@@ -745,7 +745,7 @@ export const MissingUpdateFormPopup = ({
                         </FormControl>
                         <LocationPicker
                           onLocationSelect={handleLocationSelect}
-                          isMissing={false}
+                          isMissing={true}
                           initialLocation={{
                             x: pet.x,
                             y: pet.y,
