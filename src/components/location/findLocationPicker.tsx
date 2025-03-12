@@ -8,13 +8,11 @@ interface LocationPickerProps {
     address: string;
   }) => void;
   initialLocation?: { x: number; y: number };
-  isMissing: boolean;
 }
 
 const LocationPicker = ({
   onLocationSelect,
   initialLocation,
-  isMissing,
 }: LocationPickerProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
@@ -83,7 +81,7 @@ const LocationPicker = ({
         const mapOptions = {
           center: new window.naver.maps.LatLng(37.52133, 126.9522),
           zoom: 15,
-          minZoom: 6,
+          minZoom: 5,
           tileDuration: 300,
           zoomControl: true,
           zoomControlOptions: {
@@ -100,56 +98,29 @@ const LocationPicker = ({
         // 중앙에 고정된 마커 UI 요소 추가
         const centerMarker = document.createElement("div");
         centerMarker.className = "center-marker";
-        
-        if (isMissing) {
-          centerMarker.innerHTML = `
-            <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                 width="24" height="24" viewBox="0 0 81 113"
-                 preserveAspectRatio="xMidYMid meet">
-              <g transform="translate(0,113) scale(0.1,-0.1)"
-                 fill="#FF0000" stroke="none">
-                <path d="M291 1115 c-164 -46 -278 -174 -289 -326 -12 -169 110 -427 333 -708
-                l67 -84 24 29 c202 241 333 474 370 655 14 68 14 90 4 145 -23 120 -118 228
-                -243 276 -69 27 -195 33 -266 13z m204 -92 c73 -24 158 -112 179 -182 32 -110
-                9 -213 -66 -290 -174 -181 -472 -73 -495 179 -8 87 17 152 87 222 84 84 186
-                108 295 71z"/>
-                <path d="M299 924 c-17 -21 -17 -87 0 -108 33 -40 91 -5 91 56 0 57 -59 91
-                -91 52z"/>
-                <path d="M436 924 c-22 -22 -21 -87 2 -107 24 -22 56 -22 73 -1 17 21 17 87 0
-                108 -17 20 -55 21 -75 0z"/>
-                <path d="M213 822 c-25 -16 -25 -58 0 -88 22 -25 27 -27 51 -16 21 9 26 19 26
-                45 0 49 -42 82 -77 59z"/>
-                <path d="M537 812 c-10 -10 -17 -33 -17 -51 0 -24 6 -34 26 -43 24 -11 29 -9
-                51 16 49 57 -10 133 -60 78z"/>
-                <path d="M360 773 c-38 -20 -80 -83 -80 -124 0 -45 25 -57 125 -57 127 0 151
-                28 105 118 -34 68 -93 92 -150 63z"/>
-              </g>
-            </svg>`;
-        } else {
-          centerMarker.innerHTML = `
-            <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                 width="24" height="24" viewBox="0 0 81 113"
-                 preserveAspectRatio="xMidYMid meet">
-              <g transform="translate(0,113) scale(0.1,-0.1)"
-                 fill="rgb(22, 163, 74)" stroke="none">
-                <path d="M291 1115 c-164 -46 -278 -174 -289 -326 -12 -169 110 -427 333 -708
-                l67 -84 24 29 c202 241 333 474 370 655 14 68 14 90 4 145 -23 120 -118 228
-                -243 276 -69 27 -195 33 -266 13z m204 -92 c73 -24 158 -112 179 -182 32 -110
-                9 -213 -66 -290 -174 -181 -472 -73 -495 179 -8 87 17 152 87 222 84 84 186
-                108 295 71z"/>
-                <path d="M299 924 c-17 -21 -17 -87 0 -108 33 -40 91 -5 91 56 0 57 -59 91
-                -91 52z"/>
-                <path d="M436 924 c-22 -22 -21 -87 2 -107 24 -22 56 -22 73 -1 17 21 17 87 0
-                108 -17 20 -55 21 -75 0z"/>
-                <path d="M213 822 c-25 -16 -25 -58 0 -88 22 -25 27 -27 51 -16 21 9 26 19 26
-                45 0 49 -42 82 -77 59z"/>
-                <path d="M537 812 c-10 -10 -17 -33 -17 -51 0 -24 6 -34 26 -43 24 -11 29 -9
-                51 16 49 57 -10 133 -60 78z"/>
-                <path d="M360 773 c-38 -20 -80 -83 -80 -124 0 -45 25 -57 125 -57 127 0 151
-                28 105 118 -34 68 -93 92 -150 63z"/>
-              </g>
-            </svg>`;
-        }
+        centerMarker.innerHTML = `
+          <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+               width="24" height="24" viewBox="0 0 81 113"
+               preserveAspectRatio="xMidYMid meet">
+            <g transform="translate(0,113) scale(0.1,-0.1)"
+               fill="rgb(22, 163, 74)" stroke="none">
+              <path d="M291 1115 c-164 -46 -278 -174 -289 -326 -12 -169 110 -427 333 -708
+              l67 -84 24 29 c202 241 333 474 370 655 14 68 14 90 4 145 -23 120 -118 228
+              -243 276 -69 27 -195 33 -266 13z m204 -92 c73 -24 158 -112 179 -182 32 -110
+              9 -213 -66 -290 -174 -181 -472 -73 -495 179 -8 87 17 152 87 222 84 84 186
+              108 295 71z"/>
+              <path d="M299 924 c-17 -21 -17 -87 0 -108 33 -40 91 -5 91 56 0 57 -59 91
+              -91 52z"/>
+              <path d="M436 924 c-22 -22 -21 -87 2 -107 24 -22 56 -22 73 -1 17 21 17 87 0
+              108 -17 20 -55 21 -75 0z"/>
+              <path d="M213 822 c-25 -16 -25 -58 0 -88 22 -25 27 -27 51 -16 21 9 26 19 26
+              45 0 49 -42 82 -77 59z"/>
+              <path d="M537 812 c-10 -10 -17 -33 -17 -51 0 -24 6 -34 26 -43 24 -11 29 -9
+              51 16 49 57 -10 133 -60 78z"/>
+              <path d="M360 773 c-38 -20 -80 -83 -80 -124 0 -45 25 -57 125 -57 127 0 151
+              28 105 118 -34 68 -93 92 -150 63z"/>
+            </g>
+          </svg>`;
         centerMarker.style.cssText =
           "position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:1000;pointer-events:none;";
         // centerMarker.style.cssText =

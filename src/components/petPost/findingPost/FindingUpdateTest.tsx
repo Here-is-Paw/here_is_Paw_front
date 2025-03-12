@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl, aiUrl } from "@/constants";
+import { backUrl } from "@/constants.ts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -11,22 +11,76 @@ import React, { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
 import { cn } from "@/lib/utils.ts";
 import { format } from "date-fns";
-import { FindingDetailFormData, defaultValues } from "@/types/finding";
+import { FindingDetailFormData } from "@/types/finding";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "@/components/location/locationPicker.tsx";
+import LocationPicker from "@/components/location/locationPickerTest.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
+import { FindingDetailData } from "@/types/finding.ts";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
-interface FindingFormPopup {
+interface FindingUpdateFormPopup {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  findId: number;
+  pet: FindingDetailData;
   onSuccess?: () => void;
 }
 
-export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormPopup) => {
+export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSuccess }: FindingUpdateFormPopup) => {
+  const defaultValues: FindingDetailFormData = {
+    id: pet.id,
+    name: pet.name,
+    breed: pet.breed,
+    x: pet.x,
+    y: pet.y,
+    location: pet.location,
+    detailAddr: pet.detailAddr,
+    color: pet.color,
+    serialNumber: pet.serialNumber,
+    gender: pet.gender,
+    neutered: pet.neutered,
+    age: pet.age,
+    findDate: pet.findDate,
+    etc: pet.etc,
+    file: pet.pathUrl,
+    pathUrl: pet.pathUrl,
+    memberId: pet.memberId,
+    nickname: "",
+    title: pet.title,
+    situation: pet.situation,
+    shelterId: pet.shelterId,
+  };
+
+  useEffect(() => {
+    form.setValue("id", pet.id);
+    form.setValue("name", pet.name);
+    form.setValue("breed", pet.breed);
+    form.setValue("x", pet.x);
+    form.setValue("y", pet.y);
+    form.setValue("location", pet.location);
+    form.setValue("detailAddr", pet.detailAddr);
+    form.setValue("color", pet.color);
+    form.setValue("serialNumber", pet.serialNumber);
+    form.setValue("gender", pet.gender);
+    form.setValue("neutered", pet.neutered);
+    form.setValue("age", pet.age);
+    form.setValue("findDate", pet.findDate);
+    form.setValue("etc", pet.etc);
+    form.setValue("file", pet.pathUrl);
+    form.setValue("memberId", pet.memberId);
+    form.setValue("nickname", pet.nickname);
+    form.setValue("title", pet.title);
+    form.setValue("situation", pet.situation);
+    form.setValue("shelterId", pet.shelterId);
+    setTimeout(() => {
+      // setImagePreview(pet.pathUrl);
+      console.log(pet.detailAddr)
+    }, 100);
+  }, []);
+
   const form = useForm<FindingDetailFormData>({
     defaultValues,
   });
@@ -37,8 +91,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     address: "서울시 용산구",
   });
   const [date, setDate] = React.useState<Date>();
-  
+
+  // const [imagePreview, setImagePreview] = useState<string | null>(pet.pathUrl);
+  // const [file, setFile] = useState<File | string>("");
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
+  // const [fileUrl, setFileUrl] = useState<string | "">(pet.pathUrl);
+  // const [gender, setGender] = useState("");
+  // const [neutered, setNeutered] = useState("");
 
   const {
     file,
@@ -49,14 +108,27 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     resetFileUpload,
     removeImage
   } = useFileUpload({
-    aiUrl, // 상수에서 가져온 AI API URL
-    initialImageUrl: null,
+    aiUrl,
+    useAnalysis: true, // AI 분석 사용
+    initialImageUrl: pet.pathUrl || null,
     onFileChangeCallback: (selectedFile) => {
       if (selectedFile) {
         form.setValue("file", selectedFile);
       }
     }
   });
+
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+  //
+  //   if (selectedFile) {
+  //     setFile(selectedFile);
+  //     setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+  //   } else {
+  //     setFileUrl(pet.pathUrl);
+  //     setImagePreview(fileUrl);
+  //   }
+  // };
 
   const { refreshPets } = usePetContext();
 
@@ -69,9 +141,10 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     }
   }, [location, form]);
 
+  // 기존 코드는 그대로 유지...
 
   // 추가 상세 주소 입력을 위한 상태 추가
-  // const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
+  const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
 
   // 위치 선택 핸들러
   const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
@@ -84,26 +157,28 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   };
 
   // 추가 상세 주소 변경 핸들러
-  // const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setAdditionalAddressDetails(e.target.value);
+  const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAdditionalAddressDetails(e.target.value);
 
-  //   // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
-  //   const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
+    // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
+    const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
 
-  //   form.setValue("location", combinedAddress);
-  // };
+    form.setValue("location", combinedAddress);
+  };
 
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
       resetFileUpload();
+      // setFile("");
+      // setImagePreview(null);
       setLocationInfo({
         x: location.coordinates.lng,
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      // setAdditionalAddressDetails("");
+      setAdditionalAddressDetails("");
 
       // 날짜 초기화
       setDate(undefined);
@@ -132,6 +207,8 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   const handleClose = () => {
     form.reset(defaultValues);
     resetFileUpload();
+    // setFile("");
+    // setImagePreview(null);
     onOpenChange(false);
 
     // 날짜 초기화
@@ -150,12 +227,12 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   };
 
   const handleSubmit = async (data: FindingDetailFormData) => {
-    if (!data.findDate) {
-      alert("발견 날짜를 선택해주세요.");
-      return;
+    const formData = new FormData();
+    if (pet.findDate) {
+      formData.append("findDate", pet.findDate);
     }
+
     try {
-      const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
 
@@ -164,13 +241,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         formData.append("x", locationInfo.x.toString());
         formData.append("y", locationInfo.y.toString());
       } else {
-        alert("발견 위치를 지도에서 선택해주세요.");
+        alert("실종 위치를 지도에서 선택해주세요.");
         return;
       }
 
       // 지도 주소와 상세 주소를 결합
       const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
-      console.log(data.detailAddr);
+
       formData.append("location", combinedAddress);
       formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
@@ -178,23 +255,24 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("findDate", new Date(data.findDate).toISOString().split("Z")[0]);
+      formData.append("findDate", data.findDate ? data.findDate : pet.findDate);
       formData.append("etc", data.etc || "");
 
       if (file) {
         formData.append("file", file);
       } else {
-        alert("반려동물 사진은 필수입니다.");
-        return;
+        formData.append("pathUrl", pet.pathUrl);
       }
 
-      await axios.post(`${backUrl}/api/v1/finding/write`, formData, {
+      await axios.put(`${backUrl}/api/v1/finding/${findId}`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       form.reset(defaultValues);
       resetFileUpload();
+      // setImagePreview(null);
+      // setFile("");
 
       await refreshPets();
 
@@ -236,14 +314,14 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             y: location.coordinates.lat,
             address: "서울시 용산구",
           });
-          // setAdditionalAddressDetails("");
+          setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
     >
       <DialogContent onInteractOutside={(e) => e.preventDefault()} className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white">
         <DialogHeader className="space-y-2 text-center px-6">
-          <DialogTitle className="text-2xl font-bold text-primary">반려동물 발견 신고</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-primary">반려동물 실종 신고</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">반려동물 정보를 입력해주세요</DialogDescription>
         </DialogHeader>
 
@@ -270,10 +348,9 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                   <FormField
                     control={form.control}
                     name="breed"
-                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>품종 *</FormLabel>
+                        <FormLabel>품종</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder="품종" {...field} />
                         </FormControl>
@@ -320,7 +397,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={"0"}
+                            defaultValue={pet.gender.toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="성별 선택" />
@@ -348,7 +425,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       )}
                     />
                   </div>
-
+                  {/* 파일 업로드 필드 수정 - useFileUpload 훅 사용 */}
                   <FormField
                       control={form.control}
                       name="file"
@@ -392,30 +469,41 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   accept="image/*"
                                   className="sr-only"
                                   onChange={handleFileChange}
-                                  // onChange={(e) => {
-                                  //     handleFileChange(e);
-                                  //     field.onChange(e.target.files?.[0]);
-                                  // }}
+                                  disabled={isAnalyzing}
                               />
                             </FormControl>
 
                             {/* 미리보기 (이미지 선택 시만 표시) */}
-                            <label
-                                htmlFor="file01"
-                                className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
-                            >
-                              {imagePreview ? (
-                                  <img
-                                      src={imagePreview}
-                                      alt="미리보기"
-                                      className="w-full h-full object-contain m-auto"
-                                  />
-                              ) : (
-                                  <span className="text-sm text-muted-foreground p-2">
-                                                            반려견 사진을 첨부해주세요.
-                                                        </span>
+                            <div className="relative">
+                              <label
+                                  htmlFor="file01"
+                                  className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                              >
+                                {imagePreview ? (
+                                    <img
+                                        src={imagePreview}
+                                        alt="미리보기"
+                                        className="w-full h-full object-contain m-auto"
+                                    />
+                                ) : (
+                                    <span className="text-sm text-muted-foreground p-2">
+                                반려견 사진을 첨부해주세요.
+                              </span>
+                                )}
+                              </label>
+
+                              {imagePreview && (
+                                  <button
+                                      type="button"
+                                      onClick={removeImage}
+                                      disabled={isAnalyzing}
+                                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center"
+                                  >
+                                    ✕
+                                  </button>
                               )}
-                            </label>
+                            </div>
+
                             {hasExistingImage && (
                                 <p className="text-xs text-muted-foreground mt-1">
                                   * 이미 등록된 사진이 있습니다. 새 사진을 선택하지 않으면 기존 사진이 사용됩니다.
@@ -425,6 +513,40 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                           </FormItem>
                       )}
                   />
+                  {/*<FormField*/}
+                  {/*  control={form.control}*/}
+                  {/*  name="file"*/}
+                  {/*  rules={{ required: "사진은 필수입니다" }}*/}
+                  {/*  render={({ field }) => (*/}
+                  {/*    <FormItem>*/}
+                  {/*      <FormLabel>반려동물 사진 *</FormLabel>*/}
+                  {/*      <FormControl>*/}
+                  {/*        <Input*/}
+                  {/*          type="file"*/}
+                  {/*          id="file01"*/}
+                  {/*          accept="image/*"*/}
+                  {/*          className="sr-only"*/}
+                  {/*          onChange={(e) => {*/}
+                  {/*            handleFileChange(e);*/}
+                  {/*            field.onChange(e.target.files?.[0]);*/}
+                  {/*          }}*/}
+                  {/*        />*/}
+                  {/*      </FormControl>*/}
+
+                  {/*      /!* 미리보기 (이미지 선택 시만 표시) *!/*/}
+                  {/*      <label*/}
+                  {/*        htmlFor="file01"*/}
+                  {/*        className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"*/}
+                  {/*      >*/}
+                  {/*        {imagePreview ? (*/}
+                  {/*          <img src={imagePreview} alt="미리보기" className="w-full h-full object-contain m-auto" />*/}
+                  {/*        ) : (*/}
+                  {/*          <span className="text-sm text-muted-foreground p-2">반려견 사진을 첨부해주세요.</span>*/}
+                  {/*        )}*/}
+                  {/*      </label>*/}
+                  {/*    </FormItem>*/}
+                  {/*  )}*/}
+                  {/*/>*/}
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -442,7 +564,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   onClick={() => setCalendarIsOpen((open) => !open)}
                                 >
                                   <CalendarIcon />
-                                  {date ? format(date, "yyyy-MM-dd") : <span>Pick a date</span>}
+                                  {
+                                    date
+                                      ? format(date, "yyyy-MM-dd") // date가 있다면 날짜 포맷 적용
+                                      : format(new Date(pet.findDate), "yyyy-MM-dd") // pet.findDate를 Date 객체로 변환 후 포맷 적용
+                                  }
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
@@ -458,7 +584,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   onSelect={(newDate) => {
                                     setDate(newDate);
                                     if (newDate) {
-                                      field.onChange(newDate.toISOString().split("Z")[0]);
+                                      // 선택한 날짜의 23:59:59로 시간 설정
+                                      const dateWith2359 = new Date(newDate);
+                                      dateWith2359.setHours(23, 59, 59);
+
+                                      // ISO 문자열로 변환하되 타임존 오프셋 고려
+                                      const isoString = dateWith2359.toISOString().split("Z")[0];
+                                      field.onChange(isoString);
                                     }
                                   }}
                                   initialFocus
@@ -480,7 +612,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={"0"}
+                            defaultValue={pet.neutered.toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="중성화 유무 선택" />
@@ -506,7 +638,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                         <FormControl>
                           <Input type="text" placeholder="geo" className="sr-only" {...field} readOnly disabled />
                         </FormControl>
-                        <LocationPicker onLocationSelect={handleLocationSelect} isMissing={false} />
+                        <LocationPicker
+                          onLocationSelect={handleLocationSelect}
+                          isMissing={false}
+                          initialLocation={{ x: pet.x, y: pet.y, location: pet.location }}
+                        />
                       </FormItem>
                     )}
                   />
@@ -519,7 +655,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>상세 주소</FormLabel>
-                          <Input type="text" placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
+                            {...field}
+                          />
                         </FormItem>
                       )}
                     />

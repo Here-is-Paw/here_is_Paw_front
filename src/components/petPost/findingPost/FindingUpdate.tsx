@@ -6,6 +6,7 @@ import axios from "axios";
 import { backUrl } from "@/constants";
 // import { MyPet, FindPet } from "@/types/mypet";
 import { FindingDetailData } from "@/types/finding.ts";
+
 type FindIdType = string | number;
 // API 호출 함수 추가
 const writeFindPost = async (formData: FormData, findingId: FindIdType) => {

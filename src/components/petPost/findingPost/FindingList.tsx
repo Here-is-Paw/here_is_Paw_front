@@ -11,7 +11,6 @@ export function FindingList() {
     // Context에서 데이터와 상태 가져오기
     const {
         findingPets, // filteredPets 대신 missingPets 사용
-        // searchMode,
         activeFilter,
         isLoading,
         findingHasMore,
@@ -57,9 +56,11 @@ export function FindingList() {
         // observer 콜백 함수
         const handleObserver = (entries: IntersectionObserverEntry[]) => {
             const [entry] = entries;
+            console.log("헤스모어 : ", findingHasMore);
             if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
-                console.log("Loading more data...");
-                loadMorePets();
+                console.log("Loading more finding data...");
+                // 여기를 수정: "finding" 타입 명시적으로 전달
+                loadMorePets("finding");
             }
         };
 
@@ -100,10 +101,13 @@ export function FindingList() {
 
     const handleSwiperReachEnd = () => {
         if (findingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
-            console.log("Swiper reached end, loading more data...");
-            loadMorePets();
+            console.log("Swiper reached end, loading more finding data...");
+            // 여기를 수정: "finding" 타입 명시적으로 전달
+            loadMorePets("finding");
         }
     };
+
+    console.log("findingPet: ", findingPets);
 
     return (
         <>
@@ -137,15 +141,15 @@ export function FindingList() {
                                     >
                                         {findingPets.map((pet, index) => (
                                             <SwiperSlide
-                                                key={`missing-slide${pet.id}${index}`}
+                                                key={`finding-slide${pet.id}${index}`}
                                                 className="w-40 pb-2"
                                             >
                                                 <button
                                                     type="button"
-                                                    className="text-left"
+                                                    className="text-left p-0"
                                                     onClick={() => handlePetSelect(pet)}
                                                 >
-                                                    <div className="p-2">
+                                                    <div>
                                                         <FindingCard activeFilter={"전체"} pet={pet}/>
                                                     </div>
                                                 </button>
@@ -156,10 +160,10 @@ export function FindingList() {
                                     <div className="p-2">
                                         <ul className="grid grid-cols-2 gap-2">
                                             {findingPets.map((pet, index) => (
-                                                <li key={`missing-list${pet.id}${index}`}>
+                                                <li key={`finding-list${pet.id}${index}`}>
                                                     <button
                                                         type="button"
-                                                        className="text-left w-full"
+                                                        className="text-left w-full p-0"
                                                         onClick={() => handlePetSelect(pet)}
                                                     >
                                                         <div className="w-full">
