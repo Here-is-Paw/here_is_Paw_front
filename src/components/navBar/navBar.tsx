@@ -14,7 +14,7 @@ import {ChatRoom, OpenChatRoom} from "@/types/chat";
 // import { useFindWrite } from "@/hooks/useFindWrite";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
 import { FindingFormPopup } from "@/components/petPost/findingPost/FindingPost.tsx";
-import { NotificationBell } from "@/components/notification/Notification";
+import { NotificationBell } from "@/components/notification/notification";
 
 interface NavBarProps {
   buttonStates: {
