@@ -156,39 +156,58 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   const createCareCenterMarkers = () => {
     const map = mapInstance.current;
     if (!map) return;
-
+  
     // 기존 보호센터 마커 제거
     careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
     careCenterMarkersRef.current = [];
-
+  
     // 보호센터 마커 생성
     const newCareCenterMarkers = careCenters.map((center) => {
-      // 좌표 데이터 검증
-      console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
-      
-      // 유효한 좌표값인지 확인
-      if (!center.x || !center.y || isNaN(center.x) || isNaN(center.y)) {
-        console.error(`[오류] 보호센터 좌표 누락: ${center.name}`);
-        return null;
-      }
-      
       try {
-        // 위도와 경도 순서 확인 (네이버 지도는 lat, lng 순서)
+        console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
+        
+        // 위도(y)/경도(x) 좌표를 올바르게 사용하여 위치 생성
         const position = new window.naver.maps.LatLng(center.x, center.y);
         
         const marker = new window.naver.maps.Marker({
           position: position,
-          map: showCareCenters ? map : null, // 표시 여부를 상태에 연결
+          map: showCareCenters ? map : null,
           title: `[보호소] ${center.name}`,
           icon: {
             content: getCareCenterMarkerIcon(),
             anchor: new window.naver.maps.Point(18, 18),
           },
-          visible: true, // 명시적으로 가시성 설정
-          zIndex: 100 // 다른 마커보다 위에 표시
+          visible: true,
+          zIndex: 100
         });
         
-        // InfoWindow 생성 코드는 생략...
+        // 정보창 생성
+        const infoWindow = new window.naver.maps.InfoWindow({
+          content: `
+            <div style="padding:12px; min-width:200px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif;">
+              <h4 style="margin:0 0 8px 0; color:#333; font-size:16px; border-bottom:1px solid #ddd; padding-bottom:8px;">
+                ${center.name}
+              </h4>
+              <p style="margin:4px 0; font-size:13px;"><strong>주소:</strong> ${center.address}</p>
+              <p style="margin:4px 0; font-size:13px;"><strong>전화:</strong> ${center.phoneNumber}</p>
+              <p style="margin:4px 0; font-size:13px;"><strong>운영시간:</strong> ${center.operatingHours}</p>
+            </div>
+          `,
+          borderWidth: 0,
+          disableAnchor: true,
+          backgroundColor: "white",
+          borderColor: "transparent",
+          anchorSize: new window.naver.maps.Size(0, 0),
+        });
+        
+        // 마커 클릭 이벤트 리스너 추가
+        window.naver.maps.Event.addListener(marker, "click", () => {
+          if (infoWindow.getMap()) {
+            infoWindow.close();
+          } else {
+            infoWindow.open(map, marker);
+          }
+        });
         
         return marker;
       } catch (error) {
@@ -196,7 +215,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
         return null;
       }
     }).filter(Boolean); // null 값 제거
-
+  
     // 생성된 마커 배열 저장
     careCenterMarkersRef.current = newCareCenterMarkers;
     console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
@@ -267,7 +286,17 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   // 검색 버튼 클릭 핸들러 - 선택된 위치로 검색 실행
   const handleSearchClick = () => {
     if (!selectedLocation) return;
-
+  
+    // 검색 전 모든 마커 명시적 초기화 추가
+    careCenterMarkersRef.current.forEach(marker => marker.setMap(null));
+    careCenterMarkersRef.current = [];
+    
+    missingMarkersRef.current.forEach(marker => marker.setMap(null));
+    missingMarkersRef.current = [];
+    
+    findingMarkersRef.current.forEach(marker => marker.setMap(null));
+    findingMarkersRef.current = [];
+  
     // UserLocation 상태 업데이트
     const locationObj = {
       x: selectedLocation.lat(),
@@ -275,17 +304,17 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
       _lat: selectedLocation.lat(),
       _lng: selectedLocation.lng(),
     };
-
+  
     setUserLocation(locationObj);
-
+  
     // 검색 모드를 '반경'으로 설정
     setSearchMode("반경");
     setCenterSearchMode("반경"); // 보호센터 검색 모드도 업데이트
-
+  
     // 데이터 새로고침 (반경 검색 실행)
     refreshPets();
     refreshCenters(); // 보호센터 데이터도 새로고침
-
+  
     console.log("현재 반경에서 검색 실행:", {
       위치: `${selectedLocation.lat()}, ${selectedLocation.lng()}`,
       반경: radius,
@@ -386,19 +415,18 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     };
   }, [currentLocation]);
 
-  // 반려동물 마커 업데이트
+  // 반려동물 마커 업데이트 - 수정된 코드
   useEffect(() => {
-    if (
-      mapInstance.current &&
-      (missingPets.length > 0 || findingPets.length > 0)
-    ) {
+    if (mapInstance.current) {
+      // 조건 제거: 결과가 없어도 항상 createPetMarkers 함수 실행
       createPetMarkers();
     }
   }, [missingPets, findingPets, mapInstance.current]);
 
-  // 보호센터 마커 업데이트 - 새로 추가된 useEffect
+  // 보호센터 마커 업데이트 - 수정된 코드 
   useEffect(() => {
-    if (mapInstance.current && careCenters.length > 0) {
+    if (mapInstance.current) {
+      // 조건 제거: 결과가 없어도 항상 createCareCenterMarkers 함수 실행
       console.log("보호센터 데이터 변경 감지:", careCenters.length);
       createCareCenterMarkers();
     }
