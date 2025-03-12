@@ -16,6 +16,24 @@ export interface MissingFormData {
   file: File;
 }
 
+export const formDefaultValues = {
+  id: 0,
+  name: "",
+  breed: "",
+  geo: "",
+  location: "",
+  color: "",
+  serialNumber: "",
+  gender: 0,
+  neutered: 0,
+  age: 0,
+  lostDate: "",
+  etc: "",
+  reward: 0,
+  missingState: 0,
+  file: new File([], "placeholder.jpg", { type: "image/jpeg" }),
+};
+
 export interface MissingDetailFormData {
   id: number;
 
