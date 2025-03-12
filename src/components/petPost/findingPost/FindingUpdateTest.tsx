@@ -36,6 +36,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     x: pet.x,
     y: pet.y,
     location: pet.location,
+    detailAddr: pet.detailAddr,
     color: pet.color,
     serialNumber: pet.serialNumber,
     gender: pet.gender,
@@ -59,6 +60,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     form.setValue("x", pet.x);
     form.setValue("y", pet.y);
     form.setValue("location", pet.location);
+    form.setValue("detailAddr", pet.detailAddr);
     form.setValue("color", pet.color);
     form.setValue("serialNumber", pet.serialNumber);
     form.setValue("gender", pet.gender);
@@ -74,6 +76,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     form.setValue("shelterId", pet.shelterId);
     setTimeout(() => {
       setImagePreview(pet.pathUrl);
+      console.log(pet.detailAddr)
     }, 100);
   }, []);
 
@@ -202,13 +205,12 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   };
 
   const handleSubmit = async (data: FindingDetailFormData) => {
-    if (!data.findDate) {
-      alert("발견 날짜를 선택해주세요.");
-      return;
+    const formData = new FormData();
+    if (pet.findDate) {
+      formData.append("findDate", pet.findDate);
     }
-    console.log(data.findDate);
+
     try {
-      const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
 
@@ -222,15 +224,16 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
       }
 
       // 지도 주소와 상세 주소를 결합
-      const combinedAddress = locationInfo.address ? `${locationInfo.address} ${additionalAddressDetails}`.trim() : data.location;
-      console.log(combinedAddress);
+      const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
+
       formData.append("location", combinedAddress);
+      formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
       formData.append("serialNumber", data.serialNumber || "");
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("findDate", data.findDate);
+      formData.append("findDate", data.findDate ? data.findDate : pet.findDate);
       formData.append("etc", data.etc || "");
 
       if (file) {
@@ -371,7 +374,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={"0"}
+                            defaultValue={pet.gender.toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="성별 선택" />
@@ -499,7 +502,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={"0"}
+                            defaultValue={pet.neutered.toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="중성화 유무 선택" />
@@ -536,12 +539,19 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
 
                   {/* 상세 주소 입력 필드 */}
                   <div className="space-y-2">
-                    <FormLabel>상세 주소</FormLabel>
-                    <Input
-                      type="text"
-                      placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
-                      value={additionalAddressDetails}
-                      onChange={handleAdditionalAddressChange}
+                    <FormField
+                      control={form.control}
+                      name="detailAddr"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>상세 주소</FormLabel>
+                          <Input
+                            type="text"
+                            placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
+                            {...field}
+                          />
+                        </FormItem>
+                      )}
                     />
                   </div>
 

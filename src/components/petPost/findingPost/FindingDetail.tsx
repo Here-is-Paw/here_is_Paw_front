@@ -525,6 +525,10 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
                 <dd>{pet.location || "지역 없음"}</dd>
               </dl>
               <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">상세 주소</dt>
+                <dd>{pet.detailAddr || "상세 주소 없음"}</dd>
+              </dl>
+              <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">특이사항</dt>
                 <dd>{pet.etc || "특이사항 없음"}</dd>
               </dl>

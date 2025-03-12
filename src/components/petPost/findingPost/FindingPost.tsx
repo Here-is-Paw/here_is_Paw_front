@@ -40,7 +40,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
-  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
@@ -56,7 +55,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
     if (location.loaded && !location.error) {
-
       // geo 필드 업데이트 (JSON 문자열로 저장)
       form.setValue("x", location.coordinates.lng);
       form.setValue("y", location.coordinates.lat);
@@ -66,7 +64,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // 기존 코드는 그대로 유지...
 
   // 추가 상세 주소 입력을 위한 상태 추가
-  const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
+  // const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
 
   // 위치 선택 핸들러
   const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
@@ -79,14 +77,14 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   };
 
   // 추가 상세 주소 변경 핸들러
-  const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAdditionalAddressDetails(e.target.value);
+  // const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setAdditionalAddressDetails(e.target.value);
 
-    // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
-    const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
+  //   // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
+  //   const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
 
-    form.setValue("location", combinedAddress);
-  };
+  //   form.setValue("location", combinedAddress);
+  // };
 
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
@@ -99,7 +97,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      setAdditionalAddressDetails("");
+      // setAdditionalAddressDetails("");
 
       // 날짜 초기화
       setDate(undefined);
@@ -166,9 +164,10 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       }
 
       // 지도 주소와 상세 주소를 결합
-      const combinedAddress = locationInfo.address ? `${locationInfo.address} ${additionalAddressDetails}`.trim() : data.location;
-      console.log(combinedAddress);
+      const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
+      console.log(data.detailAddr);
       formData.append("location", combinedAddress);
+      formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
       formData.append("serialNumber", data.serialNumber || "");
       formData.append("gender", data.gender?.toString() || "0");
@@ -233,7 +232,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             y: location.coordinates.lat,
             address: "서울시 용산구",
           });
-          setAdditionalAddressDetails("");
+          // setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
@@ -267,9 +266,10 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                   <FormField
                     control={form.control}
                     name="breed"
+                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>품종</FormLabel>
+                        <FormLabel>품종 *</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder="품종" {...field} />
                         </FormControl>
@@ -467,12 +467,15 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
 
                   {/* 상세 주소 입력 필드 */}
                   <div className="space-y-2">
-                    <FormLabel>상세 주소</FormLabel>
-                    <Input
-                      type="text"
-                      placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
-                      value={additionalAddressDetails}
-                      onChange={handleAdditionalAddressChange}
+                    <FormField
+                      control={form.control}
+                      name="detailAddr"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>상세 주소</FormLabel>
+                          <Input type="text" placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)" {...field} />
+                        </FormItem>
+                      )}
                     />
                   </div>
 
