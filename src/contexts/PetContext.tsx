@@ -6,7 +6,7 @@ import React, {
     ReactNode,
 } from "react";
 import axios from "axios";
-import { backUrl } from "@/constants";
+import { backUrl, postBackUrl } from "@/constants";
 import { PetList } from "@/types/mypet.ts";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
@@ -261,7 +261,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             // 발견 동물 데이터 로드
             if (activeFilter === "전체" || activeFilter === "발견했개") {
                 const findingResponse = await axios.get(
-                    `${backUrl}/api/v1/finding?page=0&size=10`,
+                    `${postBackUrl}/api/v1/finding?page=0&size=10`,
                     {
                         withCredentials: true,
                     }
@@ -320,7 +320,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             // 발견 동물 반경 검색
             if (activeFilter === "전체" || activeFilter === "발견했개") {
                 const findingRadiusResponse = await axios.get(
-                    `${backUrl}/api/v1/finding/radius`,
+                    `${postBackUrl}/api/v1/finding/radius`,
                     {
                         params: {
                             lat,
@@ -386,7 +386,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
                     nextPage = page + 1;
 
                     response = await axios.get(
-                        `${backUrl}/api/v1/finding?page=${nextPage}&size=10`
+                        `${postBackUrl}/api/v1/finding?page=${nextPage}&size=10`
                     );
 
                     const newPets = response.data.data.content || [];
@@ -445,7 +445,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
 
             if (activeFilter === "전체" || activeFilter === "발견했개") {
                 if (findingHasMore) {
-                    const findingResponse = await axios.get(`${backUrl}/api/v1/searchPost/finding`, {
+                    const findingResponse = await axios.get(`${postBackUrl}/api/v1/searchPost/finding`, {
                         params: searchParams,
                         withCredentials: true,
                     });

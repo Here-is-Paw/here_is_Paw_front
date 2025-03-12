@@ -9,6 +9,7 @@ import { ChatProvider } from "./contexts/ChatContext";
 
 import { MapLocationProvider } from "@/contexts/MapLocationContext.tsx";
 import { PetProvider } from "@/contexts/PetContext.tsx";
+import { CareCenterProvider } from "./contexts/CareCenterContext.tsx";
 
 // RadiusProvider, MapLocationProvider가 PetProvider보다 상위여야함
 // > Pet에서 두개의 전역을 사용하기 때문
@@ -18,15 +19,17 @@ function App() {
       <RadiusProvider>
         <MapLocationProvider>
           <PetProvider>
-            <ChatProvider>
-              <AuthProvider>
-                <SidebarProvider>
-                  <RootLayout>
-                    <AppRoutes />
-                  </RootLayout>
-                </SidebarProvider>
-              </AuthProvider>
-            </ChatProvider>
+            <CareCenterProvider>
+              <ChatProvider>
+                <AuthProvider>
+                  <SidebarProvider>
+                    <RootLayout>
+                      <AppRoutes />
+                    </RootLayout>
+                  </SidebarProvider>
+                </AuthProvider>
+              </ChatProvider>
+            </CareCenterProvider>
           </PetProvider>
         </MapLocationProvider>
       </RadiusProvider>

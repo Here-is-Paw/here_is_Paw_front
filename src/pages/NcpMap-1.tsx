@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
-import { usePetContext } from "@/contexts/PetContext.tsx"; // PetContext 추가
+import { usePetContext } from "@/contexts/PetContext.tsx";
+import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx"; // 동물보호센터 Context 추가
 
 interface NcpMapProps {
   currentLocation: {
@@ -23,12 +24,17 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   const [selectedLocation, setSelectedLocation] =
     useState<naver.maps.LatLng | null>(null);
   const { setUserLocation } = useMapLocation();
-  const { refreshPets, setSearchMode, findingPets, missingPets } =
-    usePetContext(); // PetContext에서 필요한 함수 가져오기
+  const { refreshPets, setSearchMode, findingPets, missingPets } = usePetContext();
+  
+  // 동물보호센터 컨텍스트 추가
+  const { careCenters, refreshCenters, setSearchMode: setCenterSearchMode } = useCareCenterContext();
 
   // 마커 레퍼런스 배열 추가
   const missingMarkersRef = useRef<naver.maps.Marker[]>([]);
   const findingMarkersRef = useRef<naver.maps.Marker[]>([]);
+  const careCenterMarkersRef = useRef<naver.maps.Marker[]>([]);  // 보호센터 마커 배열 추가
+
+  const [showCareCenters, setShowCareCenters] = useState<boolean>(true);
 
   const getPawMarkerIcon = (isLost: boolean) => {
     const color = isLost ? "#EF4444" : "#22C55E"; // red-500 : green-500
@@ -40,11 +46,21 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     `;
   };
 
+  // 보호센터 마커 아이콘 함수 추가
+  const getCareCenterMarkerIcon = () => {
+    return `
+      <svg width="36" height="36" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30 5C19.5066 5 11 13.5066 11 24C11 28.3085 12.4324 32.3654 14.9001 35.5456L30 55L45.0999 35.5456C47.5676 32.3654 49 28.3085 49 24C49 13.5066 40.4934 5 30 5ZM30 32C25.5817 32 22 28.4183 22 24C22 19.5817 25.5817 16 30 16C34.4183 16 38 19.5817 38 24C38 28.4183 34.4183 32 30 32Z" fill="#000000"/>
+        <circle cx="30" cy="24" r="8" fill="white"/>
+      </svg>
+    `;
+  };
+
   const createPetMarkers = () => {
     const map = mapInstance.current;
     if (!map) return;
 
-    // 기존 마커 제거 - 순서 수정
+    // 기존 마커 제거
     missingMarkersRef.current.forEach((marker) => marker.setMap(null));
     findingMarkersRef.current.forEach((marker) => marker.setMap(null));
 
@@ -136,6 +152,65 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     findingMarkersRef.current = newFindingMarkers;
   };
 
+  // 보호센터 마커 생성 함수 수정
+  const createCareCenterMarkers = () => {
+    const map = mapInstance.current;
+    if (!map) return;
+
+    // 기존 보호센터 마커 제거
+    careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
+    careCenterMarkersRef.current = [];
+
+    // 보호센터 마커 생성
+    const newCareCenterMarkers = careCenters.map((center) => {
+      // 좌표 데이터 검증
+      console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
+      
+      // 유효한 좌표값인지 확인
+      if (!center.x || !center.y || isNaN(center.x) || isNaN(center.y)) {
+        console.error(`[오류] 보호센터 좌표 누락: ${center.name}`);
+        return null;
+      }
+      
+      try {
+        // 위도와 경도 순서 확인 (네이버 지도는 lat, lng 순서)
+        const position = new window.naver.maps.LatLng(center.x, center.y);
+        
+        const marker = new window.naver.maps.Marker({
+          position: position,
+          map: showCareCenters ? map : null, // 표시 여부를 상태에 연결
+          title: `[보호소] ${center.name}`,
+          icon: {
+            content: getCareCenterMarkerIcon(),
+            anchor: new window.naver.maps.Point(18, 18),
+          },
+          visible: true, // 명시적으로 가시성 설정
+          zIndex: 100 // 다른 마커보다 위에 표시
+        });
+        
+        // InfoWindow 생성 코드는 생략...
+        
+        return marker;
+      } catch (error) {
+        console.error(`마커 생성 오류(${center.name}):`, error);
+        return null;
+      }
+    }).filter(Boolean); // null 값 제거
+
+    // 생성된 마커 배열 저장
+    careCenterMarkersRef.current = newCareCenterMarkers;
+    console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
+  };
+
+  const toggleCareCenterMarkers = () => {
+    const isVisible = !showCareCenters;
+    setShowCareCenters(isVisible);
+    
+    careCenterMarkersRef.current.forEach(marker => {
+      marker.setMap(isVisible ? mapInstance.current : null);
+    });
+  };
+
   // 지도 클릭 이벤트 핸들러
   const handleMapClick = (event: naver.maps.MouseEvent) => {
     const map = mapInstance.current;
@@ -205,9 +280,11 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
     // 검색 모드를 '반경'으로 설정
     setSearchMode("반경");
+    setCenterSearchMode("반경"); // 보호센터 검색 모드도 업데이트
 
     // 데이터 새로고침 (반경 검색 실행)
     refreshPets();
+    refreshCenters(); // 보호센터 데이터도 새로고침
 
     console.log("현재 반경에서 검색 실행:", {
       위치: `${selectedLocation.lat()}, ${selectedLocation.lng()}`,
@@ -309,6 +386,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     };
   }, [currentLocation]);
 
+  // 반려동물 마커 업데이트
   useEffect(() => {
     if (
       mapInstance.current &&
@@ -317,6 +395,24 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
       createPetMarkers();
     }
   }, [missingPets, findingPets, mapInstance.current]);
+
+  // 보호센터 마커 업데이트 - 새로 추가된 useEffect
+  useEffect(() => {
+    if (mapInstance.current && careCenters.length > 0) {
+      console.log("보호센터 데이터 변경 감지:", careCenters.length);
+      createCareCenterMarkers();
+    }
+  }, [careCenters, mapInstance.current]);
+
+  // showCareCenters 상태가 변경될 때 마커 표시 여부 업데이트
+  useEffect(() => {
+    if (careCenterMarkersRef.current.length > 0) {
+      careCenterMarkersRef.current.forEach(marker => {
+        marker.setMap(showCareCenters ? mapInstance.current : null);
+      });
+      console.log(`보호센터 마커 표시 상태 변경: ${showCareCenters}`);
+    }
+  }, [showCareCenters]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
