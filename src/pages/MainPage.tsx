@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react'
 // import NcpMap from './NcpMap'
 import NcpMap from "./NcpMap-1";
 import { useIsMobile } from "@/hooks/use-mobile";

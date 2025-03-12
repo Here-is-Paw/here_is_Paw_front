@@ -16,6 +16,7 @@ import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import LocationViewMap from "@/components/location/locationViewMap";
 import { UserSearchPopup } from "@/components/petPost/missingPost/reward/UserSearchPopup.tsx"; // 새 컴포넌트 임포트
+import { OpenChatRoom } from "@/types/chat.ts";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -144,26 +145,82 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     }
 
     try {
-      // 펫 데이터 확인
+      // 펫 데이터 확인 - 상세 로깅
       console.log("채팅 대상 펫 데이터:", pet);
 
-      // 작성자 ID를 targetUserId로 사용
+      // 작성자 ID를 targetUserId로 사용 - 명확한 검사 추가
       const petAny = pet as any;
-      const targetUserId = petAny.authorId || pet.id; // authorId가 없으면 기본값으로 pet.id 사용
+      let targetUserId;
 
-      console.log("채팅 요청 targetUserId:", targetUserId);
+      // authorId 확인 및 로깅
+      console.log("작성자 ID(authorId):", petAny.authorId);
+      console.log("작성자 ID 타입:", typeof petAny.authorId);
 
+      if (petAny.authorId && typeof petAny.authorId === 'number' && petAny.authorId > 0) {
+        targetUserId = petAny.authorId;
+      } else if (petAny.member && petAny.member.id && typeof petAny.member.id === 'number' && petAny.member.id > 0) {
+        targetUserId = petAny.member.id;
+      } else {
+        targetUserId = pet.id; // 최후의 수단으로 pet.id 사용
+      }
+
+      // 최종 targetUserId 로깅
+      console.log("최종 선택된 targetUserId:", targetUserId);
+      console.log("targetUserId 타입:", typeof targetUserId);
+
+      // 🔴 추가: 전역에서 이미 열린 채팅방인지 확인
+      const isAlreadyOpenEvent = new CustomEvent('check_open_chat_room', {
+        detail: { targetUserId: targetUserId },
+        cancelable: true // 이벤트 취소 가능하도록 설정
+      });
+
+      const canProceed = window.dispatchEvent(isAlreadyOpenEvent);
+
+      // 이미 열린 채팅방이면 함수 종료
+      if (!canProceed) {
+        console.log("이미 열려있는 채팅방입니다. 새 창을 열지 않습니다.");
+        onOpenChange(false); // 상세 Dialog 닫기
+        return; // 함수 종료
+      }
+
+      // NavBar의 SSE 연결 상태 확인 또는 트리거 - 중요!
+      console.log("연락하기 - NavBar SSE 연결 상태 확인");
+      const sseConnected = window.dispatchEvent(new CustomEvent('check_sse_connection', {
+        detail: {
+          userId: targetUserId,
+          source: 'contact_button'
+        }
+      }));
+      console.log("SSE 연결 확인 이벤트 발생:", sseConnected);
+
+      // API 요청 - targetUserId를 명시적으로 숫자로 변환하여 전송
+      const requestParams = { targetUserId: Number(targetUserId) };
+      console.log("채팅방 생성 API 요청 파라미터:", requestParams);
+
+      // NavBar의 createChatRoom 함수와 유사한 방식으로 구현
       const response = await axios.post(
-          `${backUrl}/api/v1/chat/rooms`,
-          { targetUserId },
-          { withCredentials: true }
+        `${backUrl}/api/v1/chat/rooms`,
+        requestParams,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: document.cookie.includes("accessToken")
+              ? `Bearer ${document.cookie.split('accessToken=')[1].split(';')[0]}`
+              : '',
+          },
+          withCredentials: true,
+        }
       );
 
+      // 응답 로깅
       console.log("채팅방 생성/조회 응답:", response.data);
+      console.log("생성된 채팅방 ID:", response.data.data.id);
+      console.log("채팅 사용자 ID:", response.data.data.chatUserId);
+      console.log("타겟 사용자 ID:", response.data.data.targetUserId);
 
       // 타켓 유저 프로필 사진 처리
       const validImageUrl = getValidImageUrl(
-          response.data.data.targetUserImageUrl
+        response.data.data.targetUserImageUrl
       );
 
       // 채팅방 정보 설정
@@ -175,8 +232,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         response.data.data.chatMessages = [];
       }
 
-      // 채팅방 목록에 새 채팅방 추가 이벤트 발행
-      chatEventBus.emitAddChatRoom({
+      // OpenChatRoom을 생성하여 isOpen 속성을 명시적으로 설정
+      const openChatRoom: OpenChatRoom = {
         id: chatRoomId,
         chatUserNickname: response.data.data.chatUserNickname,
         chatUserImageUrl: getValidImageUrl(response.data.data.chatUserImageUrl),
@@ -186,13 +243,49 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         targetUserId: response.data.data.targetUserId,
         chatMessages: [],
         modifiedDate: new Date().toISOString(),
-      });
+        isOpen: true // 명시적으로 열린 상태로 설정
+      };
+
+      // 채팅방 목록에 새 채팅방 추가 이벤트 발행
+      chatEventBus.emitAddChatRoom(openChatRoom);
+
+      // 채팅방 열림 상태를 전역 상태에 등록 (중요!)
+      window.dispatchEvent(new CustomEvent('chat_room_opened', {
+        detail: {
+          roomId: chatRoomId,
+          isOpen: true
+        }
+      }));
+
+      // 추가: 연락하기에서 열린 채팅방 이벤트 발생 (네이밍 다르게 하여 중복 방지)
+      console.log(`MissingDetail에서 채팅방 ${chatRoomId} 열림 이벤트 발생`);
+      window.dispatchEvent(new CustomEvent('contact_chat_opened', {
+        detail: {
+          roomId: chatRoomId,
+          chatRoom: openChatRoom,
+          source: 'missing_detail',
+          timestamp: new Date().getTime()
+        }
+      }));
 
       // 채팅방 목록 갱신 이벤트 발행
       refreshChatRooms();
 
       // Dialog 닫기
       onOpenChange(false);
+
+      // 읽음 처리 API 호출 - 중요!
+      try {
+        console.log(`채팅방 ${chatRoomId} 읽음 처리 API 호출`);
+        await axios.post(
+          `${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`,
+          {},
+          { withCredentials: true }
+        );
+        console.log(`채팅방 ${chatRoomId} 읽음 처리 성공`);
+      } catch (error) {
+        console.error(`채팅방 ${chatRoomId} 읽음 처리 실패:`, error);
+      }
 
       // 부모 컴포넌트에 ChatModal 정보 전달
       onChatModalOpen({
@@ -210,31 +303,31 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
         // 이미 존재하는 채팅방 데이터가 있는 경우
         if (
-            err.response.data &&
-            err.response.data.data &&
-            err.response.data.data.id
+          err.response.data &&
+          err.response.data.data &&
+          err.response.data.data.id
         ) {
           const existingChatRoom = err.response.data.data;
           const chatRoomId = existingChatRoom.id;
 
           // 기존 채팅방 정보 활용하여 채팅방 열기
           const validImageUrl = getValidImageUrl(
-              existingChatRoom.targetUserImageUrl
+            existingChatRoom.targetUserImageUrl
           );
           const targetUserNickname =
-              existingChatRoom.targetUserNickname || "상대방";
+            existingChatRoom.targetUserNickname || "상대방";
 
           // 중요: 채팅방 데이터 메시지 배열 초기화 확인
           if (!existingChatRoom.chatMessages) {
             existingChatRoom.chatMessages = [];
           }
 
-          // 채팅방 목록에 추가
-          chatEventBus.emitAddChatRoom({
+          // OpenChatRoom을 생성하여 isOpen 속성을 명시적으로 설정
+          const openChatRoom: OpenChatRoom = {
             id: chatRoomId,
             chatUserNickname: existingChatRoom.chatUserNickname || "사용자",
             chatUserImageUrl: getValidImageUrl(
-                existingChatRoom.chatUserImageUrl
+              existingChatRoom.chatUserImageUrl
             ),
             chatUserId: existingChatRoom.chatUserId,
             targetUserNickname: targetUserNickname,
@@ -242,11 +335,36 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             targetUserId: existingChatRoom.targetUserId,
             chatMessages: existingChatRoom.chatMessages || [],
             modifiedDate:
-                existingChatRoom.modifiedDate || new Date().toISOString(),
-          });
+              existingChatRoom.modifiedDate || new Date().toISOString(),
+            isOpen: true // 명시적으로 열린 상태로 설정
+          };
+
+          // 채팅방 목록에 추가
+          chatEventBus.emitAddChatRoom(openChatRoom);
+
+          // 채팅방 열림 상태를 전역 상태에 등록 (중요!)
+          window.dispatchEvent(new CustomEvent('chat_room_opened', {
+            detail: {
+              roomId: chatRoomId,
+              isOpen: true
+            }
+          }));
 
           // 채팅방 목록 갱신
           refreshChatRooms();
+
+          // 읽음 처리 API 호출 - 중요!
+          try {
+            console.log(`채팅방 ${chatRoomId} 읽음 처리 API 호출`);
+            axios.post(
+              `${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`,
+              {},
+              { withCredentials: true }
+            );
+            console.log(`채팅방 ${chatRoomId} 읽음 처리 성공`);
+          } catch (error) {
+            console.error(`채팅방 ${chatRoomId} 읽음 처리 실패:`, error);
+          }
 
           // Dialog 닫기
           onOpenChange(false);
