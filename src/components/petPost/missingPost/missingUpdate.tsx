@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl, aiUrl } from "@/constants";
+import { backUrl, aiUrl } from "@/constants.ts";
 import {
   Select,
   SelectContent,
@@ -35,22 +35,22 @@ import {
 } from "@/components/ui/popover.tsx";
 import { cn } from "@/lib/utils.ts";
 import { format } from "date-fns";
-import { MissingFormData, defaultValues } from "@/types/missing.ts";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
-import LocationPicker from "@/components/location/locationPicker.tsx";
+import LocationPicker from "@/components/location/locationPickerTest.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
-import { MyPet } from "@/types/mypet.ts";
+import { MissingDetailData, MissingDetailFormData } from "@/types/missing.ts";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import dayjs from "dayjs";
 
-interface MissingFormPopupProps {
+interface MissingUpdateFormPopup {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  missingId: number;
+  pet: MissingDetailFormData;
   onSuccess?: () => void;
-  pets?: MyPet;
 }
 
 // 숫자에 천 단위 `,` 추가하는 함수
@@ -59,13 +59,65 @@ const formatNumber = (value: number | "") => {
   return value.toLocaleString(); // 예: 1000 -> "1,000"
 };
 
-export const MissingFormPopup = ({
+export const MissingUpdateFormPopup = ({
   open,
   onOpenChange,
+  missingId,
+  pet,
   onSuccess,
-  pets,
-}: MissingFormPopupProps) => {
-  const form = useForm<MissingFormData>({
+}: MissingUpdateFormPopup) => {
+  const defaultValues: MissingDetailFormData = {
+    id: pet.id,
+    name: pet.name,
+    breed: pet.breed,
+    x: pet.x,
+    y: pet.y,
+    location: pet.location,
+    detailAddr: pet.detailAddr,
+    color: pet.color,
+    serialNumber: pet.serialNumber,
+    gender: pet.gender,
+    neutered: pet.neutered,
+    age: pet.age,
+    lostDate: pet.lostDate,
+    etc: pet.etc,
+    file: pet.pathUrl,
+    pathUrl: pet.pathUrl,
+    memberId: pet.memberId,
+    nickname: pet.nickname,
+    reward: pet.reward,
+    missingState: pet.missingState,
+  };
+
+  useEffect(() => {
+    form.setValue("id", pet.id);
+    form.setValue("name", pet.name);
+    form.setValue("breed", pet.breed);
+    form.setValue("x", pet.x);
+    form.setValue("y", pet.y);
+    form.setValue("location", pet.location);
+    form.setValue("color", pet.color);
+    form.setValue("serialNumber", pet.serialNumber);
+    form.setValue("gender", pet.gender);
+    form.setValue("neutered", pet.neutered);
+    form.setValue("age", pet.age);
+    form.setValue("lostDate", pet.lostDate);
+    form.setValue("etc", pet.etc);
+    form.setValue("file", pet.pathUrl);
+    form.setValue("memberId", pet.memberId);
+    form.setValue("nickname", pet.nickname);
+    form.setValue("reward", pet.reward);
+
+    // reward 상태 업데이트 추가
+    setReward(pet.reward || "");
+    form.setValue("missingState", pet.missingState);
+    setTimeout(() => {
+      // setImagePreview(pet.pathUrl);
+      console.log(pet.detailAddr);
+    }, 100);
+  }, []);
+
+  const form = useForm<MissingDetailData>({
     defaultValues,
   });
   const location = useGeolocation();
@@ -90,58 +142,14 @@ export const MissingFormPopup = ({
       }
     }
   };
-  //
-  // const [imagePreview, setImagePreview] = useState<string | null>(null);
-  // const [file, setFile] = useState<File | null>(null);
-  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
-  // const [hasExistingImage, setHasExistingImage] = useState(false);
-  // const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
-  // const [isAnalyzing, setIsAnalyzing] = useState(false);
-  //
-  // const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     const selectedFile = e.target.files?.[0];
-  //
-  //     if (selectedFile) {
-  //         setFile(selectedFile);
-  //         setImagePreview(URL.createObjectURL(selectedFile));
-  //         setIsAnalyzing(true); // 분석 시작
-  //         console.log('이미지 분석 시작...');
-  //         const formData = new FormData();
-  //         formData.append('file', selectedFile);
-  //
-  //         try {
-  //
-  //             const response = await axios.post(`${aiUrl}/upload-image`, formData, {
-  //                 headers: { 'Content-Type': 'multipart/form-data' }
-  //             });
-  //             console.log('이미지 분석 결과:', response);
-  //             console.log('이미지 분석 결과:', response.data);
-  //
-  //             if (response.data.image_data) {
-  //                 const byteCharacters = atob(response.data.image_data);
-  //                 const byteArrays = [];
-  //
-  //                 for (let i = 0; i < byteCharacters.length; i++) {
-  //                     byteArrays.push(byteCharacters.charCodeAt(i));
-  //                 }
-  //
-  //                 const blob = new Blob([new Uint8Array(byteArrays)], {
-  //                     type: response.data.image_type
-  //                 });
-  //
-  //                 const previewUrl = URL.createObjectURL(blob);
-  //                 setImagePreview(previewUrl);
-  //             }
-  //         } catch (error) {
-  //             console.error('이미지 처리 실패:', error);
-  //             setImagePreview(URL.createObjectURL(selectedFile));
-  //         } finally {
-  //             setIsAnalyzing(false); // 분석 완료
-  //         }
-  //     }
-  // };
 
-  // useFileUpload 훅 사용 - 기존 이미지 관련 상태들 대체
+  // const [imagePreview, setImagePreview] = useState<string | null>(pet.pathUrl);
+  // const [file, setFile] = useState<File | string>("");
+  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
+  // const [fileUrl, setFileUrl] = useState<string | "">(pet.pathUrl);
+  // const [gender, setGender] = useState("");
+  // const [neutered, setNeutered] = useState("");
+
   const {
     file,
     imagePreview,
@@ -149,10 +157,10 @@ export const MissingFormPopup = ({
     hasExistingImage,
     handleFileChange,
     resetFileUpload,
-    removeImage,
   } = useFileUpload({
-    aiUrl, // 상수에서 가져온 AI API URL
-    initialImageUrl: pets?.pathUrl || pets?.imageUrl || null,
+    aiUrl,
+    useAnalysis: true, // AI 분석 사용
+    initialImageUrl: pet.pathUrl || null,
     onFileChangeCallback: (selectedFile) => {
       if (selectedFile) {
         form.setValue("file", selectedFile);
@@ -160,20 +168,32 @@ export const MissingFormPopup = ({
     },
   });
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+  //
+  //   if (selectedFile) {
+  //     setFile(selectedFile);
+  //     setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+  //   } else {
+  //     setFileUrl(pet.pathUrl);
+  //     setImagePreview(fileUrl);
+  //   }
+  // };
+
   const { refreshPets } = usePetContext();
+
+  console.log("수정", pet);
 
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
     if (location.loaded && !location.error) {
-      const initialLocation = {
-        x: location.coordinates.lng,
-        y: location.coordinates.lat,
-      };
-
       // geo 필드 업데이트 (JSON 문자열로 저장)
-      form.setValue("geo", JSON.stringify(initialLocation));
+      form.setValue("x", location.coordinates.lng);
+      form.setValue("y", location.coordinates.lat);
     }
   }, [location, form]);
+
+  // 기존 코드는 그대로 유지...
 
   // 추가 상세 주소 입력을 위한 상태 추가
   const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
@@ -186,7 +206,8 @@ export const MissingFormPopup = ({
   }) => {
     setLocationInfo(location);
     // geo 필드 업데이트 (JSON 문자열로 저장)
-    form.setValue("geo", JSON.stringify({ x: location.x, y: location.y }));
+    form.setValue("x", location.x);
+    form.setValue("y", location.y);
     // location 필드 업데이트 (주소 문자열로 저장)
     form.setValue("location", location.address);
   };
@@ -205,44 +226,13 @@ export const MissingFormPopup = ({
     form.setValue("location", combinedAddress);
   };
 
-  // pets 데이터가 있을 때 초기값 설정
-  useEffect(() => {
-    if (pets && open) {
-      // 폼에 반려동물 정보 설정
-      form.setValue("name", pets.name || "");
-      form.setValue("breed", pets.breed || "");
-      form.setValue("color", pets.color || "");
-      form.setValue("serialNumber", pets.serialNumber || "");
-      form.setValue("gender", pets.gender !== undefined ? pets.gender : 0);
-      form.setValue(
-        "neutered",
-        pets.neutered !== undefined ? pets.neutered : 0
-      );
-      form.setValue("age", pets.age !== undefined ? pets.age : undefined);
-      form.setValue("etc", pets.etc || "");
-
-      // 이미지 미리보기 설정 (pathUrl이 있는 경우)
-      let petImage = null;
-      if (pets.pathUrl) {
-        petImage = pets.pathUrl;
-      } else if (pets.imageUrl) {
-        petImage = pets.imageUrl;
-      }
-
-      // if (petImage) {
-      //     setImagePreview(petImage);
-      //     setExistingImageUrl(petImage);
-      //     setHasExistingImage(true);
-      // }
-    }
-  }, [pets, open, form]);
-
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
-      setReward("");
       resetFileUpload();
+      // setFile("");
+      // setImagePreview(null);
       setLocationInfo({
         x: location.coordinates.lng,
         y: location.coordinates.lat,
@@ -257,7 +247,7 @@ export const MissingFormPopup = ({
       // form의 lostDate 필드도 초기화
       form.setValue("lostDate", "");
     } else if (location.loaded && !location.error) {
-      // 모달이 열릴 때 현재 위치를 다시 설정
+      // 🔥 모달이 열릴 때 현재 위치를 다시 설정
       const currentGeo = {
         x: location.coordinates.lng,
         y: location.coordinates.lat,
@@ -268,21 +258,23 @@ export const MissingFormPopup = ({
         address: locationInfo.address || "현재 위치",
       });
 
-      form.setValue("geo", JSON.stringify(currentGeo));
+      form.setValue("x", currentGeo.x);
+      form.setValue("y", currentGeo.y);
     }
   }, [open, location, form]);
 
   // 팝업 닫기 핸들러
   const handleClose = () => {
     form.reset(defaultValues);
-    setReward("");
     resetFileUpload();
+    // setFile("");
+    // setImagePreview(null);
     onOpenChange(false);
 
     // 날짜 초기화
     setDate(undefined);
 
-    // 현재 위치를 다시 설정
+    // 🔥 모달이 열릴 때 현재 위치를 다시 설정
     const currentGeo = {
       x: location.coordinates.lng,
       y: location.coordinates.lat,
@@ -294,13 +286,16 @@ export const MissingFormPopup = ({
     });
   };
 
-  const handleSubmit = async (data: MissingFormData) => {
+  const handleSubmit = async (data: MissingDetailData) => {
+    const formData = new FormData();
+
     try {
-      const formData = new FormData();
+      // MissingDetailFormData에서 MissingFormData로 변환
+      formData.append("id", data.id.toString());
       formData.append("name", data.name);
       formData.append("breed", data.breed);
 
-      // geo 좌표 정보 추가 - 더 이상 임의 값이 아닌 실제 좌표
+      // x, y 좌표를 geo 문자열로 변환
       if (locationInfo.x && locationInfo.y) {
         formData.append(
           "geo",
@@ -317,75 +312,59 @@ export const MissingFormPopup = ({
         : data.location;
 
       formData.append("location", combinedAddress);
-
       formData.append("color", data.color || "");
       formData.append("serialNumber", data.serialNumber || "");
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+
+      if (data.lostDate) {
+        formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+      } else if (pet.lostDate) {
+        formData.append("lostDate", dayjs(pet.lostDate).format("YYYY-MM-DD"));
+      }
+
       formData.append("etc", data.etc || "");
       formData.append("reward", data.reward?.toString() || "0");
       formData.append("missingState", data.missingState?.toString() || "0");
 
-      // // 기존 이미지가 있으면 파일 추가, 없으면 에러
-      // if (file) {
-      //     // 새 파일이 선택된 경우
-      //     formData.append("file", file);
-      // } else if (hasExistingImage && existingImageUrl) {
-      //     // 기존 이미지를 사용하는 경우
-      //     formData.append("pathUrl", existingImageUrl);
-      // } else {
-      //     alert("반려동물 사진은 필수입니다.");
-      //     return;
-      // }
-
-      // 파일 관련 부분만 수정
+      // 파일 관련 처리
       if (file) {
         // 새 파일이 선택된 경우
         formData.append("file", file);
-      } else if (hasExistingImage && pets?.pathUrl) {
+      } else if (hasExistingImage && pet.pathUrl) {
         // 기존 이미지를 사용하는 경우
-        formData.append("pathUrl", pets.pathUrl);
+        formData.append("pathUrl", pet.pathUrl);
       } else {
         alert("반려동물 사진은 필수입니다.");
         return;
       }
 
-      await axios.post(`${backUrl}/api/v1/missings/write`, formData, {
+      // API 요청 실행
+      await axios.patch(`${backUrl}/api/v1/missings/${missingId}`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      // 성공 후 처리
       form.reset(defaultValues);
       resetFileUpload();
-      // setImagePreview(null);
-      // setFile(null);
-      // setHasExistingImage(false);
-      // setExistingImageUrl(null);
-
       await refreshPets();
-
       onOpenChange(false);
 
-      // 현재 위치를 다시 설정
-      const currentGeo = {
-        x: location.coordinates.lng,
-        y: location.coordinates.lat,
-      };
-
-      setLocationInfo({
-        ...currentGeo,
-        address: locationInfo.address || "현재 위치",
-      });
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("반려동물 등록 오류:", error);
-      alert("반려동물 등록에 실패했습니다");
+      console.error("발견신고 등록 오류:", error);
+      alert("발견신고 등록에 실패했습니다");
     }
   };
+
+  /**
+   * 이름, 품종, 유기견 이미지, 지역, 좌표
+   * 색상, 동물 등록 번호, 성별, 중성화 유무, 나이, 발견 날짜, 기타(특징)
+   */
 
   return (
     <Dialog
@@ -430,10 +409,9 @@ export const MissingFormPopup = ({
                   <FormField
                     control={form.control}
                     name="name"
-                    rules={{ required: "반려동물 이름은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>이름 *</FormLabel>
+                        <FormLabel>이름</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
@@ -449,10 +427,9 @@ export const MissingFormPopup = ({
                   <FormField
                     control={form.control}
                     name="breed"
-                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>품종 *</FormLabel>
+                        <FormLabel>품종</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder="품종" {...field} />
                         </FormControl>
@@ -503,7 +480,7 @@ export const MissingFormPopup = ({
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={field.value?.toString()}
+                            defaultValue={(pet.gender ?? 0).toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="성별 선택" />
@@ -537,7 +514,7 @@ export const MissingFormPopup = ({
                       )}
                     />
                   </div>
-
+                  {/* 파일 업로드 필드 수정 - useFileUpload 훅 사용 */}
                   <FormField
                     control={form.control}
                     name="file"
@@ -581,30 +558,30 @@ export const MissingFormPopup = ({
                             accept="image/*"
                             className="sr-only"
                             onChange={handleFileChange}
-                            // onChange={(e) => {
-                            //     handleFileChange(e);
-                            //     field.onChange(e.target.files?.[0]);
-                            // }}
+                            disabled={isAnalyzing}
                           />
                         </FormControl>
 
                         {/* 미리보기 (이미지 선택 시만 표시) */}
-                        <label
-                          htmlFor="file01"
-                          className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
-                        >
-                          {imagePreview ? (
-                            <img
-                              src={imagePreview}
-                              alt="미리보기"
-                              className="w-full h-full object-contain m-auto"
-                            />
-                          ) : (
-                            <span className="text-sm text-muted-foreground p-2">
-                              반려견 사진을 첨부해주세요.
-                            </span>
-                          )}
-                        </label>
+                        <div className="relative">
+                          <label
+                            htmlFor="file01"
+                            className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                          >
+                            {imagePreview ? (
+                              <img
+                                src={imagePreview}
+                                alt="미리보기"
+                                className="w-full h-full object-contain m-auto"
+                              />
+                            ) : (
+                              <span className="text-sm text-muted-foreground p-2">
+                                반려견 사진을 첨부해주세요.
+                              </span>
+                            )}
+                          </label>
+                        </div>
+
                         {hasExistingImage && (
                           <p className="text-xs text-muted-foreground mt-1">
                             * 이미 등록된 사진이 있습니다. 새 사진을 선택하지
@@ -615,6 +592,40 @@ export const MissingFormPopup = ({
                       </FormItem>
                     )}
                   />
+                  {/*<FormField*/}
+                  {/*  control={form.control}*/}
+                  {/*  name="file"*/}
+                  {/*  rules={{ required: "사진은 필수입니다" }}*/}
+                  {/*  render={({ field }) => (*/}
+                  {/*    <FormItem>*/}
+                  {/*      <FormLabel>반려동물 사진 *</FormLabel>*/}
+                  {/*      <FormControl>*/}
+                  {/*        <Input*/}
+                  {/*          type="file"*/}
+                  {/*          id="file01"*/}
+                  {/*          accept="image/*"*/}
+                  {/*          className="sr-only"*/}
+                  {/*          onChange={(e) => {*/}
+                  {/*            handleFileChange(e);*/}
+                  {/*            field.onChange(e.target.files?.[0]);*/}
+                  {/*          }}*/}
+                  {/*        />*/}
+                  {/*      </FormControl>*/}
+
+                  {/*      /!* 미리보기 (이미지 선택 시만 표시) *!/*/}
+                  {/*      <label*/}
+                  {/*        htmlFor="file01"*/}
+                  {/*        className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"*/}
+                  {/*      >*/}
+                  {/*        {imagePreview ? (*/}
+                  {/*          <img src={imagePreview} alt="미리보기" className="w-full h-full object-contain m-auto" />*/}
+                  {/*        ) : (*/}
+                  {/*          <span className="text-sm text-muted-foreground p-2">반려견 사진을 첨부해주세요.</span>*/}
+                  {/*        )}*/}
+                  {/*      </label>*/}
+                  {/*    </FormItem>*/}
+                  {/*  )}*/}
+                  {/*/>*/}
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -622,7 +633,7 @@ export const MissingFormPopup = ({
                       name="lostDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>실종 날짜</FormLabel>
+                          <FormLabel>발견 날짜 *</FormLabel>
                           <FormControl>
                             <Popover open={calendarIsOpen}>
                               <PopoverTrigger asChild>
@@ -637,11 +648,16 @@ export const MissingFormPopup = ({
                                   }
                                 >
                                   <CalendarIcon />
-                                  {date ? (
-                                    format(date, "yyyy-MM-dd")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
+                                  {
+                                    date
+                                      ? format(date, "yyyy-MM-dd") // date가 있다면 날짜 포맷 적용
+                                      : format(
+                                          pet.lostDate
+                                            ? new Date(pet.lostDate)
+                                            : new Date(),
+                                          "yyyy-MM-dd"
+                                        ) // pet.lostDate를 Date 객체로 변환 후 포맷 적용
+                                  }
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent
@@ -660,9 +676,15 @@ export const MissingFormPopup = ({
                                   onSelect={(newDate) => {
                                     setDate(newDate);
                                     if (newDate) {
-                                      field.onChange(
-                                        dayjs(newDate).format("YYYY-MM-DD")
-                                      );
+                                      // 선택한 날짜의 23:59:59로 시간 설정
+                                      const dateWith2359 = new Date(newDate);
+                                      dateWith2359.setHours(23, 59, 59);
+
+                                      // ISO 문자열로 변환하되 타임존 오프셋 고려
+                                      const isoString = dateWith2359
+                                        .toISOString()
+                                        .split("Z")[0];
+                                      field.onChange(isoString);
                                     }
                                   }}
                                   initialFocus
@@ -684,7 +706,7 @@ export const MissingFormPopup = ({
                             onValueChange={(value) => {
                               field.onChange(parseInt(value));
                             }}
-                            defaultValue={field.value?.toString()}
+                            defaultValue={(pet.neutered ?? 0).toString()}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="중성화 유무 선택" />
@@ -703,10 +725,10 @@ export const MissingFormPopup = ({
                 <div className="grid gap-4">
                   <FormField
                     control={form.control}
-                    name="geo"
+                    name="x"
                     render={({ field }) => (
                       <FormItem className="">
-                        <FormLabel>실종 위치(지도) *</FormLabel>
+                        <FormLabel>발견 위치(지도) *</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
@@ -719,7 +741,12 @@ export const MissingFormPopup = ({
                         </FormControl>
                         <LocationPicker
                           onLocationSelect={handleLocationSelect}
-                          isMissing={true}
+                          isMissing={false}
+                          initialLocation={{
+                            x: pet.x,
+                            y: pet.y,
+                            location: pet.location,
+                          }}
                         />
                       </FormItem>
                     )}
@@ -767,8 +794,8 @@ export const MissingFormPopup = ({
                             type="text"
                             placeholder="사례금"
                             min={0}
-                            {...field}
-                            value={formatNumber(reward) ?? ""}
+                            // field를 직접 사용하지 않고 computed value와 handler를 사용
+                            value={reward !== "" ? formatNumber(reward) : ""}
                             onChange={handleRewardChange}
                           />
                         </FormControl>
@@ -785,7 +812,7 @@ export const MissingFormPopup = ({
                         <FormControl>
                           <Textarea
                             placeholder="반려동물에 대한 추가 정보를 입력하세요"
-                            className="min-h-[80px] resize-none"
+                            className="min-h-[80px]"
                             {...field}
                           />
                         </FormControl>
