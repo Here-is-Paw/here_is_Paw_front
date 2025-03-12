@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/popover.tsx";
 import { cn } from "@/lib/utils.ts";
 import { format } from "date-fns";
-import { MissingFormData, defaultValues } from "@/types/missing.ts";
+import { MissingFormData, formDefaultValues } from "@/types/missing.ts";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { CalendarIcon } from "lucide-react";
 import LocationPicker from "@/components/location/locationPicker.tsx";
@@ -66,7 +66,7 @@ export const MissingFormPopup = ({
   pets,
 }: MissingFormPopupProps) => {
   const form = useForm<MissingFormData>({
-    defaultValues,
+    defaultValues: formDefaultValues,
   });
   const location = useGeolocation();
   const [locationInfo, setLocationInfo] = useState({
@@ -240,7 +240,7 @@ export const MissingFormPopup = ({
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
-      form.reset(defaultValues);
+      form.reset(formDefaultValues);
       setReward("");
       resetFileUpload();
       setLocationInfo({
@@ -274,7 +274,7 @@ export const MissingFormPopup = ({
 
   // 팝업 닫기 핸들러
   const handleClose = () => {
-    form.reset(defaultValues);
+    form.reset(formDefaultValues);
     setReward("");
     resetFileUpload();
     onOpenChange(false);
@@ -357,7 +357,7 @@ export const MissingFormPopup = ({
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      form.reset(defaultValues);
+      form.reset(formDefaultValues);
       resetFileUpload();
       // setImagePreview(null);
       // setFile(null);
@@ -393,7 +393,7 @@ export const MissingFormPopup = ({
       onOpenChange={(newOpen) => {
         if (!newOpen) {
           // 팝업이 닫힐 때 폼 초기화
-          form.reset(defaultValues);
+          form.reset(formDefaultValues);
           setLocationInfo({
             x: location.coordinates.lng,
             y: location.coordinates.lat,

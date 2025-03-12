@@ -38,7 +38,6 @@ export interface ChatModalInfo {
 
 interface MissingDetailProps {
   petId: number | undefined;
-  location: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // ChatModal 관련 정보를 상위 컴포넌트로 전달하는 콜백 함수 추가
