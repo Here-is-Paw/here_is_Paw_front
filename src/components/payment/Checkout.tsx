@@ -185,10 +185,10 @@ export const CheckoutPage: React.FC = () => {
                   await widgets.requestPayment({
                     orderId: generateRandomString(),
                     orderName: `결제 금액: ${amount.value.toLocaleString()}원`,
-                    successUrl: "https://www.pawpaw.kknaks.site/success",
-                    failUrl: "https://www.pawpaw.kknaks.site/fail",
-                    // successUrl: window.location.origin + "/success",
-                    // failUrl: window.location.origin + "/fail",
+                    // successUrl: "https://www.pawpaw.kknaks.site/success",
+                    // failUrl: "https://www.pawpaw.kknaks.site/fail",
+                    successUrl: window.location.origin + "/success",
+                    failUrl: window.location.origin + "/fail",
                     customerEmail: "customer123@gmail.com",
                     customerName: "김토스",
                   });
