@@ -81,7 +81,6 @@ export function ChatRoomList({
               // TypeScript에서 인식할 수 있도록 수정
               const roomWithUnread = room as ChatRoom & { unreadCount?: number };
               console.log(`채팅방 ${room.id} 안 읽은 메시지 수:`, roomWithUnread.unreadCount);
-              const unreadCount = roomWithUnread.unreadCount || 0;
               
               // 메시지에 읽음 상태 관련 필드가 있는지 확인
               const msgAny = room.chatMessages && room.chatMessages.length > 0 ? room.chatMessages[room.chatMessages.length - 1] as any : null;

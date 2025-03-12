@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, ChevronLeft } from "lucide-react";
+import { X, Send } from "lucide-react";
 import axios from "axios";
 import { backUrl } from "@/constants";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -390,7 +390,6 @@ export function ChatModal({
     // NavBar의 getOtherUserInfo와 유사한 로직
     const myId = Number(userId);
     const chatUserId = Number(chatRoom.chatUserId);
-    const targetUserId = Number(chatRoom.targetUserId);
     
     const isMyChat = myId === chatUserId;
     console.log(`[ChatModal] 내가 채팅 시작자인지: ${isMyChat}, 비교: ${myId} === ${chatUserId}`);

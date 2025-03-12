@@ -14,7 +14,7 @@ import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
-import { ChatRoom, OpenChatRoom } from "@/types/chat.ts";
+import { OpenChatRoom } from "@/types/chat.ts";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -165,6 +165,21 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
       // 최종 targetUserId 로깅
       console.log("최종 선택된 targetUserId:", targetUserId);
       console.log("targetUserId 타입:", typeof targetUserId);
+      
+      // 🔴 추가: 전역에서 이미 열린 채팅방인지 확인
+      const isAlreadyOpenEvent = new CustomEvent('check_open_chat_room', {
+        detail: { targetUserId: targetUserId },
+        cancelable: true // 이벤트 취소 가능하도록 설정
+      });
+      
+      const canProceed = window.dispatchEvent(isAlreadyOpenEvent);
+      
+      // 이미 열린 채팅방이면 함수 종료
+      if (!canProceed) {
+        console.log("이미 열려있는 채팅방입니다. 새 창을 열지 않습니다.");
+        onOpenChange(false); // 상세 Dialog 닫기
+        return; // 함수 종료
+      }
       
       // NavBar의 SSE 연결 상태 확인 또는 트리거 - 중요!
       console.log("연락하기 - NavBar SSE 연결 상태 확인");

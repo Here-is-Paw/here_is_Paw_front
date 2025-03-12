@@ -99,7 +99,7 @@ const NcpMap = ({currentLocation, onLocationSelect}: NcpMapProps) => {
 
 
     // 지도 클릭 이벤트 핸들러
-    const handleMapClick = (event: naver.maps.MouseEvent) => {
+    const handleMapClick = (event: any) => {
         const map = mapInstance.current;
         if (!map) return;
 

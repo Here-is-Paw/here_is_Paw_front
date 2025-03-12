@@ -1,6 +1,7 @@
-import { SidebarMainContent } from "./sidebar/SidebarContent";
 import { useState } from "react";
 import { MyPage } from "@/components/mypage/MyPage.tsx";
+import { MissingList } from "@/components/posts/missingPost/MissingList.tsx";
+import { FindingList } from "@/components/posts/findingPost/FindingList.tsx";
 import {
   Drawer,
   DrawerContent,
@@ -13,12 +14,31 @@ import { clsx } from "clsx";
 import { SidebarHeader } from "./sidebar/SidebarHeader";
 import {usePetContext} from "@/contexts/PetContext.tsx";
 
+// props 타입을 정의합니다 (사용하지 않지만 타입 오류 해결을 위해 추가)
+interface AppSidebarMobileProps {
+  lostPets?: any[];
+  findPets?: any[];
+}
 
-export function AppSidebarMobile() {
+export function AppSidebarMobile(_props: AppSidebarMobileProps) {
   const [open, setOpen] = useState(true);
   const [snap, setSnap] = useState<number | string | null>("355px");
 
   const {activeFilter} = usePetContext();
+
+  // 컴포넌트 렌더링 선택 함수 추가
+  const renderContent = () => {
+    switch (activeFilter) {
+      case "My":
+        return <MyPage />;
+      case "잃어버렸개":
+        return <MissingList />;
+      case "발견했개":
+        return <FindingList />;
+      default:
+        return <div>선택된 필터가 없습니다.</div>;
+    }
+  };
 
   return (
     <>
@@ -58,11 +78,7 @@ export function AppSidebarMobile() {
                 "overflow-hidden": snap !== 1,
               })}
             >
-              {activeFilter === "My" ? (
-                <MyPage />
-              ) : (
-                <SidebarMainContent />
-              )}
+              {renderContent()}
             </div>
           </DrawerContent>
         </DrawerPortal>

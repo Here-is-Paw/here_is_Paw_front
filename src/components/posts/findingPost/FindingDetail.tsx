@@ -14,7 +14,7 @@ import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import {petUtils} from "@/types/pet.common.ts";
-import { ChatRoom, OpenChatRoom } from "@/types/chat.ts";
+import { OpenChatRoom } from "@/types/chat.ts";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -150,21 +150,45 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({
       const petAny = pet as any;
       let targetUserId;
       
-      // authorId 확인 및 로깅
+      // 세 가지 가능한 ID 필드 확인 및 로깅
+      console.log("채팅 대상 펫 데이터:", pet);
+      console.log("작성자 ID(memberId):", petAny.memberId);
+      console.log("작성자 ID(member_id):", petAny.member_id);
       console.log("작성자 ID(authorId):", petAny.authorId);
-      console.log("작성자 ID 타입:", typeof petAny.authorId);
       
-      if (petAny.authorId && typeof petAny.authorId === 'number' && petAny.authorId > 0) {
+      // 우선순위에 따라 ID 필드 확인
+      if (petAny.memberId && typeof petAny.memberId === 'number' && petAny.memberId > 0) {
+        console.log("memberId 필드 사용");
+        targetUserId = petAny.memberId;
+      } else if (petAny.member_id && typeof petAny.member_id === 'number' && petAny.member_id > 0) {
+        console.log("member_id 필드 사용");
+        targetUserId = petAny.member_id;
+      } else if (petAny.authorId && typeof petAny.authorId === 'number' && petAny.authorId > 0) {
+        console.log("authorId 필드 사용");
         targetUserId = petAny.authorId;
-      } else if (petAny.member && petAny.member.id && typeof petAny.member.id === 'number' && petAny.member.id > 0) {
-        targetUserId = petAny.member.id;
       } else {
+        console.log("fallback: pet.id 사용");
         targetUserId = pet.id; // 최후의 수단으로 pet.id 사용
       }
       
       // 최종 targetUserId 로깅
       console.log("최종 선택된 targetUserId:", targetUserId);
       console.log("targetUserId 타입:", typeof targetUserId);
+      
+      // 🔴 추가: 전역에서 이미 열린 채팅방인지 확인
+      const isAlreadyOpenEvent = new CustomEvent('check_open_chat_room', {
+        detail: { targetUserId: targetUserId },
+        cancelable: true // 이벤트 취소 가능하도록 설정
+      });
+      
+      const canProceed = window.dispatchEvent(isAlreadyOpenEvent);
+      
+      // 이미 열린 채팅방이면 함수 종료
+      if (!canProceed) {
+        console.log("이미 열려있는 채팅방입니다. 새 창을 열지 않습니다.");
+        onOpenChange(false); // 상세 Dialog 닫기
+        return; // 함수 종료
+      }
       
       // NavBar의 SSE 연결 상태 확인 또는 트리거 - 중요!
       console.log("연락하기 - NavBar SSE 연결 상태 확인");

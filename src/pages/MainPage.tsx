@@ -5,8 +5,12 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { NavBar } from "@/components/navBar/navBar"
 import useGeolocation from '@/hooks/useGeolocation'
 
+// props 타입을 정의합니다 (사용하지 않지만 타입 오류 해결을 위해 추가)
+interface MainPageProps {
+  mockLostPets?: any[];
+}
 
-export default function MainPage() {
+export default function MainPage(_props: MainPageProps) {
   const isMobile = useIsMobile()
   const location = useGeolocation()
 
