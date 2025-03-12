@@ -65,33 +65,33 @@ export const SuccessPage: React.FC = () => {
         };
 
         // Access Token 확인
-        const accessToken = localStorage.getItem("accessToken");
+        // const accessToken = localStorage.getItem("accessToken");
 
         // 없다면 Refresh Token으로 Access Token 갱신
-        if (!accessToken) {
-          const refreshToken = localStorage.getItem("refreshToken");
-          if (refreshToken) {
-            try {
-              const refreshResponse = await axios.post(
-                `${backUrl}/api/v1/members/refresh`,
-                { refreshToken },
-                { withCredentials: true }
-              );
-              if (refreshResponse.data?.accessToken) {
-                localStorage.setItem(
-                  "accessToken",
-                  refreshResponse.data.accessToken
-                );
-              }
-            } catch (refreshError) {
-              navigate("/login");
-              throw {
-                message: "인증이 만료되었습니다. 다시 로그인해주세요.",
-                code: "AUTH_EXPIRED",
-              };
-            }
-          }
-        }
+        // if (!accessToken) {
+        //   const refreshToken = localStorage.getItem("refreshToken");
+        //   if (refreshToken) {
+        //     try {
+        //       const refreshResponse = await axios.post(
+        //         `${backUrl}/api/v1/members/refresh`,
+        //         { refreshToken },
+        //         { withCredentials: true }
+        //       );
+        //       if (refreshResponse.data?.accessToken) {
+        //         localStorage.setItem(
+        //           "accessToken",
+        //           refreshResponse.data.accessToken
+        //         );
+        //       }
+        //     } catch (refreshError) {
+        //       navigate("/login");
+        //       throw {
+        //         message: "인증이 만료되었습니다. 다시 로그인해주세요.",
+        //         code: "AUTH_EXPIRED",
+        //       };
+        //     }
+        //   }
+        // }
 
         // 최신 accessToken으로 결제 요청
         const response = await axios.post(
@@ -99,10 +99,10 @@ export const SuccessPage: React.FC = () => {
           requestData,
           {
             withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
+            // headers: {
+            //   "Content-Type": "application/json",
+            //   Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            // },
           }
         );
 

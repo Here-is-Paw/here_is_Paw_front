@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input.tsx";
 import { Search, User, Award } from "lucide-react";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
-import { ConfirmationAlert } from "@/components/petPost/missingPost/reward/ConfirmationAlert"; // 새로 만든 Alert 컴포넌트 임포트
+import { ConfirmationAlert } from "@/components/petPost/missingPost/reward/ConfirmationAlert";
+import { ChargeNeededAlert } from "@/components/petPost/missingPost/reward/ChargeNeededAlert";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 
 interface UserSearchPopupProps {
     open: boolean;
@@ -31,7 +33,6 @@ interface UserSearchResult {
 export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                                                                     open,
                                                                     onOpenChange,
-                                                                    petId,
                                                                     rewardAmount,
                                                                     onSuccess,
                                                                 }) => {
@@ -42,7 +43,18 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
     const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
     const [transferring, setTransferring] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+
+    // 팝업 상태 관리
     const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
+    const [showChargeNeeded, setShowChargeNeeded] = useState<boolean>(false);
+
+    // ToastAlert 상태 관리
+    const [toast, setToast] = useState({
+        open: false,
+        type: "success" as "success" | "error",
+        title: "",
+        message: ""
+    });
 
     const DEFAULT_IMAGE_URL =
         "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -54,6 +66,16 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
         }
         handleSearch()
     }, [searchQuery]);
+
+    // Toast 알림 표시 함수
+    const showToast = (type: "success" | "error", title: string, message: string) => {
+        setToast({
+            open: true,
+            type,
+            title,
+            message
+        });
+    };
 
     // 사용자 검색 함수
     const handleSearch = async () => {
@@ -130,29 +152,51 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
         try {
             // 사례금 전달 API 호출
             const response = await axios.post(
-                `${backUrl}/api/v1/payments/reward`,
+                `${backUrl}/api/v1/payment/reward`,
                 {
-                    petId: petId,
-                    receiverId: selectedUserId,
+                    rewardUserId: selectedUserId,
+                    rewardAmount: rewardAmount
                 },
                 { withCredentials: true }
             );
 
-            if (response.data.success) {
-                alert(`${selectedUser.nickname}님에게 사례금 전달이 완료되었습니다.`);
-                onOpenChange(false);
-                if (onSuccess) {
-                    onSuccess();
-                }
+            if (response.data.statusCode === 200) {
+                // 성공 ToastAlert 표시
+                showToast(
+                    "success",
+                    "사례금 전달 완료",
+                    `${selectedUser.nickname}님에게 사례금 전달이 완료되었습니다.`
+                );
+
+                // 3초 후 자동으로 닫기 (ToastAlert의 자체 타이머가 있으므로 추가 필요 없음)
+                setTimeout(() => {
+                    onOpenChange(false); // 모든 팝업 닫기
+                    if (onSuccess) {
+                        onSuccess();
+                    }
+                }, 3000);
             } else {
                 setError(response.data.message || "사례금 전달 중 오류가 발생했습니다.");
             }
         } catch (err: any) {
             console.error("사례금 전달 오류:", err);
+
+            // HTTP 402 Payment Required 처리
+            if (err.response && err.response.status === 402) {
+                // 충전 필요 팝업 표시
+                setShowChargeNeeded(true);
+                return;
+            }
+
             setError(err.response?.data?.message || "사례금 전달 중 오류가 발생했습니다.");
         } finally {
             setTransferring(false);
         }
+    };
+
+    // 충전 페이지로 이동
+    const handleGoToCharge = () => {
+        window.location.href = "/checkout"; // 충전 페이지 URL
     };
 
     // 이미지 URL 유효성 검사
@@ -170,7 +214,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
         }
     };
 
-    // 확인 대화상자 설명 텍스트 생성 - DOM 중첩 오류 수정
+    // 확인 대화상자 설명 텍스트 생성
     const getConfirmationDescription = () => {
         if (!selectedUser) return "";
 
@@ -189,6 +233,17 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
 
     return (
         <>
+            {/* ToastAlert - Portal을 사용하므로 항상 최상위에 렌더링됨 */}
+            <ToastAlert
+                open={toast.open}
+                type={toast.type}
+                title={toast.title}
+                message={toast.message}
+                duration={3000}
+                onClose={() => setToast(prev => ({ ...prev, open: false }))}
+            />
+
+            {/* 사용자 검색 다이얼로그 */}
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="max-w-md w-full py-6 px-6 bg-white">
                     <DialogHeader>
@@ -249,7 +304,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                                                 <p className="font-medium">{user.nickname}</p>
                                                 {user.email && <p className="text-sm text-gray-500">{user.email}</p>}
                                             </div>
-                                            <div className="w-5 h-5 rounded-full border border-blue-500 flex-shrink-0">
+                                            <div className="w-5 h-5 rounded-full border border-blue-500 flex-shrink-0 flex items-center justify-center">
                                                 {selectedUserId === user.id && (
                                                     <div className="w-3 h-3 bg-blue-500 rounded-full m-auto" />
                                                 )}
@@ -285,7 +340,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                         </Button>
                         <Button
                             onClick={handleRewardButtonClick}
-                            disabled={!selectedUserId || transferring}
+                            disabled={!selectedUserId || transferring || toast.open}
                             className="bg-amber-500 hover:bg-amber-600"
                         >
                             사례금 전달하기
@@ -294,7 +349,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                 </DialogContent>
             </Dialog>
 
-            {/* 확인 대화상자 */}
+            {/* 사례금 전달 확인 팝업 */}
             <ConfirmationAlert
                 open={showConfirmation}
                 onOpenChange={setShowConfirmation}
@@ -304,6 +359,15 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                 cancelLabel="취소"
                 onConfirm={handleRewardTransfer}
                 confirmColor="bg-amber-500 hover:bg-amber-600"
+            />
+
+            {/* 포인트 충전 필요 팝업 */}
+            <ChargeNeededAlert
+                open={showChargeNeeded}
+                onOpenChange={setShowChargeNeeded}
+                neededAmount={rewardAmount}
+                onGoToCharge={handleGoToCharge}
+                onCancel={() => setShowChargeNeeded(false)}
             />
         </>
     );
