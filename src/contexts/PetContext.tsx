@@ -245,6 +245,8 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
     // 기존 refreshPets 함수 수정
     const refreshPets = async () => {
         setIsLoading(true);
+        setMissingPets([]);
+        setFindingPets([]);
         pageReset();
 
         try {

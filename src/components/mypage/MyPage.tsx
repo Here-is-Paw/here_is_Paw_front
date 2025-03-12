@@ -6,6 +6,7 @@ import axios from "axios";
 import { SidebarGroup } from "@/components/ui/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx"; // 새로 만든 Toast 컴포넌트 임포트
 
 // Context and Constants
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,14 @@ export function MyPage() {
   const [userFinding, setUserFinding] = useState<PetList[]>([]);
   const [loading, setLoading] = useState(true);
   const [points, setPoints] = useState<number>(0);
+
+  // Toast 알림 상태
+  const [toast, setToast] = useState({
+    open: false,
+    type: "success" as "success" | "error",
+    title: "",
+    message: ""
+  });
 
   // Modal and Interaction States
   const [isAddPetOpen, setIsAddPetOpen] = useState(false);
@@ -122,6 +131,16 @@ export function MyPage() {
     }
   };
 
+  // Toast 알림 표시 함수
+  const showToast = (type: "success" | "error", title: string, message: string) => {
+    setToast({
+      open: true,
+      type,
+      title,
+      message
+    });
+  };
+
   const updateUserProfile = async (updatedData: {
     id: number;
     nickname?: string;
@@ -147,14 +166,14 @@ export function MyPage() {
 
       // API 요청
       const response = await axios.patch(
-        `${backUrl}/api/v1/members/modify`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
+          `${backUrl}/api/v1/members/modify`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            withCredentials: true,
+          }
       );
 
       // 성공 시 사용자 데이터 업데이트 - 새 객체로 만들어서 확실히 재렌더링 되도록 함
@@ -163,8 +182,12 @@ export function MyPage() {
       // 포인트 정보도 함께 갱신
       await fetchUserPoints();
 
-      // 성공 메시지 표시
-      alert("프로필이 성공적으로 업데이트되었습니다.");
+      // 토스트 알림 표시
+      showToast(
+          "success",
+          "프로필 업데이트 성공",
+          "프로필이 성공적으로 업데이트되었습니다."
+      );
 
       return response.data;
     } catch (error) {
@@ -173,11 +196,13 @@ export function MyPage() {
       // 에러 처리
       if (axios.isAxiosError(error)) {
         const errorMessage =
-          error.response?.data?.data?.message ||
-          "프로필 업데이트에 실패했습니다.";
-        alert(errorMessage);
+            error.response?.data?.data?.message ||
+            "프로필 업데이트에 실패했습니다.";
+
+        // 에러 토스트 알림 표시
+        showToast("error", "프로필 업데이트 실패", errorMessage);
       } else {
-        alert("프로필 업데이트 중 알 수 없는 오류가 발생했습니다.");
+        showToast("error", "오류", "프로필 업데이트 중 알 수 없는 오류가 발생했습니다.");
       }
 
       throw error;
@@ -193,9 +218,17 @@ export function MyPage() {
 
       // 삭제 성공 시 목록 갱신
       await fetchUserPets();
+
+      // 성공 토스트 표시
+      showToast("success", "삭제 완료", "반려동물이 성공적으로 삭제되었습니다.");
+
       return true;
     } catch (error) {
       console.error("반려동물 삭제 실패:", error);
+
+      // 에러 토스트 표시
+      showToast("error", "삭제 실패", "반려동물 삭제에 실패했습니다.");
+
       return false;
     }
   };
@@ -217,7 +250,7 @@ export function MyPage() {
     if (petToDelete?.id) {
       const success = await deletePet(petToDelete.id);
       if (!success) {
-        alert("반려동물 삭제에 실패했습니다.");
+        showToast("error", "삭제 실패", "반려동물 삭제에 실패했습니다.");
       }
     }
     setIsDeleteDialogOpen(false);
@@ -229,7 +262,7 @@ export function MyPage() {
       navigate("/checkout");
     } catch (error) {
       console.error("결제 페이지 이동 실패:", error);
-      alert("결제 페이지로 이동할 수 없습니다.");
+      showToast("error", "이동 실패", "결제 페이지로 이동할 수 없습니다.");
     }
   };
 
@@ -238,9 +271,9 @@ export function MyPage() {
       console.log("radius 값: ", radius);
 
       await axios.patch(
-        `${backUrl}/api/v1/members/radius`,
-        { radius },
-        { withCredentials: true }
+          `${backUrl}/api/v1/members/radius`,
+          { radius },
+          { withCredentials: true }
       );
 
       // 백엔드 로그아웃 API 호출 (필요한 경우)
@@ -251,108 +284,119 @@ export function MyPage() {
       logout(); // Context 상태 업데이트
     } catch (error) {
       console.error("로그아웃 실패:", error);
+      showToast("error", "로그아웃 실패", "로그아웃 중 오류가 발생했습니다.");
     }
   };
 
   // Render Loading State for Non-Logged In Users
   if (!isLoggedIn) {
     return (
-      <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
-        <SidebarGroup className="p-4">
-          <Card className="mb-4">
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <h3 className="font-medium text-lg mb-2">로그인이 필요합니다</h3>
-              <p className="text-gray-500 text-sm mb-4">
-                서비스를 이용하려면 로그인하세요.
-              </p>
-              <KakaoLoginPopup />
-            </CardContent>
-          </Card>
-        </SidebarGroup>
-      </div>
+        <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
+          <SidebarGroup className="p-4">
+            <Card className="mb-4">
+              <CardContent className="p-6 flex flex-col items-center justify-center">
+                <h3 className="font-medium text-lg mb-2">로그인이 필요합니다</h3>
+                <p className="text-gray-500 text-sm mb-4">
+                  서비스를 이용하려면 로그인하세요.
+                </p>
+                <KakaoLoginPopup />
+              </CardContent>
+            </Card>
+          </SidebarGroup>
+        </div>
     );
   }
 
   // Render Loading Indicator
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)] flex items-center justify-center">
-        <p>데이터를 불러오는 중...</p>
-      </div>
+        <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)] flex items-center justify-center">
+          <p>데이터를 불러오는 중...</p>
+        </div>
     );
   }
 
   // Main Page Render
   return (
-    <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
-      {/* 프로필 섹션 */}
-      <SidebarGroup className="p-4">
-        <ProfileSection
-          userData={userData}
-          points={points}
-          handlePayment={handlePayment}
-          onUpdateProfile={updateUserProfile}
+      <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
+        {/* Toast 알림 */}
+        <ToastAlert
+            open={toast.open}
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            duration={3000}
+            onClose={() => setToast(prev => ({ ...prev, open: false }))}
         />
-      </SidebarGroup>
 
-      {/* 검색 반경 슬라이더 섹션 */}
-      <SidebarGroup className="p-4 pt-0">
-        <RadiusSlider />
-      </SidebarGroup>
+        {/* 프로필 섹션 */}
+        <SidebarGroup className="p-4">
+          <ProfileSection
+              userData={userData}
+              points={points}
+              handlePayment={handlePayment}
+              onUpdateProfile={updateUserProfile}
+          />
+        </SidebarGroup>
 
-      {/* 내 반려동물 섹션 */}
-      <SidebarGroup className="p-4 pt-0">
-        <PetsSection
-          userPets={userPets}
-          userData={userData}
-          onAddPetClick={() => setIsAddPetOpen(true)}
-          onDeletePet={handleDeleteClick}
-          onUpdatePet={handleEditClick}
+        {/* 검색 반경 슬라이더 섹션 */}
+        <SidebarGroup className="p-4 pt-0">
+          <RadiusSlider />
+        </SidebarGroup>
+
+        {/* 내 반려동물 섹션 */}
+        <SidebarGroup className="p-4 pt-0">
+          <PetsSection
+              userPets={userPets}
+              userData={userData}
+              onAddPetClick={() => setIsAddPetOpen(true)}
+              onDeletePet={handleDeleteClick}
+              onUpdatePet={handleEditClick}
+          />
+        </SidebarGroup>
+
+        <SidebarGroup className="p-4 pt-0">
+          <UserPostsTabs
+              userMissing={userMissing}
+              userFinding={userFinding}
+              refreshPosts={fetchUserPost}
+          />
+        </SidebarGroup>
+
+        {/* 반려동물 추가 팝업 */}
+        <AddPetFormPopup
+            open={isAddPetOpen}
+            onOpenChange={setIsAddPetOpen}
+            onSuccess={fetchUserPets}
         />
-      </SidebarGroup>
 
-      <SidebarGroup className="p-4 pt-0">
-        <UserPostsTabs
-            userMissing={userMissing}
-            userFinding={userFinding}
-            refreshPosts={fetchUserPost}
+        {/* 반려동물 수정 팝업 */}
+        <EditPetFormPopup
+            open={isEditPetOpen}
+            onOpenChange={setIsEditPetOpen}
+            petToEdit={petToEdit}
+            onSuccess={fetchUserPets}
         />
-      </SidebarGroup>
 
-      {/* 반려동물 추가 팝업 */}
-      <AddPetFormPopup
-        open={isAddPetOpen}
-        onOpenChange={setIsAddPetOpen}
-        onSuccess={fetchUserPets}
-      />
+        {/* 로그아웃 버튼 */}
+        <SidebarGroup className="p-4">
+          <Button className="w-full" variant="ghost" onClick={handleLogout}>
+            로그아웃
+          </Button>
+        </SidebarGroup>
 
-      {/* 반려동물 수정 팝업 */}
-      <EditPetFormPopup
-        open={isEditPetOpen}
-        onOpenChange={setIsEditPetOpen}
-        petToEdit={petToEdit}
-        onSuccess={fetchUserPets}
-      />
+        {/* 저작권 정보 */}
+        <div className="p-4 mt-auto text-center text-gray-500">
+          <div>© 2025 Here Is Paw</div>
+        </div>
 
-      {/* 로그아웃 버튼 */}
-      <SidebarGroup className="p-4">
-        <Button className="w-full" variant="ghost" onClick={handleLogout}>
-          로그아웃
-        </Button>
-      </SidebarGroup>
-
-      {/* 저작권 정보 */}
-      <div className="p-4 mt-auto text-center text-gray-500">
-        <div>© 2025 Here Is Paw</div>
+        {/* 반려동물 삭제 확인 대화상자 */}
+        <DeletePetDialog
+            isOpen={isDeleteDialogOpen}
+            petToDelete={petToDelete}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirmDelete={handleConfirmDelete}
+        />
       </div>
-
-      {/* 반려동물 삭제 확인 대화상자 */}
-      <DeletePetDialog
-        isOpen={isDeleteDialogOpen}
-        petToDelete={petToDelete}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirmDelete={handleConfirmDelete}
-      />
-    </div>
   );
 }

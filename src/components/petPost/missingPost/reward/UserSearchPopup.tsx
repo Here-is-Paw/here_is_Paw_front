@@ -13,6 +13,7 @@ import axios from "axios";
 import { backUrl } from "@/constants.ts";
 import { ConfirmationAlert } from "@/components/petPost/missingPost/reward/ConfirmationAlert";
 import { ChargeNeededAlert } from "@/components/petPost/missingPost/reward/ChargeNeededAlert";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 
 interface UserSearchPopupProps {
     open: boolean;
@@ -47,6 +48,14 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
     const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
     const [showChargeNeeded, setShowChargeNeeded] = useState<boolean>(false);
 
+    // ToastAlert 상태 관리
+    const [toast, setToast] = useState({
+        open: false,
+        type: "success" as "success" | "error",
+        title: "",
+        message: ""
+    });
+
     const DEFAULT_IMAGE_URL =
         "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
@@ -57,6 +66,16 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
         }
         handleSearch()
     }, [searchQuery]);
+
+    // Toast 알림 표시 함수
+    const showToast = (type: "success" | "error", title: string, message: string) => {
+        setToast({
+            open: true,
+            type,
+            title,
+            message
+        });
+    };
 
     // 사용자 검색 함수
     const handleSearch = async () => {
@@ -142,11 +161,20 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
             );
 
             if (response.data.statusCode === 200) {
-                alert(`${selectedUser.nickname}님에게 사례금 전달이 완료되었습니다.`);
-                onOpenChange(false); // 모든 팝업 닫기
-                if (onSuccess) {
-                    onSuccess();
-                }
+                // 성공 ToastAlert 표시
+                showToast(
+                    "success",
+                    "사례금 전달 완료",
+                    `${selectedUser.nickname}님에게 사례금 전달이 완료되었습니다.`
+                );
+
+                // 3초 후 자동으로 닫기 (ToastAlert의 자체 타이머가 있으므로 추가 필요 없음)
+                setTimeout(() => {
+                    onOpenChange(false); // 모든 팝업 닫기
+                    if (onSuccess) {
+                        onSuccess();
+                    }
+                }, 3000);
             } else {
                 setError(response.data.message || "사례금 전달 중 오류가 발생했습니다.");
             }
@@ -205,6 +233,16 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
 
     return (
         <>
+            {/* ToastAlert - Portal을 사용하므로 항상 최상위에 렌더링됨 */}
+            <ToastAlert
+                open={toast.open}
+                type={toast.type}
+                title={toast.title}
+                message={toast.message}
+                duration={3000}
+                onClose={() => setToast(prev => ({ ...prev, open: false }))}
+            />
+
             {/* 사용자 검색 다이얼로그 */}
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="max-w-md w-full py-6 px-6 bg-white">
@@ -302,7 +340,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
                         </Button>
                         <Button
                             onClick={handleRewardButtonClick}
-                            disabled={!selectedUserId || transferring}
+                            disabled={!selectedUserId || transferring || toast.open}
                             className="bg-amber-500 hover:bg-amber-600"
                         >
                             사례금 전달하기
