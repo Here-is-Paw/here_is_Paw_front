@@ -64,10 +64,10 @@ export const SuccessPage: React.FC = () => {
           paymentKey: paymentKey,
         };
 
-        // // Access Token 확인
+        // Access Token 확인
         // const accessToken = localStorage.getItem("accessToken");
-        //
-        // // 없다면 Refresh Token으로 Access Token 갱신
+
+        // 없다면 Refresh Token으로 Access Token 갱신
         // if (!accessToken) {
         //   const refreshToken = localStorage.getItem("refreshToken");
         //   if (refreshToken) {
@@ -99,10 +99,10 @@ export const SuccessPage: React.FC = () => {
           requestData,
           {
             withCredentials: true,
-            headers: {
-              "Content-Type": "application/json"
-              // Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
+            // headers: {
+            //   "Content-Type": "application/json",
+            //   Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            // },
           }
         );
 
@@ -150,7 +150,7 @@ export const SuccessPage: React.FC = () => {
   }, [searchParams, navigate, isProcessing, responseData, hasAttempted]);
 
   return (
-    <div className="payment-container" style={{
+    <div className="payment-container" style={{ 
       position: "absolute", 
       top: 0, 
       left: 0, 

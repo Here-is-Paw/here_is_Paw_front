@@ -92,7 +92,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
         content: `
                     <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #08CF5D;">
                         <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
-                            
+
                             발견했개
                         </h4>
                         <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">

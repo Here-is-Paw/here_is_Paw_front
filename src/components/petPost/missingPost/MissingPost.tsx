@@ -6,9 +6,10 @@ import {
     DialogDescription,
     DialogTitle,
 } from "@/components/ui/dialog.tsx";
-import {Button} from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import {backUrl} from "@/constants.ts";
+import { backUrl } from "@/constants.ts";
+import { aiUrl } from "@/constants.ts";
 
 import {
     Select,
@@ -25,25 +26,25 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form.tsx";
-import {Input} from "@/components/ui/input.tsx";
-import {Textarea} from "@/components/ui/textarea.tsx";
-import {useForm} from "react-hook-form";
-import React, {useEffect, useState} from "react";
+import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { useForm } from "react-hook-form";
+import React, { useEffect, useState } from "react";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover.tsx";
-import {cn} from "@/lib/utils.ts";
-import {format} from "date-fns";
-import {MissingFormData, defaultValues} from "@/types/missing.ts";
-import {Calendar} from "@/components/ui/calendar.tsx";
-import {CalendarIcon} from "lucide-react";
+import { cn } from "@/lib/utils.ts";
+import { format } from "date-fns";
+import { MissingFormData, defaultValues } from "@/types/missing.ts";
+import { Calendar } from "@/components/ui/calendar.tsx";
+import { CalendarIcon } from "lucide-react";
 import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
-import {ko} from "date-fns/locale";
-import {usePetContext} from "@/contexts/PetContext.tsx";
-import {MyPet} from "@/types/mypet.ts";
+import { ko } from "date-fns/locale";
+import { usePetContext } from "@/contexts/PetContext.tsx";
+import { MyPet } from "@/types/mypet.ts";
 
 interface MissingFormPopupProps {
     open: boolean;
@@ -59,11 +60,11 @@ const formatNumber = (value: number | "") => {
 };
 
 export const MissingFormPopup = ({
-                                     open,
-                                     onOpenChange,
-                                     onSuccess,
-                                     pets,
-                                 }: MissingFormPopupProps) => {
+    open,
+    onOpenChange,
+    onSuccess,
+    pets,
+}: MissingFormPopupProps) => {
     const form = useForm<MissingFormData>({
         defaultValues,
     });
@@ -95,18 +96,63 @@ export const MissingFormPopup = ({
     const [calendarIsOpen, setCalendarIsOpen] = useState(false);
     const [hasExistingImage, setHasExistingImage] = useState(false);
     const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+    // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
+
+    //     if (selectedFile) {
+    //         setFile(selectedFile);
+    //         setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
+    //         setHasExistingImage(false); // 새 파일을 선택하면 기존 이미지 사용 안 함
+    //     }
+    // };
+    // handleFileChange 함수 수정
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
 
         if (selectedFile) {
             setFile(selectedFile);
-            setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
-            setHasExistingImage(false); // 새 파일을 선택하면 기존 이미지 사용 안 함
+            setImagePreview(URL.createObjectURL(selectedFile));
+            setIsAnalyzing(true); // 분석 시작
+            console.log('이미지 분석 시작...');
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                
+                const response = await axios.post(`${aiUrl}/upload-image`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                console.log('이미지 분석 결과:', response);
+                console.log('이미지 분석 결과:', response.data);
+
+                if (response.data.image_data) {
+                    const byteCharacters = atob(response.data.image_data);
+                    const byteArrays = [];
+
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteArrays.push(byteCharacters.charCodeAt(i));
+                    }
+
+                    const blob = new Blob([new Uint8Array(byteArrays)], {
+                        type: response.data.image_type
+                    });
+
+                    const previewUrl = URL.createObjectURL(blob);
+                    setImagePreview(previewUrl);
+                }
+            } catch (error) {
+                console.error('이미지 처리 실패:', error);
+                setImagePreview(URL.createObjectURL(selectedFile));
+            } finally {
+                setIsAnalyzing(false); // 분석 완료
+            }
         }
     };
 
-    const {refreshPets} = usePetContext();
+    const { refreshPets } = usePetContext();
 
     // 위치 정보가 로드되면 초기 geo 값 설정
     useEffect(() => {
@@ -132,7 +178,7 @@ export const MissingFormPopup = ({
     }) => {
         setLocationInfo(location);
         // geo 필드 업데이트 (JSON 문자열로 저장)
-        form.setValue("geo", JSON.stringify({x: location.x, y: location.y}));
+        form.setValue("geo", JSON.stringify({ x: location.x, y: location.y }));
         // location 필드 업데이트 (주소 문자열로 저장)
         form.setValue("location", location.address);
     };
@@ -253,7 +299,7 @@ export const MissingFormPopup = ({
             if (locationInfo.x && locationInfo.y) {
                 formData.append(
                     "geo",
-                    JSON.stringify({x: locationInfo.x, y: locationInfo.y})
+                    JSON.stringify({ x: locationInfo.x, y: locationInfo.y })
                 );
             } else {
                 alert("실종 위치를 지도에서 선택해주세요.");
@@ -291,7 +337,7 @@ export const MissingFormPopup = ({
 
             await axios.post(`${backUrl}/api/v1/missings/write`, formData, {
                 withCredentials: true,
-                headers: {"Content-Type": "multipart/form-data"},
+                headers: { "Content-Type": "multipart/form-data" },
             });
 
             form.reset(defaultValues);
@@ -366,8 +412,8 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="name"
-                                        rules={{required: "반려동물 이름은 필수입니다"}}
-                                        render={({field}) => (
+                                        rules={{ required: "반려동물 이름은 필수입니다" }}
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>이름 *</FormLabel>
                                                 <FormControl>
@@ -377,7 +423,7 @@ export const MissingFormPopup = ({
                                                         {...field}
                                                     />
                                                 </FormControl>
-                                                <FormMessage/>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -385,14 +431,14 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="breed"
-                                        rules={{required: "품종은 필수입니다"}}
-                                        render={({field}) => (
+                                        rules={{ required: "품종은 필수입니다" }}
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>품종 *</FormLabel>
                                                 <FormControl>
                                                     <Input type="text" placeholder="품종" {...field} />
                                                 </FormControl>
-                                                <FormMessage/>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -401,7 +447,7 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="color"
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>색상</FormLabel>
                                                 <FormControl>
@@ -414,7 +460,7 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="serialNumber"
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>등록번호</FormLabel>
                                                 <FormControl>
@@ -432,7 +478,7 @@ export const MissingFormPopup = ({
                                         <FormField
                                             control={form.control}
                                             name="gender"
-                                            render={({field}) => (
+                                            render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>성별</FormLabel>
                                                     <Select
@@ -442,7 +488,7 @@ export const MissingFormPopup = ({
                                                         defaultValue={field.value?.toString()}
                                                     >
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="성별 선택"/>
+                                                            <SelectValue placeholder="성별 선택" />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="0">선택 안함</SelectItem>
@@ -457,7 +503,7 @@ export const MissingFormPopup = ({
                                         <FormField
                                             control={form.control}
                                             name="age"
-                                            render={({field}) => (
+                                            render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>나이</FormLabel>
                                                     <FormControl>
@@ -480,9 +526,36 @@ export const MissingFormPopup = ({
                                         rules={{
                                             required: hasExistingImage ? false : "사진은 필수입니다"
                                         }}
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>반려동물 사진 {!hasExistingImage && "*"}</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <FormLabel>반려동물 사진 *</FormLabel>
+                                                    {isAnalyzing && (
+                                                        <div className="flex items-center gap-2 text-green-600 text-sm">
+                                                            <svg
+                                                                className="animate-spin h-5 w-5"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <circle
+                                                                    className="opacity-25"
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth="4"
+                                                                />
+                                                                <path
+                                                                    className="opacity-75"
+                                                                    fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                                />
+                                                            </svg>
+                                                            <span>이미지 분석 중...</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <FormControl>
                                                     <Input
                                                         type="file"
@@ -509,8 +582,8 @@ export const MissingFormPopup = ({
                                                         />
                                                     ) : (
                                                         <span className="text-sm text-muted-foreground p-2">
-                              반려견 사진을 첨부해주세요.
-                            </span>
+                                                            반려견 사진을 첨부해주세요.
+                                                        </span>
                                                     )}
                                                 </label>
                                                 {hasExistingImage && (
@@ -518,7 +591,7 @@ export const MissingFormPopup = ({
                                                         * 이미 등록된 사진이 있습니다. 새 사진을 선택하지 않으면 기존 사진이 사용됩니다.
                                                     </p>
                                                 )}
-                                                <FormMessage/>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -527,7 +600,7 @@ export const MissingFormPopup = ({
                                         <FormField
                                             control={form.control}
                                             name="lostDate"
-                                            render={({field}) => (
+                                            render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>실종 날짜</FormLabel>
                                                     <FormControl>
@@ -543,7 +616,7 @@ export const MissingFormPopup = ({
                                                                         setCalendarIsOpen((open) => !open)
                                                                     }
                                                                 >
-                                                                    <CalendarIcon/>
+                                                                    <CalendarIcon />
                                                                     {date ? (
                                                                         format(date, "yyyy-MM-dd")
                                                                     ) : (
@@ -584,7 +657,7 @@ export const MissingFormPopup = ({
                                         <FormField
                                             control={form.control}
                                             name="neutered"
-                                            render={({field}) => (
+                                            render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>중성화 유무</FormLabel>
                                                     <Select
@@ -594,7 +667,7 @@ export const MissingFormPopup = ({
                                                         defaultValue={field.value?.toString()}
                                                     >
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="중성화 유무 선택"/>
+                                                            <SelectValue placeholder="중성화 유무 선택" />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="0">선택 안함</SelectItem>
@@ -611,7 +684,7 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="geo"
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem className="">
                                                 <FormLabel>실종 위치(지도) *</FormLabel>
                                                 <FormControl>
@@ -647,8 +720,8 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="location"
-                                        rules={{required: "실종 위치는 필수입니다"}}
-                                        render={({field}) => (
+                                        rules={{ required: "실종 위치는 필수입니다" }}
+                                        render={({ field }) => (
                                             <FormItem className="sr-only">
                                                 <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
                                                 <FormControl>
@@ -666,7 +739,7 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="reward"
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>사례금</FormLabel>
                                                 <FormControl>
@@ -686,7 +759,7 @@ export const MissingFormPopup = ({
                                     <FormField
                                         control={form.control}
                                         name="etc"
-                                        render={({field}) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>특이사항</FormLabel>
                                                 <FormControl>
