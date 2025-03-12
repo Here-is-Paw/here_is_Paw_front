@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { usePetContext } from "@/contexts/PetContext.tsx";
-import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx"; // 동물보호센터 Context 추가
+import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx";
 
 interface NcpMapProps {
   currentLocation: {
@@ -32,7 +32,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   // 마커 레퍼런스 배열 추가
   const missingMarkersRef = useRef<naver.maps.Marker[]>([]);
   const findingMarkersRef = useRef<naver.maps.Marker[]>([]);
-  const careCenterMarkersRef = useRef<naver.maps.Marker[]>([]);  // 보호센터 마커 배열 추가
+  const careCenterMarkersRef = useRef<naver.maps.Marker[]>([]);
 
   const [showCareCenters, setShowCareCenters] = useState<boolean>(true);
 
@@ -46,7 +46,6 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     `;
   };
 
-  // 보호센터 마커 아이콘 함수 추가
   const getCareCenterMarkerIcon = () => {
     return `
       <svg width="36" height="36" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -166,7 +165,6 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
       try {
         console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
         
-        // 위도(y)/경도(x) 좌표를 올바르게 사용하여 위치 생성
         const position = new window.naver.maps.LatLng(center.x, center.y);
         
         const marker = new window.naver.maps.Marker({
@@ -184,13 +182,24 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
         // 정보창 생성
         const infoWindow = new window.naver.maps.InfoWindow({
           content: `
-            <div style="padding:12px; min-width:200px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif;">
-              <h4 style="margin:0 0 8px 0; color:#333; font-size:16px; border-bottom:1px solid #ddd; padding-bottom:8px;">
+            <div style="padding:15px; min-width:220px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #000000;">
+              <h4 style="margin:0 0 12px 0; color:#333; font-size:16px; border-bottom:2px solid #000000; padding-bottom:8px;">
                 ${center.name}
               </h4>
-              <p style="margin:4px 0; font-size:13px;"><strong>주소:</strong> ${center.address}</p>
-              <p style="margin:4px 0; font-size:13px;"><strong>전화:</strong> ${center.phoneNumber}</p>
-              <p style="margin:4px 0; font-size:13px;"><strong>운영시간:</strong> ${center.operatingHours}</p>
+              <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+                <tr>
+                  <td style="font-weight:bold; color:#555; width:70px;">주소:</td>
+                  <td style="color:#333;">${center.address}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold; color:#555;">전화:</td>
+                  <td style="color:#333;">${center.phoneNumber}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold; color:#555;">운영시간:</td>
+                  <td style="color:#333;">${center.operatingHours}</td>
+                </tr>
+              </table>
             </div>
           `,
           borderWidth: 0,
