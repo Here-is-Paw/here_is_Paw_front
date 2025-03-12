@@ -6,7 +6,7 @@ import React, {
     ReactNode,
 } from "react";
 import axios from "axios";
-import { backUrl, careCenterBackUrl } from "@/constants";
+import { backUrl } from "@/constants";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { useRadius } from "@/contexts/RadiusContext.tsx";
 
@@ -164,7 +164,7 @@ export const CareCenterProvider: React.FC<{ children: ReactNode }> = ({
             setHasMore(false);
             
             const radiusResponse = await axios.get(
-                `${careCenterBackUrl}/api/v1/care-center/radius`,
+                `${backUrl}/api/v1/care-center/radius`,
                 {
                     params: {
                         latitude: _lat,
