@@ -1,51 +1,39 @@
-// @ts-nocheck
-import {Button} from "@/components/ui/button";
-import {Plus, MessageSquare, Bell, LogOut, Minus} from "lucide-react";
-import {FilterButton} from "./filterButton";
-import {KakaoLoginPopup} from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
-import {useAuth} from "@/contexts/AuthContext";
-import {MissingFormPopup} from "@/components/posts/missingPost/MissingPost.tsx";
+import { Button } from "@/components/ui/button";
+import { Plus, MessageSquare, Bell, LogOut, Minus } from "lucide-react";
+import { FilterButton } from "./filterButton";
+import { KakaoLoginPopup } from "@/components/kakaoLogin/KakaoLoginPopup.tsx";
+import { useAuth } from "@/contexts/AuthContext";
+import { MissingFormPopup } from "@/components/petPost/missingPost/MissingPost.tsx";
 import axios from "axios";
-import {backUrl} from "@/constants";
-import {useState, useEffect, useRef} from "react";
-import {ChatRoomList} from "@/components/chat/ChatRoomList";
-import {ChatModal} from "@/components/chat/ChatModal";
+import { backUrl } from "@/constants";
+import { useState, useEffect, useRef } from "react";
+import { ChatRoomList } from "@/components/chat/ChatRoomList";
+import { ChatModal } from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import {ChatRoom, OpenChatRoom} from "@/types/chat";
 // import { useFindWrite } from "@/hooks/useFindWrite";
-import {useRadius} from "@/contexts/RadiusContext.tsx";
-import {FindingFormPopup} from "@/components/posts/findingPost/FindingPost.tsx";
-
-// 전체 파일에 대해 미사용 변수 체크 비활성화
-// @ts-nocheck
+import { useRadius } from "@/contexts/RadiusContext.tsx";
+import { FindingFormPopup } from "@/components/petPost/findingPost/FindingPost.tsx";
 
 interface NavBarProps {
-    buttonStates: {
-        lost: boolean;
-        found: boolean;
-        hospital: boolean;
-    };
-    toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
+  buttonStates: {
+    lost: boolean;
+    found: boolean;
+    hospital: boolean;
+  };
+  toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
 }
 
 const DEFAULT_IMAGE_URL =
-    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
-
-// 쿠키값을 가져오는 유틸리티 함수
-const getCookieValue = (name: string): string | null => {
-  const cookies = document.cookie.split('; ');
-  for (const cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=');
-    if (cookieName === name) {
-      return decodeURIComponent(cookieValue);
-    }
-  }
-  return null;
-};
+  "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
 export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
+  const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
+  const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
+
   const { isLoggedIn, logout } = useAuth();
   const { radius } = useRadius();
+  // const findLocation = useGeolocation()
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
@@ -62,177 +50,32 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   b.modifiedDate).getTime()
         : new Date(b.modifiedDate).getTime();
 
-      return bLastMessageTime - aLastMessageTime;
-    });
-  };
+            return bLastMessageTime - aLastMessageTime;
+        });
+    };
 
   console.log(isLoggedIn);
 
-  const handleLogout = async () => {
-    try {
-      await axios.patch(
-        `${backUrl}/api/v1/members/radius`,
-        { radius },
-        { withCredentials: true }
-      );
-      await axios.delete(`${backUrl}/api/v1/members/logout`, {
-        withCredentials: true,
-      });
-      logout();
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-    }
-  };
-
-  const [isResistModalOpen, setIsResistModalOpen] = useState(false);
-  
-  // 아래 변수들은 사용되지 않지만 ESlint 경고를 제거하기 위해 주석 처리
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const [isFindModalOpen, setIsFindModalOpen] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  
-  const [breed, setBreed] = useState("");
-  const [geoX, setGeoX] = useState(0);
-  const [geoY, setGeoY] = useState(0);
-  const [location, setLocation] = useState("");
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("");
-  const [etc, setEtc] = useState("");
-  const [situation, setSituation] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState(0);
-  const [neutered, setNeutered] = useState(0);
-  const [me_id, setMe_id] = useState(0);
-  const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
-  const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
-
-  // 아래 핸들러 함수들도 사용되지 않지만 다른 코드에서 참조할 수 있으므로 유지
-  const handleLocationSelect = (location: {
-    x: number;
-    y: number;
-    address: string;
-  }) => {
-    setGeoX(location.x);
-    setGeoY(location.y);
-    setLocation(location.address);
-
-    console.log("missing geo", location);
-  };
-
-  const handleBreed = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBreed(e.target.value);
-  };
-
-  const handleName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleEtc = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEtc(e.target.value);
-  };
-
-  const handleColor = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setColor(e.target.value);
-  };
-
-  const handleSituation = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setSituation(e.target.value);
-  };
-
-  const handleTitle = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTitle(e.target.value);
-  };
-
-  const handleGender = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setGender(Number(e.target.value));
-  };
-
-  const handleAge = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAge(e.target.value);
-  };
-
-  const handleNeutered = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNeutered(Number(e.target.value));
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-
-      const imageUrl = URL.createObjectURL(file);
-      setImagePreview(imageUrl);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
-    localStorage.removeItem("uploadedImage");
-  };
-
-  useEffect(() => {
-    const savedImage = localStorage.getItem("uploadedImage");
-    if (savedImage) {
-      setImagePreview(savedImage);
-    }
-  }, []);
-
-  const handleFindSubmit = async () => {
-    if (isLoggedIn) {
-      const memberResponse = await axios.get(`${backUrl}/api/v1/members/me`, {
-        withCredentials: true,
-      });
-
-      const member_id = memberResponse.data.data.id;
-      setMe_id(member_id);
-
-      try {
-        const formData = new FormData();
-
-        if (imageFile) {
-          formData.append("file", imageFile);
+    const handleLogout = async () => {
+        try {
+            await axios.patch(
+                `${backUrl}/api/v1/members/radius`,
+                {radius},
+                {withCredentials: true}
+            );
+            await axios.delete(`${backUrl}/api/v1/members/logout`, {
+                withCredentials: true,
+            });
+            logout();
+        } catch (error) {
+            console.error("로그아웃 실패:", error);
         }
+    };
 
-        formData.append("title", title);
-        formData.append("situation", situation);
-        formData.append("breed", breed);
-        formData.append("location", location);
-        formData.append("x", geoX.toString());
-        formData.append("y", geoY.toString());
-        formData.append("name", name);
-        formData.append("color", color);
-        formData.append("etc", etc);
-        formData.append("gender", gender.toString());
-        formData.append("age", age);
-        formData.append("neutered", neutered.toString());
-        formData.append("find_date", "2025-02-20T00:00:00");
-        formData.append("member_id", member_id);
-        formData.append("shelter_id", "1");
+    const [isResistModalOpen, setIsResistModalOpen] = useState(false);
 
-        const response = await axios.post(`${backUrl}/find/new`, formData, {
-          withCredentials: true,
-        });
-
-        if (response.status === 200 || response.status === 201) {
-          alert("발견 신고가 성공적으로 저장되었습니다!");
-          handleRemoveImage();
-        } else {
-          alert("저장 실패");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("오류가 발생했습니다.");
-        handleRemoveImage();
-      }
-    } else {
-      alert("로그인 후 이용 가능한 서비스 입니다!");
-      return;
-    }
-  };
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    const [me_id, setMe_id] = useState(0);
+    // const { writeFindPost } = useFindWrite();
 
   const [isChatListOpen, setIsChatListOpen] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
@@ -255,20 +98,20 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
     if (eventType === 'READ_STATUS') {
       console.log("읽음 상태 변경 이벤트 감지:", eventData);
-      
+
       // 채팅방 ID 확인
       const roomId = eventData.chatRoomId || eventData.roomId;
-      
+
       if (!roomId) {
         console.log("읽음 상태 이벤트에 채팅방 ID가 없어 처리 무시");
         return;
       }
-      
+
       // 읽음 처리한 사용자 확인
       const readById = eventData.readBy || eventData.userId;
-      
+
       console.log(`채팅방 ${roomId} 읽음 처리 이벤트, 처리 사용자: ${readById}`);
-      
+
       // 채팅방 목록 상태 업데이트 (unreadCount를 0으로)
       setChatRooms(prevRooms => {
         return prevRooms.map(room => {
@@ -279,18 +122,18 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           return room;
         });
       });
-      
+
       return;
     }
 
-    if (eventType === 'unreadMessages' || eventType === 'NEW_MESSAGE' || 
-        eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE' || 
+    if (eventType === 'unreadMessages' || eventType === 'NEW_MESSAGE' ||
+        eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE' ||
         eventType === 'CHAT_UPDATED') {
       console.log("채팅 관련 이벤트 감지:", eventData);
 
       // 채팅방 ID 확인
       const roomId = eventData.chatRoomId || eventData.roomId;
-      
+
       // 메시지가 내가 보낸 것인지 확인
       const isMyMessage = eventData.memberId === me_id;
       if (isMyMessage) {
@@ -310,7 +153,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
       // 현재 채팅방이 열려있는지 확인 (상세 로깅 추가)
       console.log("현재 열린 채팅방 목록:", openChatRooms.map(r => ({id: r.id, isOpen: r.isOpen})));
-      
+
       // 채팅방 열림 상태 확인 로직 개선 (명시적인 비교)
       const isRoomOpen = roomId ? openChatRooms.some(room => {
         const isOpen = room.id === Number(roomId) && room.isOpen === true;
@@ -322,7 +165,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
       if (isRoomOpen) {
         console.log(`채팅방 ${roomId}가 열려있어 SSE 알림 처리 필요 없음, 읽음 처리 API 호출`);
-        
+
         // 열린 채팅방은 읽음 처리 API 호출 (백업) - 동기적으로 실행
         try {
           // axios로 변경하여 동기적으로 실행
@@ -336,7 +179,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             withCredentials: true
           }).then(() => {
             console.log(`채팅방 ${roomId} 자동 읽음 처리 API 호출 완료`);
-            
+
             // 추가: 채팅방 목록 즉시 갱신하여 UI에 반영
             fetchChatRooms().catch(err => {
               console.error("읽음 처리 후 채팅방 목록 갱신 실패:", err);
@@ -345,7 +188,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         } catch (error) {
           console.error(`채팅방 ${roomId} 자동 읽음 처리 API 호출 오류:`, error);
         }
-        
+
         return;
       }
 
@@ -447,58 +290,58 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       // SSE 연결 확인 이벤트 리스너 추가
       const checkSSEConnection = (event: Event) => {
         console.log("SSE 연결 확인 이벤트 수신:", event);
-        
+
         const customEvent = event as CustomEvent;
         if (customEvent.detail && customEvent.detail.source === 'contact_button') {
           console.log("연락하기 버튼에서 SSE 연결 확인 요청 수신");
-          
+
           // SSE 연결 상태 확인
           const isConnected = sseRef.current && sseRef.current.readyState === EventSource.OPEN;
           console.log("현재 SSE 연결 상태:", isConnected ? "연결됨" : "연결되지 않음");
-          
+
           // 연결이 끊어진 경우 재연결
           if (!isConnected) {
             console.log("SSE 연결이 없거나 끊어짐, 재연결 시도");
-            
+
             // 기존 연결 정리
             if (sseRef.current) {
               sseRef.current.close();
               sseRef.current = null;
             }
-            
+
             // 연결 재설정
             setupSSEConnection();
           }
-          
+
           // 데이터 갱신 트리거
           fetchChatRooms().catch(err => {
             console.error("SSE 연결 확인 후 채팅방 목록 갱신 실패:", err);
           });
         }
-        
+
         return true;
       };
-      
+
       window.addEventListener('check_sse_connection', checkSSEConnection);
 
       // 채팅방 열림 상태 확인 이벤트 리스너 추가 (MissingDetail에서 발생)
       const handleChatRoomOpened = (event: Event) => {
         console.log("채팅방 열림 상태 이벤트 수신:", event);
-        
+
         const customEvent = event as CustomEvent;
         if (customEvent.detail) {
           const { roomId, isOpen } = customEvent.detail;
           console.log(`채팅방 ${roomId} 열림 상태: ${isOpen}`);
-          
+
           // openChatRooms 상태 업데이트 (기존 방식 재사용)
           if (isOpen) {
             const chatRoom = chatRooms.find(room => room.id === roomId);
             if (chatRoom) {
               console.log(`채팅방 ${roomId} 열기 처리 (MissingDetail에서 요청)`);
-              
+
               // 이미 있는지 확인
               const isAlreadyOpen = openChatRooms.some(room => room.id === roomId);
-              
+
               if (isAlreadyOpen) {
                 // 이미 열려있는 채팅방의 isOpen 상태만 true로 설정
                 setOpenChatRooms(prev => prev.map(r => ({
@@ -511,14 +354,14 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                   ...chatRoom,
                   isOpen: true
                 };
-                
+
                 // 다른 채팅방은 isOpen을 false로 설정하고 새 채팅방 추가
                 setOpenChatRooms(prev => [
                   ...prev.map(r => ({ ...r, isOpen: false })),
                   openRoom
                 ]);
               }
-              
+
               // 읽음 처리 API 호출 (백업)
               fetch(`${backUrl}/api/v1/chat/${roomId}/read`, {
                 method: 'POST',
@@ -534,26 +377,26 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
             }
           }
         }
-        
+
         return true;
       };
-      
+
       window.addEventListener('chat_room_opened', handleChatRoomOpened);
 
       // 연락하기에서 열린 채팅방 이벤트 처리 (새로 추가)
       const handleContactChatOpened = (event: Event) => {
         console.log("연락하기에서 채팅방 열림 이벤트 수신:", event);
-        
+
         const customEvent = event as CustomEvent;
         if (customEvent.detail) {
           const { roomId, source } = customEvent.detail;
           console.log(`연락하기(${source})에서 채팅방 ${roomId} 열림`);
-          
+
           // 채팅방 목록 갱신
           fetchChatRooms().then(() => {
             // 해당 채팅방 찾기
             const existingRoom = chatRooms.find(r => r.id === roomId);
-            
+
             if (existingRoom) {
               // 읽음 처리 API 호출
               axios.post(`${backUrl}/api/v1/chat/${roomId}/read`, {}, {
@@ -566,31 +409,31 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 withCredentials: true
               }).then(() => {
                 console.log(`연락하기: 채팅방 ${roomId} 읽음 처리 성공`);
-                
+
                 // 리렌더링 트리거
                 setChatListRenderTrigger(prev => prev + 1);
               });
-              
+
               // 로컬 상태에서 카운트 초기화
-              setChatRooms(prevRooms => 
+              setChatRooms(prevRooms =>
                 prevRooms.map(r => r.id === roomId ? { ...r, unreadCount: 0 } : r)
               );
             }
           });
         }
       };
-      
+
       // 이미 열린 채팅방인지 확인하는 이벤트 핸들러
       const handleCheckOpenChatRoom = (event: Event) => {
         const customEvent = event as CustomEvent;
         if (customEvent.detail && customEvent.detail.targetUserId) {
           const { targetUserId } = customEvent.detail;
-          
+
           // 현재 열린 채팅방 목록에서 확인
-          const isAlreadyOpen = openChatRooms.some(room => 
+          const isAlreadyOpen = openChatRooms.some(room =>
             room.targetUserId === targetUserId && room.isOpen
           );
-          
+
           if (isAlreadyOpen) {
             console.log(`대상 사용자 ID가 ${targetUserId}인 채팅방이 이미 열려 있음`);
             event.preventDefault(); // 이벤트 취소
@@ -599,9 +442,9 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }
         return true; // 채팅방 열기 진행
       };
-      
+
       window.addEventListener('contact_chat_opened', handleContactChatOpened);
-      
+
       // 채팅방 중복 확인 이벤트 리스너 추가
       window.addEventListener('check_open_chat_room', handleCheckOpenChatRoom);
 
@@ -612,7 +455,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           sseRef.current.close();
           sseRef.current = null;
         }
-        
+
         // 이벤트 리스너 제거
         window.removeEventListener('check_sse_connection', checkSSEConnection);
         window.removeEventListener('chat_room_opened', handleChatRoomOpened);
@@ -645,7 +488,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       withCredentials: true
     }).then((response) => {
       console.log(`채팅방 ${room.id} 읽음 처리 API 응답:`, response.data);
-      
+
       // 채팅방 목록 즉시 갱신
       fetchChatRooms().catch(err => {
         console.error("채팅방 읽음 처리 후 목록 갱신 실패:", err);
@@ -653,7 +496,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     }).catch(error => {
       console.error(`채팅방 ${room.id} 읽음 처리 API 오류:`, error);
     });
-    
+
     // 즉시 로컬 상태 업데이트 - 카운트 증가 로직과 동일한 패턴 사용
     setChatRooms(prevRooms => {
       return prevRooms.map(r => {
@@ -711,7 +554,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
       console.log("===== 채팅방 목록 로드 시작 =====");
       setLoading(true);
       setError(null);
-  
+
       // 인증 토큰 확인
       const accessToken = getCookieValue('accessToken');
       if (!accessToken) {
@@ -720,7 +563,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         setLoading(false);
         return;
       }
-  
+
       try {
         // axios로 요청 전환 (fetch API 대신)
         console.log("axios로 채팅방 목록 요청...");
@@ -732,45 +575,45 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           withCredentials: true,
           timeout: 10000 // 10초 타임아웃 설정
         });
-        
+
         console.log("채팅방 목록 응답:", response.data);
-        
+
         if (response.data && response.data.data) {
           // 서버 응답 데이터 전체 구조 로깅
           console.log("서버 응답 첫 번째 채팅방 전체 데이터:", response.data.data[0]);
-          
+
           // 필터링 및 정렬 로직
           const filteredRooms = response.data.data.filter(
             (room: ChatRoom) => room.chatUserId === me_id || room.targetUserId === me_id
           );
-          
+
           // 서버 응답의 unreadCount 또는 unreadMessageCount 필드 확인 및 로깅
           console.log("서버 응답의 안 읽은 메시지 카운트:", filteredRooms.map((r: ChatRoom) => ({
-            id: r.id, 
-            unreadCount: r.unreadCount, 
+            id: r.id,
+            unreadCount: r.unreadCount,
             unreadMessageCount: (r as any).unreadMessageCount
           })));
-          
+
           // 서버 응답에서 안 읽은 메시지 카운트 필드 적용
           const roomsWithUnreadCount = filteredRooms.map((room: ChatRoom) => {
             // 서버 응답에서 unreadCount 또는 unreadMessageCount 필드 확인
-            const serverUnreadCount = room.unreadCount !== undefined 
-              ? room.unreadCount 
+            const serverUnreadCount = room.unreadCount !== undefined
+              ? room.unreadCount
               : (room as any).unreadMessageCount || 0;
-            
+
             // 기존 채팅방 객체에 안 읽은 메시지 카운트 추가
-            return { 
-              ...room, 
+            return {
+              ...room,
               unreadCount: serverUnreadCount
             };
           });
-          
+
           // 최종 채팅방 목록 로깅
           console.log("처리된 안 읽은 메시지 카운트:", roomsWithUnreadCount.map((r: ChatRoom) => ({
-            id: r.id, 
+            id: r.id,
             unreadCount: r.unreadCount
           })));
-          
+
           const sortedRooms = sortChatRoomsByLastMessageTime(roomsWithUnreadCount);
           setChatRooms(sortedRooms);
         } else {
@@ -779,7 +622,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }
       } catch (error: unknown) {
         console.error("API 요청 오류:", error);
-        
+
         if (axios.isAxiosError(error)) {
           if (error.code === 'ECONNABORTED') {
             setError("요청 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
@@ -797,10 +640,10 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
           const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
           setError(`채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
         }
-        
+
         setChatRooms([]);
       }
-      
+
       setLoading(false);
     } catch (error: unknown) {
       console.error("채팅방 목록 로드 오류:", error);
@@ -817,7 +660,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
         try {
             console.log(`채팅방 ${roomId} 나가기 요청 - 사용자 ID: ${me_id}`);
-            
+
             const response = await axios.post(
                 `${backUrl}/api/v1/chat/rooms/${roomId}/leave`,
                 {}, // 본문 데이터 없음 - 백엔드에서 @LoginUser로 현재 사용자 식별
@@ -905,7 +748,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     const getOtherUserInfo = (room: ChatRoom) => {
         console.log(`[getOtherUserInfo] 채팅방 정보:`, room);
         console.log(`[getOtherUserInfo] 현재 사용자 ID: ${me_id}, 채팅 사용자 ID: ${room.chatUserId}, 대상 사용자 ID: ${room.targetUserId}`);
-        
+
         // me_id가 없는 경우 기본값 설정
         if (!me_id) {
             console.warn('[getOtherUserInfo] 현재 사용자 ID가 없습니다. 기본값으로 처리합니다.');
@@ -915,23 +758,23 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                 userId: room.targetUserId
             };
         }
-        
+
         // 명확한 숫자 비교를 위해 변환
         const myId = Number(me_id);
         const chatUserId = Number(room.chatUserId);
         // targetUserId 변수는 사용되지 않으므로 제거
-        
+
         // 내가 채팅 시작자인지 여부 확인
         const isMyChat = myId === chatUserId;
         console.log(`[getOtherUserInfo] 내가 채팅 시작자인지: ${isMyChat}, 비교: ${myId} === ${chatUserId}`);
-        
+
         // 상대방 정보 반환
         const result = {
             nickname: isMyChat ? room.targetUserNickname : room.chatUserNickname,
             imageUrl: getValidImageUrl(isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl),
             userId: isMyChat ? room.targetUserId : room.chatUserId
         };
-        
+
         console.log(`[getOtherUserInfo] 결과:`, result);
         return result;
     };
@@ -952,13 +795,13 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
     // 로그인 상태 확인
     const accessToken = getCookieValue('accessToken');
     if (!accessToken) return;
-    
+
     console.log("주기적 채팅방 목록 갱신 설정");
-    
+
     // 10분마다 채팅방 목록 갱신 (30초에서 10분으로 변경)
     const intervalId = setInterval(() => {
       console.log("주기적 채팅방 목록 갱신 실행");
-      
+
       // 채팅방 목록이 열려있는 경우에만 갱신
       if (isChatListOpen) {
         fetchChatRooms().catch(err => {
@@ -966,7 +809,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         });
       }
     }, 600000); // 30,000ms(30초)에서 600,000ms(10분)으로 변경
-    
+
     // 컴포넌트 언마운트 시 정리
     return () => {
       console.log("주기적 채팅방 목록 갱신 해제");
@@ -995,7 +838,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         }
       });
 
-      client.current = stompClient;
+            client.current = stompClient;
 
       stompClient.onConnect = () => {
         console.log('NavBar WebSocket Connected');
@@ -1215,12 +1058,12 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
 
                     // 현재 열려있는 모든 채팅방 로깅
                     console.log("현재 열린 채팅방 목록:", openChatRooms.map(r => `${r.id}:${r.isOpen}`).join(', '));
-                    
+
                     // 채팅방이 열려있는지 명시적으로 다시 확인 (OpenChatRoom 상태 확인)
-                    const isThisRoomOpen = openChatRooms.some(openRoom => 
+                    const isThisRoomOpen = openChatRooms.some(openRoom =>
                       openRoom.id === room.id && openRoom.isOpen
                     );
-                    
+
                     // 채팅방이 열려있으면 메시지를 수신한 즉시 읽음 처리 API 호출
                     if (isThisRoomOpen && !isMessageFromCurrentUser) {
                       console.log(`열린 채팅방 ${room.id}에 메시지 도착, 즉시 읽음 처리 API 호출`);
@@ -1234,14 +1077,14 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
                               : '',
                           }
                         });
-                        
+
                         // 열린 채팅방에서는 unreadCount를 0으로 강제 설정
                         unreadCount = 0;
                       } catch (error) {
                         console.error(`채팅방 ${room.id} 읽음 처리 API 호출 오류:`, error);
                       }
                     }
-                    
+
                     // 업데이트된 채팅방 반환
                     return {
                       ...room,
@@ -1268,7 +1111,7 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         });
       };
 
-      stompClient.activate();
+            stompClient.activate();
 
       return () => {
         if (stompClient.active) {
@@ -1283,123 +1126,121 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
   // 채팅 목록 아이콘 클릭 이벤트 처리 - 상세 로깅 추가
   const handleChatListToggle = () => {
     console.log(`===== 채팅 목록 ${!isChatListOpen ? '열기' : '닫기'} =====`);
-    
+
     // 토글 상태 변경
     setIsChatListOpen(!isChatListOpen);
-    
+
     // 채팅 목록을 열 때만 데이터 로드
     if (!isChatListOpen) {
       console.log("채팅 목록을 열었습니다. 데이터 로드를 시작합니다.");
-      
+
       // 액세스 토큰 확인 및 로깅
       const accessToken = getCookieValue('accessToken');
       console.log("채팅 목록 데이터 요청 전 토큰 확인:", !!accessToken);
       console.log("현재 사용자 ID:", me_id);
-      
+
       // 채팅방 목록 데이터 로드 요청
       fetchChatRooms();
     }
   };
 
-    return (
-        <>
-            <nav className="mt-5 fixed right-0 z-50 w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
-                <div className="px-4 max-lg:px-1">
-                    <div
-                        className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
-                        <div className="flex-none pl-2">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="bg-green-600 rounded-full"
-                                onClick={() => setIsResistModalOpen(true)}
-                            >
-                                <Plus className="h-4 w-4 text-white"/>
-                            </Button>
-                            {isResistModalOpen && (
-                                <div
-                                    className="absolute top-[3%] left-[0%] bg-white rounded-tl-3xl rounded-b-2xl w-[200px] overflow-hidden z-50">
-                                    <div className="flex-none pl-2 pt-1">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="bg-green-600 rounded-full"
-                                            onClick={() => {
-                                                setIsResistModalOpen(false);
-                                            }}
-                                        >
-                                            <Minus className="h-4 w-4 text-white"/>
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            className="flex items-center justify-start p-4 hover:bg-gray-100 bgr-white h-12"
-                                            onClick={() => {
-                                                setIsMissingAddOpen(true);
-                                            }}
-                                        >
-                                            <div
-                                                className="w-10 h-10 mr-2 rounded-full flex items-center justify-center">
-                                                <svg
-                                                    viewBox="0 0 30 31"
-                                                    fill="none"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="svg-2"
-                                                >
-                                                    <path
-                                                        d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
-                                                        fill="#DC2627"
-                                                    />
-                                                    <path
-                                                        d="M14.225 15.175C13.353 14.22 12.7833 13.0283 12.5875 11.75H7.5C7.16598 11.7721 6.83109 11.7226 6.51776 11.6048C6.20442 11.4869 5.91988 11.3035 5.68317 11.0668C5.44647 10.8301 5.26306 10.5456 5.14524 10.2322C5.02742 9.91891 4.9779 9.58402 5 9.25C5 8.91848 4.8683 8.60054 4.63388 8.36612C4.39946 8.1317 4.08152 8 3.75 8C3.41848 8 3.10054 8.1317 2.86612 8.36612C2.6317 8.60054 2.5 8.91848 2.5 9.25C2.51297 10.1174 2.71788 10.9712 3.1 11.75C3.52301 12.5667 4.1861 13.2341 5 13.6625V28H8.75V21.75H16.25V28H20V17.8375C17.8194 17.6657 15.7717 16.7216 14.225 15.175Z"
-                                                        fill="#DC2627"
-                                                    />
-                                                </svg>
-                                            </div>
-                                            실종 신고하기
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            className="flex items-center justify-start p-4 hover:bg-gray-100 bgr-white h-12"
-                                            onClick={() => {
-                                                if (!isLoggedIn) {
-                                                    alert("로그인 후 이용해주세요!");
-                                                } else {
-                                                    setIsFindingAddOpen(true);
-                                                }
-                                                setIsResistModalOpen(false);
-                                            }}
-                                        >
-                                            <div
-                                                className="w-6 h-6 mr-2 rounded-full flex items-center justify-center btn-size">
-                                                <svg
-                                                    viewBox="0 0 30 31"
-                                                    fill="none"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="svg-2"
-                                                >
-                                                    <path
-                                                        d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
-                                                        fill="#15AF55"
-                                                    />
-                                                    <path
-                                                        d="M14.225 15.175C13.353 14.22 12.7833 13.0283 12.5875 11.75H7.5C7.16598 11.7721 6.83109 11.7226 6.51776 11.6048C6.20442 11.4869 5.91988 11.3035 5.68317 11.0668C5.44647 10.8301 5.26306 10.5456 5.14524 10.2322C5.02742 9.91891 4.9779 9.58402 5 9.25C5 8.91848 4.8683 8.60054 4.63388 8.36612C4.39946 8.1317 4.08152 8 3.75 8C3.41848 8 3.10054 8.1317 2.86612 8.36612C2.6317 8.60054 2.5 8.91848 2.5 9.25C2.51297 10.1174 2.71788 10.9712 3.1 11.75C3.52301 12.5667 4.1861 13.2341 5 13.6625V28H8.75V21.75H16.25V28H20V17.8375C17.8194 17.6657 15.7717 16.7216 14.225 15.175Z"
-                                                        fill="#15AF55"
-                                                    />
-                                                </svg>
-                                            </div>
-                                            발견 등록하기
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
+  return (
+    <>
+      <nav className="mt-5 fixed right-0 z-[5] w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
+        <div className="px-4 max-lg:px-1">
+          <div className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
+            <div className="flex-none pl-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-green-600 rounded-full"
+                onClick={() => setIsResistModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 text-white" />
+              </Button>
+              {isResistModalOpen && (
+                <div className="absolute top-[3%] left-[0%] bg-white rounded-2xl w-[200px] overflow-hidden z-50">
+                  <div className="flex-none px-2 py-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-green-600 rounded-full"
+                      onClick={() => {
+                        setIsResistModalOpen(false);
+                      }}
+                    >
+                      <Minus className="h-4 w-4 text-white" />
+                    </Button>
+                    <div className="py-1">
+                      <Button
+                        variant="ghost"
+                        className="flex items-center justify-start w-full p-4 hover:bg-gray-100 bgr-white h-12"
+                        onClick={() => {
+                          setIsMissingAddOpen(true);
+                        }}
+                      >
+                        <div className="w-10 h-10 mr-2 rounded-full flex items-center justify-center">
+                          <svg
+                            viewBox="0 0 30 31"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="svg-2"
+                          >
+                            <path
+                              d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
+                              fill="#DC2627"
+                            />
+                            <path
+                              d="M14.225 15.175C13.353 14.22 12.7833 13.0283 12.5875 11.75H7.5C7.16598 11.7721 6.83109 11.7226 6.51776 11.6048C6.20442 11.4869 5.91988 11.3035 5.68317 11.0668C5.44647 10.8301 5.26306 10.5456 5.14524 10.2322C5.02742 9.91891 4.9779 9.58402 5 9.25C5 8.91848 4.8683 8.60054 4.63388 8.36612C4.39946 8.1317 4.08152 8 3.75 8C3.41848 8 3.10054 8.1317 2.86612 8.36612C2.6317 8.60054 2.5 8.91848 2.5 9.25C2.51297 10.1174 2.71788 10.9712 3.1 11.75C3.52301 12.5667 4.1861 13.2341 5 13.6625V28H8.75V21.75H16.25V28H20V17.8375C17.8194 17.6657 15.7717 16.7216 14.225 15.175Z"
+                              fill="#DC2627"
+                            />
+                          </svg>
                         </div>
+                        실종 신고하기
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="flex items-center justify-start w-full p-4 hover:bg-gray-100 bgr-white h-12"
+                        onClick={() => {
+                          if (!isLoggedIn) {
+                            alert("로그인 후 이용해주세요!");
+                          } else {
+                            setIsFindingAddOpen(true);
+                          }
+                          setIsResistModalOpen(false);
+                        }}
+                      >
+                        <div className="w-6 h-6 mr-2 rounded-full flex items-center justify-center btn-size">
+                          <svg
+                            viewBox="0 0 30 31"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="svg-2"
+                          >
+                            <path
+                              d="M26.25 8H23.75L22.1625 6.4125C21.5876 5.8389 20.812 5.51163 20 5.5H16.875C16.6999 4.7985 16.2993 4.17391 15.7347 3.72224C15.1701 3.27057 14.4728 3.01682 13.75 3V10.95C13.8142 12.2124 14.3133 13.4137 15.1625 14.35C16.5607 15.6941 18.3895 16.5001 20.325 16.625L24.6375 14.9C25.1435 14.6969 25.5991 14.3859 25.9726 13.9887C26.3461 13.5914 26.6284 13.1175 26.8 12.6L27.5 10.6875C27.5201 10.5591 27.5201 10.4284 27.5 10.3V9.25C27.5 8.91848 27.3683 8.60054 27.1339 8.36612C26.8995 8.1317 26.5815 8 26.25 8ZM20 10.5C19.7528 10.5 19.5111 10.4267 19.3055 10.2893C19.1 10.152 18.9398 9.95676 18.8452 9.72835C18.7505 9.49995 18.7258 9.24861 18.774 9.00614C18.8222 8.76366 18.9413 8.54093 19.1161 8.36612C19.2909 8.1913 19.5137 8.07225 19.7561 8.02402C19.9986 7.97579 20.2499 8.00054 20.4784 8.09515C20.7068 8.18976 20.902 8.34998 21.0393 8.55554C21.1767 8.7611 21.25 9.00277 21.25 9.25C21.25 9.58152 21.1183 9.89946 20.8839 10.1339C20.6495 10.3683 20.3315 10.5 20 10.5Z"
+                              fill="#15AF55"
+                            />
+                            <path
+                              d="M14.225 15.175C13.353 14.22 12.7833 13.0283 12.5875 11.75H7.5C7.16598 11.7721 6.83109 11.7226 6.51776 11.6048C6.20442 11.4869 5.91988 11.3035 5.68317 11.0668C5.44647 10.8301 5.26306 10.5456 5.14524 10.2322C5.02742 9.91891 4.9779 9.58402 5 9.25C5 8.91848 4.8683 8.60054 4.63388 8.36612C4.39946 8.1317 4.08152 8 3.75 8C3.41848 8 3.10054 8.1317 2.86612 8.36612C2.6317 8.60054 2.5 8.91848 2.5 9.25C2.51297 10.1174 2.71788 10.9712 3.1 11.75C3.52301 12.5667 4.1861 13.2341 5 13.6625V28H8.75V21.75H16.25V28H20V17.8375C17.8194 17.6657 15.7717 16.7216 14.225 15.175Z"
+                              fill="#15AF55"
+                            />
+                          </svg>
+                        </div>
+                        발견 등록하기
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                        <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-5">
-                            <div className="flex flex-wrap justify-end w-full gap-3">
-                                <FilterButton
-                                    buttonStates={buttonStates}
-                                    toggleButton={toggleButton}
-                                />
+            <div className="flex-1 flex flex-wrap justify-end items-center gap-1 pr-5">
+              <div className="flex flex-wrap justify-end w-full gap-3">
+                <FilterButton
+                  buttonStates={buttonStates}
+                  toggleButton={toggleButton}
+                />
 
                 {isLoggedIn ? (
                   <>
@@ -1442,8 +1283,14 @@ export function NavBar({ buttonStates, toggleButton }: NavBarProps) {
         </div>
       </nav>
 
-            <MissingFormPopup open={isMissingAddOpen} onOpenChange={setIsMissingAddOpen}/>
-            <FindingFormPopup open={isFindingAddOpen} onOpenChange={setIsFindingAddOpen}/>
+      <MissingFormPopup
+        open={isMissingAddOpen}
+        onOpenChange={setIsMissingAddOpen}
+      />
+      <FindingFormPopup
+        open={isFindingAddOpen}
+        onOpenChange={setIsFindingAddOpen}
+      />
 
             {openChatRooms.map((room) => (
                 <ChatModal

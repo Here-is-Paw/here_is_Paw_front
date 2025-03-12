@@ -1,20 +1,20 @@
 import {Swiper, SwiperSlide} from "swiper/react";
 import {Navigation, Pagination} from "swiper/modules";
 import {useEffect, useRef, useState} from "react";
-import {MissingCard} from "./MissingCard.tsx";
-import {MissingDetail, ChatModalInfo} from "./MissingDetail.tsx";
+import {FindingCard} from "./FindingCard.tsx";
 import {ChatModal} from "@/components/chat/ChatModal.tsx";
 import {usePetContext} from "@/contexts/PetContext.tsx";
 import {PetList} from "@/types/mypet.ts";
+import {ChatModalInfo, FindingDetail} from "@/components/petPost/findingPost/FindingDetail.tsx";
 
-export function MissingList() {
+export function FindingList() {
     // Context에서 데이터와 상태 가져오기
     const {
-        missingPets, // filteredPets 대신 missingPets 사용
+        findingPets, // filteredPets 대신 missingPets 사용
         // searchMode,
         activeFilter,
         isLoading,
-        hasMore,
+        findingHasMore,
         loadMorePets
     } = usePetContext();
 
@@ -57,7 +57,7 @@ export function MissingList() {
         // observer 콜백 함수
         const handleObserver = (entries: IntersectionObserverEntry[]) => {
             const [entry] = entries;
-            if (entry.isIntersecting && hasMore && !isLoading && !initialLoad) {
+            if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
                 console.log("Loading more data...");
                 loadMorePets();
             }
@@ -67,7 +67,7 @@ export function MissingList() {
         observerRef.current = new IntersectionObserver(handleObserver, options);
 
         // 로딩 요소 관찰 시작
-        if (loadingRef.current && hasMore) {
+        if (loadingRef.current && findingHasMore) {
             observerRef.current.observe(loadingRef.current);
         }
 
@@ -77,7 +77,7 @@ export function MissingList() {
                 observerRef.current.disconnect();
             }
         };
-    }, [hasMore, isLoading, loadMorePets, initialLoad]);
+    }, [findingHasMore, isLoading, loadMorePets, initialLoad]);
 
     // 펫 선택 핸들러 추가
     const handlePetSelect = (pet: PetList) => {
@@ -99,7 +99,7 @@ export function MissingList() {
     };
 
     const handleSwiperReachEnd = () => {
-        if (hasMore && !isLoading && !initialLoad && activeFilter === "전체") {
+        if (findingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
             console.log("Swiper reached end, loading more data...");
             loadMorePets();
         }
@@ -113,7 +113,7 @@ export function MissingList() {
                 </div>
             ) : (
                 <>
-                    {missingPets.length > 0 ? (
+                    {findingPets.length > 0 ? (
                         <>
                             <div
                                 className={`h-auto ${
@@ -135,7 +135,7 @@ export function MissingList() {
                                         }}
                                         className="relative"
                                     >
-                                        {missingPets.map((pet, index) => (
+                                        {findingPets.map((pet, index) => (
                                             <SwiperSlide
                                                 key={`missing-slide${pet.id}${index}`}
                                                 className="w-40 pb-2"
@@ -146,7 +146,7 @@ export function MissingList() {
                                                     onClick={() => handlePetSelect(pet)}
                                                 >
                                                     <div className="p-2">
-                                                        <MissingCard activeFilter={"전체"} pet={pet}/>
+                                                        <FindingCard activeFilter={"전체"} pet={pet}/>
                                                     </div>
                                                 </button>
                                             </SwiperSlide>
@@ -155,7 +155,7 @@ export function MissingList() {
                                 ) : (
                                     <div className="p-2">
                                         <ul className="grid grid-cols-2 gap-2">
-                                            {missingPets.map((pet, index) => (
+                                            {findingPets.map((pet, index) => (
                                                 <li key={`missing-list${pet.id}${index}`}>
                                                     <button
                                                         type="button"
@@ -163,7 +163,7 @@ export function MissingList() {
                                                         onClick={() => handlePetSelect(pet)}
                                                     >
                                                         <div className="w-full">
-                                                            <MissingCard
+                                                            <FindingCard
                                                                 activeFilter={"잃어버렸개"}
                                                                 pet={pet}
                                                             />
@@ -175,8 +175,8 @@ export function MissingList() {
 
                                         {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
                                         <div ref={loadingRef} className="py-4 text-center">
-                                            {isLoading && hasMore && <p>더 불러오는 중...</p>}
-                                            {!hasMore && missingPets.length > 0 && (
+                                            {isLoading && findingHasMore && <p>더 불러오는 중...</p>}
+                                            {!findingHasMore && findingPets.length > 0 && (
                                                 <p className="text-gray-500 text-sm">
                                                     모든 데이터를 불러왔습니다
                                                 </p>
@@ -186,7 +186,7 @@ export function MissingList() {
                                 )}
 
                                 {/* 모달은 한 번만 렌더링 */}
-                                <MissingDetail
+                                <FindingDetail
                                     petId={selectedPet?.id}
                                     open={isOpen}
                                     onOpenChange={(open) => {
