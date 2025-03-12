@@ -22,8 +22,10 @@ import LocationViewMap from "@/components/location/locationViewMap";
 import { usePetContext } from "@/contexts/PetContext.tsx"; // 새 컴포넌트 임포트
 import { OpenChatRoom } from "@/types/chat.ts";
 import { UserSearchPopup } from "@/components/petPost/missingPost/reward/UserSearchPopup.tsx"; // 새 컴포넌트 임포트
+import { Pencil } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { MissingUpdateFormPopup } from "./missingUpdate";
 // import { useAuth } from "@/contexts/AuthContext";
-// import { Pencil } from "lucide-react";
 // import { MissingFormPopup } from "./MissingPost";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
@@ -40,6 +42,7 @@ interface MissingDetailProps {
   onOpenChange: (open: boolean) => void;
   // ChatModal 관련 정보를 상위 컴포넌트로 전달하는 콜백 함수 추가
   onChatModalOpen: (chatInfo: ChatModalInfo) => void;
+  onSuccess?: () => void;
 }
 
 export const MissingDetail: React.FC<MissingDetailProps> = ({
@@ -47,12 +50,12 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   open,
   onOpenChange,
   onChatModalOpen,
+  onSuccess,
 }) => {
   const [pet, setPet] = useState<MissingDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  // const [missingFormOpen, setMissingFormOpen] = useState<boolean>(false);
-  // const [petToReport, setPetToReport] = useState<MissingFormData | null>(null);
+  const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
   const [showUserSearchPopup, setShowUserSearchPopup] =
     useState<boolean>(false);
 
@@ -61,7 +64,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
-  // const loginUser = useAuth();
+  const loginUser = useAuth();
 
   useEffect(() => {
     const fetchPetDetail = async () => {
@@ -144,6 +147,38 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
       return DEFAULT_IMAGE_URL;
     }
     return imageUrl;
+  };
+
+  const handleDeleteClick = async (missingId: number) => {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      try {
+        const response = await axios.delete(
+          `${backUrl}/api/v1/missings/${missingId}`,
+          {
+            withCredentials: true,
+          }
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          alert("발견 신고가 성공적으로 삭제되었습니다!");
+
+          await refreshPets();
+
+          // 모달 닫기
+          onOpenChange(false);
+
+          // 삭제 성공 후 실행할 콜백 함수 호출
+          if (onSuccess) {
+            onSuccess();
+          }
+        } else {
+          alert("삭제 실패!");
+        }
+      } catch (err) {
+        console.error("Failed to delete pet details:", err);
+        alert("오류가 발생했습니다.");
+      }
+    }
   };
 
   // 연락하기 버튼 핸들러
@@ -485,25 +520,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     }
   };
 
-  // 수정 버튼 클릭 핸들러
-  // const handleEditClick = () => {
-  //   // 상세 정보 창 닫기
-  //   onOpenChange(false);
-  // };
-
-  // const handleReportMissing = (e: React.MouseEvent) => {
-  //   e.stopPropagation(); // 이벤트 버블링 방지
-
-  //   setMissingFormOpen(true);
-  //   onOpenChange(false);
-  // };
-
-  // const handleMissingFormSuccess = () => {
-  //   // 실종 신고가 성공적으로 제출된 후 실행할 코드
-  //   setMissingFormOpen(false);
-  //   setPetToReport(null);
-  // };
-
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -618,25 +634,30 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
           </div>
 
           <DialogFooter className="px-6">
-            {/* {loginUser.userData?.id === pet.memberId && (
+            {loginUser.userData?.id === pet.memberId && (
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   className="flex items-center gap-1 bg-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-destructive/80"
-                  onClick={handleEditClick}
+                  onClick={() => handleDeleteClick(pet.id)}
                 >
                   <span className="text-destructive-foreground">삭제</span>
                 </Button>
                 <Button
                   variant="outline"
                   className="flex items-center gap-1"
-                  onClick={(e) => handleReportMissing(e)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // 이벤트 전파 중지
+                    // handleUpdateClick();
+                    setIsMissingAddOpen(true);
+                    onOpenChange(false);
+                  }}
                 >
                   <Pencil className="h-4 w-4" />
                   <span>정보 수정</span>
                 </Button>
               </div>
-            )} */}
+            )}
             <div className="flex justify-end gap-2 w-full">
               <Button
                 type="button"
@@ -657,6 +678,14 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* 실종 신고 수정 폼 */}
+      <MissingUpdateFormPopup
+        open={isMissingAddOpen}
+        onOpenChange={setIsMissingAddOpen}
+        missingId={pet.id}
+        pet={pet}
+      />
+
       {/* UserSearchPopup 컴포넌트 */}
       {petId && (
         <UserSearchPopup
@@ -667,13 +696,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
           onSuccess={handleRewardSuccess}
         />
       )}
-
-      {/* 실종 신고 폼 */}
-      {/* <MissingFormPopup
-        open={missingFormOpen}
-        onOpenChange={setMissingFormOpen}
-        onSuccess={handleMissingFormSuccess}
-      /> */}
     </>
   );
 };
