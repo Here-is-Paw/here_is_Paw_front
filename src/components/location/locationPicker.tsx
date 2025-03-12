@@ -81,7 +81,7 @@ const LocationPicker = ({
         const mapOptions = {
           center: new window.naver.maps.LatLng(37.52133, 126.9522),
           zoom: 15,
-          minZoom: 5,
+          minZoom: 6,
           tileDuration: 300,
           zoomControl: true,
           zoomControlOptions: {

@@ -50,7 +50,7 @@ const LocationViewMap = ({ location }: LocationViewMapProps) => {
         const mapOptions = {
           center: position,
           zoom: 16,
-          minZoom: 5,
+          minZoom: 6,
           tileDuration: 300,
           zoomControl: true,
           zoomControlOptions: {

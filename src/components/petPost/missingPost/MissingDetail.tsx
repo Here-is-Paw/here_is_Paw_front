@@ -8,7 +8,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog.tsx";
 import React, { useEffect, useState } from "react";
-import { MissingDetailData, missingUtils } from "@/types/missing.ts";
+import {
+  MissingDetailData,
+  // MissingFormData,
+  missingUtils,
+} from "@/types/missing.ts";
 import { petUtils } from "@/types/pet.common.ts";
 import axios from "axios";
 import { backUrl } from "@/constants.ts";
@@ -16,6 +20,9 @@ import { useChatContext } from "@/contexts/ChatContext.tsx";
 import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import LocationViewMap from "@/components/location/locationViewMap";
 import { UserSearchPopup } from "@/components/petPost/missingPost/reward/UserSearchPopup.tsx"; // 새 컴포넌트 임포트
+// import { useAuth } from "@/contexts/AuthContext";
+// import { Pencil } from "lucide-react";
+// import { MissingFormPopup } from "./MissingPost";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -34,19 +41,23 @@ interface MissingDetailProps {
 }
 
 export const MissingDetail: React.FC<MissingDetailProps> = ({
-                                                              petId,
-                                                              open,
-                                                              onOpenChange,
-                                                              onChatModalOpen,
-                                                            }) => {
+  petId,
+  open,
+  onOpenChange,
+  onChatModalOpen,
+}) => {
   const [pet, setPet] = useState<MissingDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUserSearchPopup, setShowUserSearchPopup] = useState<boolean>(false);
+  // const [missingFormOpen, setMissingFormOpen] = useState<boolean>(false);
+  // const [petToReport, setPetToReport] = useState<MissingFormData | null>(null);
+  const [showUserSearchPopup, setShowUserSearchPopup] =
+    useState<boolean>(false);
 
   const DEFAULT_IMAGE_URL =
-      "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
   const { refreshChatRooms } = useChatContext();
+  // const loginUser = useAuth();
 
   useEffect(() => {
     const fetchPetDetail = async () => {
@@ -54,6 +65,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
       setLoading(true);
       setError(null);
+
+      // console.log("loginUser", loginUser);
 
       try {
         const response = await axios.get(`${backUrl}/api/v1/missings/${petId}`);
@@ -114,15 +127,15 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   // 이미지 URL이 유효한지 확인하고 기본 이미지로 대체하는 함수
   const isKakaoDefaultProfile = (url: string) => {
     return (
-        url && url.includes("kakaocdn.net") && url.includes("default_profile")
+      url && url.includes("kakaocdn.net") && url.includes("default_profile")
     );
   };
 
   const getValidImageUrl = (imageUrl: string | undefined) => {
     if (
-        !imageUrl ||
-        imageUrl === "profile" ||
-        isKakaoDefaultProfile(imageUrl)
+      !imageUrl ||
+      imageUrl === "profile" ||
+      isKakaoDefaultProfile(imageUrl)
     ) {
       return DEFAULT_IMAGE_URL;
     }
@@ -135,8 +148,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
     // 로그인 여부 확인
     const isLoggedIn =
-        document.cookie.includes("accessToken") ||
-        localStorage.getItem("isLoggedIn") === "true";
+      document.cookie.includes("accessToken") ||
+      localStorage.getItem("isLoggedIn") === "true";
     if (!isLoggedIn) {
       alert("로그인이 필요한 서비스입니다.");
       window.location.href = "/login"; // 로그인 페이지로 이동
@@ -154,16 +167,16 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
       console.log("채팅 요청 targetUserId:", targetUserId);
 
       const response = await axios.post(
-          `${backUrl}/api/v1/chat/rooms`,
-          { targetUserId },
-          { withCredentials: true }
+        `${backUrl}/api/v1/chat/rooms`,
+        { targetUserId },
+        { withCredentials: true }
       );
 
       console.log("채팅방 생성/조회 응답:", response.data);
 
       // 타켓 유저 프로필 사진 처리
       const validImageUrl = getValidImageUrl(
-          response.data.data.targetUserImageUrl
+        response.data.data.targetUserImageUrl
       );
 
       // 채팅방 정보 설정
@@ -210,19 +223,19 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
         // 이미 존재하는 채팅방 데이터가 있는 경우
         if (
-            err.response.data &&
-            err.response.data.data &&
-            err.response.data.data.id
+          err.response.data &&
+          err.response.data.data &&
+          err.response.data.data.id
         ) {
           const existingChatRoom = err.response.data.data;
           const chatRoomId = existingChatRoom.id;
 
           // 기존 채팅방 정보 활용하여 채팅방 열기
           const validImageUrl = getValidImageUrl(
-              existingChatRoom.targetUserImageUrl
+            existingChatRoom.targetUserImageUrl
           );
           const targetUserNickname =
-              existingChatRoom.targetUserNickname || "상대방";
+            existingChatRoom.targetUserNickname || "상대방";
 
           // 중요: 채팅방 데이터 메시지 배열 초기화 확인
           if (!existingChatRoom.chatMessages) {
@@ -234,7 +247,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             id: chatRoomId,
             chatUserNickname: existingChatRoom.chatUserNickname || "사용자",
             chatUserImageUrl: getValidImageUrl(
-                existingChatRoom.chatUserImageUrl
+              existingChatRoom.chatUserImageUrl
             ),
             chatUserId: existingChatRoom.chatUserId,
             targetUserNickname: targetUserNickname,
@@ -242,7 +255,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             targetUserId: existingChatRoom.targetUserId,
             chatMessages: existingChatRoom.chatMessages || [],
             modifiedDate:
-                existingChatRoom.modifiedDate || new Date().toISOString(),
+              existingChatRoom.modifiedDate || new Date().toISOString(),
           });
 
           // 채팅방 목록 갱신
@@ -291,8 +304,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   const handleRewardClick = () => {
     // 로그인 여부 확인
     const isLoggedIn =
-        document.cookie.includes("accessToken") ||
-        localStorage.getItem("isLoggedIn") === "true";
+      document.cookie.includes("accessToken") ||
+      localStorage.getItem("isLoggedIn") === "true";
 
     if (!isLoggedIn) {
       alert("로그인이 필요한 서비스입니다.");
@@ -314,160 +327,208 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   const handleRewardSuccess = () => {
     // 필요한 경우 서버에서 새로운 데이터 로드
     if (petId) {
-      axios.get(`${backUrl}/api/v1/missings/${petId}`)
-          .then(response => {
-            if (response.data && response.data.data) {
-              setPet(response.data.data);
-            }
-          })
-          .catch(err => {
-            console.error("데이터 갱신 오류:", err);
-          });
+      axios
+        .get(`${backUrl}/api/v1/missings/${petId}`)
+        .then((response) => {
+          if (response.data && response.data.data) {
+            setPet(response.data.data);
+          }
+        })
+        .catch((err) => {
+          console.error("데이터 갱신 오류:", err);
+        });
     }
   };
 
+  // 수정 버튼 클릭 핸들러
+  // const handleEditClick = () => {
+  //   // 상세 정보 창 닫기
+  //   onOpenChange(false);
+  // };
+
+  // const handleReportMissing = (e: React.MouseEvent) => {
+  //   e.stopPropagation(); // 이벤트 버블링 방지
+
+  //   setMissingFormOpen(true);
+  //   onOpenChange(false);
+  // };
+
+  // const handleMissingFormSuccess = () => {
+  //   // 실종 신고가 성공적으로 제출된 후 실행할 코드
+  //   setMissingFormOpen(false);
+  //   setPetToReport(null);
+  // };
+
   if (loading) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-            <div className="flex justify-center items-center h-full">
-              <p className="text-gray-500">데이터를 불러오는 중...</p>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-500">데이터를 불러오는 중...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (error || !pet) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-            <div className="flex justify-center items-center h-full flex-col">
-              <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
-              <Button onClick={() => onOpenChange(false)} className="mt-4">
-                닫기
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+          <div className="flex justify-center items-center h-full flex-col">
+            <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
+            <Button onClick={() => onOpenChange(false)} className="mt-4">
+              닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-      <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-            <DialogHeader className="space-y-2 text-center px-6">
-              <DialogTitle className="text-2xl font-bold text-primary">
-                잃어버렸개
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                잃어버렸개 상세정보
-              </DialogDescription>
-            </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+          <DialogHeader className="space-y-2 text-center px-6">
+            <DialogTitle className="text-2xl font-bold text-primary">
+              잃어버렸개
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              잃어버렸개 상세정보
+            </DialogDescription>
+          </DialogHeader>
 
-            {/* 내용 영역 */}
-            <div className="px-6 py-4 overflow-auto">
-              <div className="flex flex-col items-center mb-6">
-                <div className="h-60 w-full mb-4">
-                  {pet?.pathUrl && (
-                      <img
-                          src={pet.pathUrl}
-                          alt={pet.name || "이름 없음"}
-                          className="object-contain w-full h-full"
-                      />
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">이름</dt>
-                  <dd>{pet.name || "이름 없음"}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">품종</dt>
-                  <dd>{pet.breed || "품종 미상"}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">색상</dt>
-                  <dd>{pet.color || "정보 없음"}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">나이</dt>
-                  <dd>{pet.age ? `${pet.age}살` : "나이 미상"}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">성별</dt>
-                  <dd>{petUtils.getGenderText(pet.gender || 0)}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">중성화 여부</dt>
-                  <dd>{petUtils.getNeuteredText(pet.neutered || 0)}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">등록 번호</dt>
-                  <dd>{pet.serialNumber || "등록번호 없음"}</dd>
-                </dl>
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
-                  <dd>{pet.lostDate || "실종 날짜 없음"}</dd>
-                </dl>
-                <dl className="col-span-2">
-                  <dt className="text-sm font-medium text-gray-500">지역</dt>
-
-                  <dd>
-                    {pet.location || "지역 없음"}
-
-                    <div className="mt-1">
-                      <LocationViewMap
-                          location={{ x: pet.x, y: pet.y, address: pet.location }}
-                      />
-                    </div>
-                  </dd>
-                </dl>
-                <dl className="col-span-2">
-                  <dt className="text-sm font-medium text-gray-500">특이사항</dt>
-                  <dd>{pet.etc || "특이사항 없음"}</dd>
-                </dl>
-                <dl className="col-span-2">
-                  <dt className="text-sm font-medium text-gray-500">사례금</dt>
-                  <dd>{missingUtils.formatReward(pet.reward || 0)}</dd>
-                </dl>
+          {/* 내용 영역 */}
+          <div className="px-6 py-4 overflow-auto">
+            <div className="flex flex-col items-center mb-6">
+              <div className="h-60 w-full mb-4">
+                {pet?.pathUrl && (
+                  <img
+                    src={pet.pathUrl}
+                    alt={pet.name || "이름 없음"}
+                    className="object-contain w-full h-full"
+                  />
+                )}
               </div>
             </div>
 
-            <DialogFooter className="px-6">
-              <div className="flex justify-end gap-2 w-full">
+            <div className="grid grid-cols-2 gap-4">
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">이름</dt>
+                <dd>{pet.name || "이름 없음"}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">품종</dt>
+                <dd>{pet.breed || "품종 미상"}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">색상</dt>
+                <dd>{pet.color || "정보 없음"}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">나이</dt>
+                <dd>{pet.age ? `${pet.age}살` : "나이 미상"}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">성별</dt>
+                <dd>{petUtils.getGenderText(pet.gender || 0)}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">
+                  중성화 여부
+                </dt>
+                <dd>{petUtils.getNeuteredText(pet.neutered || 0)}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">등록 번호</dt>
+                <dd>{pet.serialNumber || "등록번호 없음"}</dd>
+              </dl>
+              <dl>
+                <dt className="text-sm font-medium text-gray-500">실종 날짜</dt>
+                <dd>{pet.lostDate || "실종 날짜 없음"}</dd>
+              </dl>
+              <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">지역</dt>
+
+                <dd>
+                  {pet.location || "지역 없음"}
+
+                  <div className="mt-1">
+                    <LocationViewMap
+                      location={{ x: pet.x, y: pet.y, address: pet.location }}
+                    />
+                  </div>
+                </dd>
+              </dl>
+              <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">특이사항</dt>
+                <dd>{pet.etc || "특이사항 없음"}</dd>
+              </dl>
+              <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">사례금</dt>
+                <dd>{missingUtils.formatReward(pet.reward || 0)}</dd>
+              </dl>
+            </div>
+          </div>
+
+          <DialogFooter className="px-6">
+            {/* {loginUser.userData?.id === pet.memberId && (
+              <div className="flex gap-2">
                 <Button
-                    type="button"
-                    className="bg-amber-500 hover:bg-amber-600"
-                    onClick={handleRewardClick}
+                  variant="outline"
+                  className="flex items-center gap-1 bg-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-destructive/80"
+                  onClick={handleEditClick}
                 >
-                  사례금 전달하기
+                  <span className="text-destructive-foreground">삭제</span>
                 </Button>
                 <Button
-                    type="button"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleContactClick}
+                  variant="outline"
+                  className="flex items-center gap-1"
+                  onClick={(e) => handleReportMissing(e)}
                 >
-                  연락하기
+                  <Pencil className="h-4 w-4" />
+                  <span>정보 수정</span>
                 </Button>
               </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            )} */}
+            <div className="flex justify-end gap-2 w-full">
+              <Button
+                type="button"
+                className="bg-amber-500 hover:bg-amber-600"
+                onClick={handleRewardClick}
+              >
+                사례금 전달하기
+              </Button>
+              <Button
+                type="button"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleContactClick}
+              >
+                연락하기
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* UserSearchPopup 컴포넌트 */}
-        {petId && (
-            <UserSearchPopup
-                open={showUserSearchPopup}
-                onOpenChange={setShowUserSearchPopup}
-                petId={petId}
-                rewardAmount={pet.reward || 0}
-                onSuccess={handleRewardSuccess}
-            />
-        )}
-      </>
+      {/* UserSearchPopup 컴포넌트 */}
+      {petId && (
+        <UserSearchPopup
+          open={showUserSearchPopup}
+          onOpenChange={setShowUserSearchPopup}
+          petId={petId}
+          rewardAmount={pet.reward || 0}
+          onSuccess={handleRewardSuccess}
+        />
+      )}
+
+      {/* 실종 신고 폼 */}
+      {/* <MissingFormPopup
+        open={missingFormOpen}
+        onOpenChange={setMissingFormOpen}
+        onSuccess={handleMissingFormSuccess}
+      /> */}
+    </>
   );
 };
