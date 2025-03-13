@@ -24,7 +24,7 @@ import {UserSearchPopup} from "@/components/petPost/missingPost/reward/UserSearc
 import {Pencil} from "lucide-react";
 import {useAuth} from "@/contexts/AuthContext";
 import {MissingUpdateFormPopup} from "./missingUpdate";
-import {useChatContact} from "@/hooks/useChatContact.tsx";
+import {useChatContact} from "@/hooks/chat/useChatContact.tsx";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {

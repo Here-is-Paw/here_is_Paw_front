@@ -764,23 +764,6 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                             openRoom.id === room.id && openRoom.isOpen
                                         );
 
-                                        // 채팅방이 열려있으면 메시지를 수신한 즉시 읽음 처리 API 호출
-                                        // if (isThisRoomOpen && !isMessageFromCurrentUser) {
-                                        //     console.log(`열린 채팅방 ${room.id}에 메시지 도착, 즉시 읽음 처리 API 호출`);
-                                        //     try {
-                                        //         axios.post(`${backUrl}/api/v1/chat/${roomId}/read`, {}, {
-                                        //             headers: {
-                                        //                 'Content-Type': 'application/json'
-                                        //             },
-                                        //             withCredentials: true
-                                        //         });
-                                        //
-                                        //         // 열린 채팅방에서는 unreadCount를 0으로 강제 설정
-                                        //         unreadCount = 0;
-                                        //     } catch (error) {
-                                        //         console.error(`채팅방 ${room.id} 읽음 처리 API 호출 오류:`, error);
-                                        //     }
-                                        // }
 
                                         // 업데이트된 채팅방 반환
                                         return {

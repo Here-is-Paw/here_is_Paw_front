@@ -17,7 +17,7 @@ import {ToastAlert} from "@/components/alert/ToastAlert.tsx";
 import {FindingUpdateFormPopup} from "@/components/petPost/findingPost/FindingUpdate.tsx";
 import {useAuth} from "@/contexts/AuthContext";
 import {usePetContext} from "@/contexts/PetContext.tsx";
-import {useChatContact} from "@/hooks/useChatContact.tsx";
+import {useChatContact} from "@/hooks/chat/useChatContact.tsx";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
