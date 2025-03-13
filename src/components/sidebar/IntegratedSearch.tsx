@@ -83,7 +83,7 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
             placeholder={
               searchMode === "반경" ? "반경 내 게시글 검색" : "전체 게시글 검색"
             }
-            className="w-full h-10 pl-4 pr-11 py-2 border-0 focus:outline-none text-black placeholder-gray-500"
+            className="w-full h-10 pl-4 pr-11 py-2 border-0 focus:outline-none text-black placeholder-gray-500 bg-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {

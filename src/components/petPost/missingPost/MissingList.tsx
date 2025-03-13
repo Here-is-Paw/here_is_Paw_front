@@ -36,7 +36,7 @@ export function MissingList() {
   });
 
   const DEFAULT_IMAGE_URL =
-      "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
   // 초기 로드 상태 업데이트
   useEffect(() => {
@@ -57,10 +57,10 @@ export function MissingList() {
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
       if (
-          entry.isIntersecting &&
-          missingHasMore &&
-          !isLoading &&
-          !initialLoad
+        entry.isIntersecting &&
+        missingHasMore &&
+        !isLoading &&
+        !initialLoad
       ) {
         // 여기를 수정: "missing" 타입 명시적으로 전달
         loadMorePets("missing");
@@ -104,126 +104,130 @@ export function MissingList() {
 
   const handleSwiperReachEnd = () => {
     if (
-        missingHasMore &&
-        !isLoading &&
-        !initialLoad &&
-        activeFilter === "전체"
+      missingHasMore &&
+      !isLoading &&
+      !initialLoad &&
+      activeFilter === "전체"
     ) {
-      console.log("Swiper reached end, loading more missing data...");
       // 여기를 수정: "missing" 타입 명시적으로 전달
       loadMorePets("missing");
     }
   };
 
   return (
-      <>
-        {initialLoad ? (
-            <div className="p-4 text-center">
-              <p>데이터를 불러오는 중...</p>
-            </div>
-        ) : (
+    <>
+      {initialLoad ? (
+        <div className="p-4 text-center">
+          <p>데이터를 불러오는 중...</p>
+        </div>
+      ) : (
+        <>
+          {missingPets.length > 0 ? (
             <>
-              {missingPets.length > 0 ? (
-                  <>
-                    <div
-                        className={`h-auto ${
-                            activeFilter !== "전체" ? `overflow-y-auto` : ``
-                        }`}
-                    >
-                      {activeFilter === "전체" ? (
-                          <Swiper
-                              slidesPerView={"auto"}
-                              spaceBetween={8}
-                              pagination={{
-                                type: "fraction",
-                              }}
-                              navigation={true}
-                              modules={[Pagination, Navigation]}
-                              onReachEnd={handleSwiperReachEnd}
-                              onSwiper={(swiper) => {
-                                swiperRef.current = swiper;
-                              }}
-                              className="relative"
-                          >
-                            {missingPets.map((pet, index) => (
-                                <SwiperSlide
-                                    key={`missing-slide${pet.id}${index}`}
-                                    className="w-40 pb-2"
-                                >
-                                  <button
-                                      type="button"
-                                      className="text-left p-0"
-                                      onClick={() => handlePetSelect(pet)}
-                                  >
-                                    <div>
-                                      <MissingCard activeFilter={"전체"} pet={pet} />
-                                    </div>
-                                  </button>
-                                </SwiperSlide>
-                            ))}
-                          </Swiper>
-                      ) : (
-                          <div className="p-2">
-                            <ul className="grid grid-cols-2 gap-2">
-                              {missingPets.map((pet, index) => (
-                                  <li key={`missing-list${pet.id}${index}`}>
-                                    <button
-                                        type="button"
-                                        className="text-left w-full p-0"
-                                        onClick={() => handlePetSelect(pet)}
-                                    >
-                                      <div className="w-full">
-                                        <MissingCard
-                                            activeFilter={"잃어버렸개"}
-                                            pet={pet}
-                                        />
-                                      </div>
-                                    </button>
-                                  </li>
-                              ))}
-                            </ul>
-
-                            {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
-                            <div ref={loadingRef} className="py-4 text-center">
-                              {isLoading && missingHasMore && <p>더 불러오는 중...</p>}
-                              {!missingHasMore && missingPets.length > 0 && (
-                                  <p className="text-gray-500 text-sm">
-                                    모든 데이터를 불러왔습니다
-                                  </p>
-                              )}
-                            </div>
+              <div
+                className={`h-auto ${
+                  activeFilter !== "전체" ? `overflow-y-auto` : ``
+                }`}
+              >
+                {activeFilter === "전체" ? (
+                  <Swiper
+                    slidesPerView={"auto"}
+                    spaceBetween={8}
+                    pagination={{
+                      type: "fraction",
+                    }}
+                    navigation={true}
+                    modules={[Pagination, Navigation]}
+                    onReachEnd={handleSwiperReachEnd}
+                    onSwiper={(swiper) => {
+                      swiperRef.current = swiper;
+                    }}
+                    className="relative"
+                  >
+                    {missingPets.map((pet, index) => (
+                      <SwiperSlide
+                        key={`missing-slide${pet.id}${index}`}
+                        className="w-40 pb-2"
+                      >
+                        <button
+                          type="button"
+                          className="text-left p-0"
+                          onClick={() => handlePetSelect(pet)}
+                        >
+                          <div>
+                            <MissingCard activeFilter={"전체"} pet={pet} />
                           </div>
+                        </button>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
+                  <div className="p-2">
+                    <p className="mb-2 text-sm text-right text-gray-400">
+                      실종 게시글: {missingPets.length}
+                    </p>
+                    <ul className="grid grid-cols-2 gap-2">
+                      {missingPets.map((pet, index) => (
+                        <li key={`missing-list${pet.id}${index}`}>
+                          <button
+                            type="button"
+                            className="text-left w-full p-0"
+                            onClick={() => handlePetSelect(pet)}
+                          >
+                            <div className="w-full">
+                              <MissingCard
+                                activeFilter={"잃어버렸개"}
+                                pet={pet}
+                              />
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
+                    <div ref={loadingRef} className="py-4 text-center">
+                      {isLoading && missingHasMore && <p>더 불러오는 중...</p>}
+                      {!missingHasMore && missingPets.length > 0 && (
+                        <p className="text-gray-500 text-sm">
+                          모든 데이터를 불러왔습니다.
+                        </p>
                       )}
-
-                      {/* 모달은 한 번만 렌더링 */}
-                      <MissingDetail
-                          petId={selectedPet?.id}
-                          open={isOpen}
-                          onOpenChange={(open) => {
-                            setIsOpen(open);
-                            if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
-                          }}
-                          onChatModalOpen={handleChatModalOpen}
-                      />
-
-                      {/* ChatModal - Dialog 외부에서 관리 */}
-                      <ChatModal
-                          isOpen={chatModalInfo.isOpen}
-                          onClose={handleChatModalClose}
-                          targetUserImageUrl={chatModalInfo.targetUserImageUrl}
-                          targetUserNickname={chatModalInfo.targetUserNickname}
-                          defaultImageUrl={DEFAULT_IMAGE_URL}
-                          chatRoomId={chatModalInfo.chatRoomId}
-                      />
                     </div>
-                  </>
-              ) : (
-                  <>
-                    <p className="p-4 text-center text-red-500">데이터가 없습니다.</p>
-                  </>
-              )}
+                  </div>
+                )}
+
+                {/* 모달은 한 번만 렌더링 */}
+                <MissingDetail
+                  petId={selectedPet?.id}
+                  open={isOpen}
+                  onOpenChange={(open) => {
+                    setIsOpen(open);
+                    if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+                  }}
+                  onChatModalOpen={handleChatModalOpen}
+                />
+
+                {/* ChatModal - Dialog 외부에서 관리 */}
+                <ChatModal
+                  isOpen={chatModalInfo.isOpen}
+                  onClose={handleChatModalClose}
+                  targetUserImageUrl={chatModalInfo.targetUserImageUrl}
+                  targetUserNickname={chatModalInfo.targetUserNickname}
+                  defaultImageUrl={DEFAULT_IMAGE_URL}
+                  chatRoomId={chatModalInfo.chatRoomId}
+                />
+              </div>
             </>
-        )}
-      </>
+          ) : (
+            <>
+              <p className="p-4 text-center text-gray-400">
+                등록된 실종 게시글이 없습니다.
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </>
   );
 }

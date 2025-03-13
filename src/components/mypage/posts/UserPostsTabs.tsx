@@ -119,10 +119,10 @@ export function UserPostsTabs({
                 </TabsTrigger>
                 <TabsTrigger
                   value={POST_TYPE.FINDING}
-                  className="flex items-center gap-2 h-full"
+                  className="flex flex-col gap-1 h-full"
                 >
                   {userFinding.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="flex-1">
                       {userFinding.length}
                     </Badge>
                   )}

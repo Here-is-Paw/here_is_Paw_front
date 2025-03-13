@@ -22,7 +22,7 @@ export function FilterButton({
         variant="ghost"
         className={`gap-2 ${
           buttonStates.lost ? "bg-gray-300" : "bg-red-500"
-        } text-white rounded-full p-2 h-8 min-w-[97px] hover:bg-red-500 hover:bg-opacity-100 focus:ring-0 focus:outline-none`}
+        } text-white rounded-full p-2 h-8 min-w-[97px] hover:bg-red-500 hover:bg-opacity-100 focus:ring-0 focus:outline-none shadow`}
         onClick={() => toggleButton("lost")}
       >
         <img src={pawRed} alt="Logo" className="w-4 h-4" />
@@ -33,7 +33,7 @@ export function FilterButton({
         variant="ghost"
         className={`gap-2 ${
           buttonStates.found ? "bg-gray-300" : "bg-green-500"
-        } text-white rounded-full p-2 h-8 min-w-[97px] hover:bg-green-500 hover:bg-opacity-100 focus:ring-0 focus:outline-none`}
+        } text-white rounded-full p-2 h-8 min-w-[97px] hover:bg-green-500 hover:bg-opacity-100 focus:ring-0 focus:outline-none shadow`}
         onClick={() => toggleButton("found")}
       >
         <img src={pawGreen} alt="Logo" className="w-4 h-4" />
@@ -46,7 +46,7 @@ export function FilterButton({
           buttonStates.hospital
             ? "bg-gray-300 text-white"
             : "bg-gray-500 text-white"
-        } p-2 h-8 min-w-[97px] hover:bg-opacity-100 focus:ring-0 focus:outline-none`}
+        } p-2 h-8 min-w-[97px] hover:bg-opacity-100 focus:ring-0 focus:outline-none shadow`}
         onClick={() => toggleButton("hospital")}
       >
         <Hospital />
