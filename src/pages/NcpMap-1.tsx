@@ -28,10 +28,10 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
 
   const { radius } = useRadius();
   const [selectedLocation, setSelectedLocation] =
-      useState<naver.maps.LatLng | null>(null);
+    useState<naver.maps.LatLng | null>(null);
   const { setUserLocation } = useMapLocation();
   const { refreshPets, setSearchMode, findingPets, missingPets } = usePetContext();
-  
+
   // 동물보호센터 컨텍스트 추가
   const { careCenters, refreshCenters, setSearchMode: setCenterSearchMode } = useCareCenterContext();
 
@@ -66,15 +66,15 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
   const createPetMarkers = () => {
     const map = mapInstance.current;
     if (!map) return;
-  
+
     // 기존 마커 제거
     missingMarkersRef.current.forEach((marker) => marker.setMap(null));
     findingMarkersRef.current.forEach((marker) => marker.setMap(null));
-  
+
     // 마커 배열 초기화
     missingMarkersRef.current = [];
     findingMarkersRef.current = [];
-  
+
     // 잃어버린 반려동물 마커 (빨간색) - buttonStates.lost가 true일 때만 표시
     if (!buttonStates.lost) {
       const newMissingMarkers = missingPets.map((pet) => {
@@ -87,19 +87,19 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
             anchor: new window.naver.maps.Point(12, 12),
           },
         });
-  
+
         window.naver.maps.Event.addListener(marker, "click", () => {
           alert(
               `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
           );
         });
-  
+
         return marker;
       });
-  
+
       missingMarkersRef.current = newMissingMarkers;
     }
-  
+
     // 발견된 반려동물 마커 (초록색) - buttonStates.found가 true일 때만 표시
     if (!buttonStates.found) {
       const newFindingMarkers = findingPets.map((pet) => {
@@ -112,7 +112,7 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
             anchor: new window.naver.maps.Point(12, 12),
           },
         });
-  
+
         // InfoWindow 생성
         const infoWindow = new window.naver.maps.InfoWindow({
           content: `
@@ -146,9 +146,9 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
           anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
           anchorSkew: true, // 앵커 기울임 효과 활성화
           anchorColor: "white", // 앵커 색상
-  
+
         });
-  
+
         // 마커 클릭 이벤트 리스너 추가
         window.naver.maps.Event.addListener(marker, "click", () => {
           if (infoWindow.getMap()) {
@@ -157,10 +157,10 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
             infoWindow.open(map, marker);
           }
         });
-  
+
         return marker;
       });
-  
+
       findingMarkersRef.current = newFindingMarkers;
     }
   };
@@ -169,20 +169,20 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
   const createCareCenterMarkers = () => {
     const map = mapInstance.current;
     if (!map) return;
-  
+
     // 기존 보호센터 마커 제거
     careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
     careCenterMarkersRef.current = [];
-  
+
     // buttonStates.hospital이 true일 때만 보호센터 마커 표시
     if (!buttonStates.hospital) {
       // 보호센터 마커 생성
       const newCareCenterMarkers = careCenters.map((center) => {
         try {
           console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
-          
+
           const position = new window.naver.maps.LatLng(center.x, center.y);
-          
+
           const marker = new window.naver.maps.Marker({
             position: position,
             map: map,
@@ -194,7 +194,7 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
             visible: true,
             zIndex: 100
           });
-          
+
           // 정보창 생성
           const infoWindow = new window.naver.maps.InfoWindow({
             content: `
@@ -224,7 +224,7 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
             borderColor: "transparent",
             anchorSize: new window.naver.maps.Size(0, 0),
           });
-          
+
           // 마커 클릭 이벤트 리스너 추가
           window.naver.maps.Event.addListener(marker, "click", () => {
             if (infoWindow.getMap()) {
@@ -233,14 +233,14 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
               infoWindow.open(map, marker);
             }
           });
-          
+
           return marker;
         } catch (error) {
           console.error(`마커 생성 오류(${center.name}):`, error);
           return null;
         }
       }).filter(Boolean); // null 값 제거
-    
+
       // 생성된 마커 배열 저장
       careCenterMarkersRef.current = newCareCenterMarkers;
       console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
@@ -303,17 +303,17 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
   // 검색 버튼 클릭 핸들러 - 선택된 위치로 검색 실행
   const handleSearchClick = () => {
     if (!selectedLocation) return;
-  
+
     // 검색 전 모든 마커 명시적 초기화 추가
     careCenterMarkersRef.current.forEach(marker => marker.setMap(null));
     careCenterMarkersRef.current = [];
-    
+
     missingMarkersRef.current.forEach(marker => marker.setMap(null));
     missingMarkersRef.current = [];
-    
+
     findingMarkersRef.current.forEach(marker => marker.setMap(null));
     findingMarkersRef.current = [];
-  
+
     // UserLocation 상태 업데이트
     const locationObj = {
       x: selectedLocation.lat(),
@@ -321,17 +321,17 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
       _lat: selectedLocation.lat(),
       _lng: selectedLocation.lng(),
     };
-  
+
     setUserLocation(locationObj);
-  
+
     // 검색 모드를 '반경'으로 설정
     setSearchMode("반경");
     setCenterSearchMode("반경"); // 보호센터 검색 모드도 업데이트
-  
+
     // 데이터 새로고침 (반경 검색 실행)
     refreshPets();
     refreshCenters(); // 보호센터 데이터도 새로고침
-  
+
     console.log("현재 반경에서 검색 실행:", {
       위치: `${selectedLocation.lat()}, ${selectedLocation.lng()}`,
       반경: radius,
@@ -448,28 +448,27 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
   }, [careCenters, buttonStates.hospital]);
 
   return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <div
-            id="map"
-            ref={mapElement}
-            style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
-        />
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        id="map"
+        ref={mapElement}
+        style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
+      />
 
-        {/* 검색 버튼 */}
-        <div className="absolute bottom-5 left-[calc(100%-24.5rem)] -translate-x-1/2 z-50">
-          <button
-              onClick={handleSearchClick}
-              disabled={!selectedLocation}
-              className="bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center"
-              style={{
-                minWidth: "180px",
-                opacity: selectedLocation ? 1 : 0.6,
-              }}
-          >
-            현재 반경에서 검색
-          </button>
-        </div>
+      {/* 검색 버튼 */}
+      <div className="absolute bottom-5 right-4 z-50">
+        <button
+          onClick={handleSearchClick}
+          disabled={!selectedLocation}
+          className={`
+            bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center w-[11.25rem]
+            ${selectedLocation || "opacity-60"}
+          `}
+        >
+          현재 반경에서 검색
+        </button>
       </div>
+    </div>
   );
 };
 

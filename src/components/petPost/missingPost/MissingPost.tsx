@@ -45,6 +45,8 @@ import { usePetContext } from "@/contexts/PetContext.tsx";
 import { MyPet } from "@/types/mypet.ts";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import dayjs from "dayjs";
+import { ToastAlert } from "@/components/alert/ToastAlert";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MissingFormPopupProps {
   open: boolean;
@@ -90,6 +92,10 @@ export const MissingFormPopup = ({
       }
     }
   };
+
+  // 제출 상태를 추적하는 상태 변수 추가
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   //
   // const [imagePreview, setImagePreview] = useState<string | null>(null);
   // const [file, setFile] = useState<File | null>(null);
@@ -161,6 +167,29 @@ export const MissingFormPopup = ({
   });
 
   const { refreshPets } = usePetContext();
+
+  // Toast 알림 상태
+  const [toast, setToast] = useState({
+    open: false,
+    type: "success" as "success" | "error" | "warning",
+    title: "",
+    message: "",
+  });
+
+  const showToast = (
+    type: "success" | "error" | "warning",
+    title: string,
+    message: string
+  ) => {
+    setToast({
+      open: true,
+      type,
+      title,
+      message,
+    });
+  };
+
+  const loginUser = useAuth();
 
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
@@ -295,21 +324,16 @@ export const MissingFormPopup = ({
   };
 
   const handleSubmit = async (data: MissingFormData) => {
+    // 이미 제출 중이면 중복 제출 방지
+    if (isSubmitting) return;
+
     try {
+      // 제출 시작 시 상태 변경
+      setIsSubmitting(true);
+
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
-
-      // geo 좌표 정보 추가 - 더 이상 임의 값이 아닌 실제 좌표
-      if (locationInfo.x && locationInfo.y) {
-        formData.append(
-          "geo",
-          JSON.stringify({ x: locationInfo.x, y: locationInfo.y })
-        );
-      } else {
-        alert("실종 위치를 지도에서 선택해주세요.");
-        return;
-      }
 
       // 지도 주소와 상세 주소를 결합
       const combinedAddress = locationInfo.address
@@ -323,7 +347,7 @@ export const MissingFormPopup = ({
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+
       formData.append("etc", data.etc || "");
       formData.append("reward", data.reward?.toString() || "0");
       formData.append("missingState", data.missingState?.toString() || "0");
@@ -348,7 +372,36 @@ export const MissingFormPopup = ({
         // 기존 이미지를 사용하는 경우
         formData.append("pathUrl", pets.pathUrl);
       } else {
-        alert("반려동물 사진은 필수입니다.");
+        showToast(
+          "warning",
+          "반려동물 사진은 필수입니다.",
+          "사진 등록 후 다시 시도해주세요."
+        );
+        return;
+      }
+
+      if (!data.lostDate) {
+        showToast(
+          "warning",
+          "실종 날짜 선택은 필수입니다.",
+          "실종 날짜를 선택해주세요."
+        );
+        return;
+      }
+      formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+
+      // geo 좌표 정보 추가 - 더 이상 임의 값이 아닌 실제 좌표
+      if (locationInfo.x && locationInfo.y) {
+        formData.append(
+          "geo",
+          JSON.stringify({ x: locationInfo.x, y: locationInfo.y })
+        );
+      } else {
+        showToast(
+          "warning",
+          "실종 위치 선택은 필수입니다.",
+          "실종 위치를 지도에서 선택해주세요."
+        );
         return;
       }
 
@@ -356,6 +409,12 @@ export const MissingFormPopup = ({
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      showToast(
+        "success",
+        "실종 신고 등록 완료",
+        "실종 신고가 성공적으로 등록되었습니다."
+      );
 
       form.reset(formDefaultValues);
       resetFileUpload();
@@ -383,7 +442,14 @@ export const MissingFormPopup = ({
       }
     } catch (error) {
       console.error("반려동물 등록 오류:", error);
-      alert("반려동물 등록에 실패했습니다");
+      showToast(
+        "error",
+        "실종 신고 등록 실패",
+        "실종 신고 등록에 실패했습니다."
+      );
+    } finally {
+      // 성공하든 실패하든 제출 상태 초기화
+      setIsSubmitting(false);
     }
   };
 
@@ -404,6 +470,16 @@ export const MissingFormPopup = ({
         onOpenChange(newOpen);
       }}
     >
+      {/* Toast 알림 */}
+      <ToastAlert
+        open={toast.open}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        duration={1000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+      />
+
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white"
@@ -665,6 +741,12 @@ export const MissingFormPopup = ({
                                       );
                                     }
                                   }}
+                                  disabled={(date) => {
+                                    // 오늘 날짜 이후의 날짜를 비활성화
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+                                    return date > today;
+                                  }}
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -798,13 +880,24 @@ export const MissingFormPopup = ({
           </Form>
         </div>
         <DialogFooter className="px-6">
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              취소
-            </Button>
-            <Button type="submit" form="missing">
-              등록하기
-            </Button>
+          <div>
+            {!loginUser.isLoggedIn && (
+              <p className="text-xs text-red-600 text-right mb-1">
+                로그인 후 등록가능합니다.
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                취소
+              </Button>
+              <Button
+                type="submit"
+                form="missing"
+                disabled={!loginUser.isLoggedIn || isSubmitting}
+              >
+                {isSubmitting ? "등록 중..." : "등록하기"}
+              </Button>
+            </div>
           </div>
         </DialogFooter>
       </DialogContent>

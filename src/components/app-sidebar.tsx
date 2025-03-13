@@ -24,7 +24,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="max-lg:w-[18rem]">
+    <Sidebar>
       {/* 헤더 영역 */}
       <SidebarHeader />
 
