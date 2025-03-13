@@ -31,7 +31,7 @@ export default function MainPage() {
             }
 
             <div className={`fixed ${isMobile ? "inset-0 top-[120px]" : "inset-0"}`}>
-                <NcpMap currentLocation={location}/>
+                <NcpMap currentLocation={location} buttonStates={buttonStates} />
             </div>
         </div>
     );
