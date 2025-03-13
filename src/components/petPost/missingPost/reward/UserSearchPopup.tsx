@@ -14,6 +14,7 @@ import { backUrl } from "@/constants.ts";
 import { ConfirmationAlert } from "@/components/petPost/missingPost/reward/ConfirmationAlert";
 import { ChargeNeededAlert } from "@/components/petPost/missingPost/reward/ChargeNeededAlert";
 import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
+import {useAuth} from "@/contexts/AuthContext.tsx";
 
 interface UserSearchPopupProps {
     open: boolean;
@@ -47,6 +48,8 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
     // 팝업 상태 관리
     const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
     const [showChargeNeeded, setShowChargeNeeded] = useState<boolean>(false);
+
+    const loginUserId = useAuth().userData?.id;
 
     // ToastAlert 상태 관리
     const [toast, setToast] = useState({
@@ -88,7 +91,7 @@ export const UserSearchPopup: React.FC<UserSearchPopupProps> = ({
         setError(null);
 
         try {
-            const response = await axios.get(`${backUrl}/api/v1/searchMember`, {
+            const response = await axios.get(`${backUrl}/api/v1/searchMember/${loginUserId}`, {
                 params: { kw: searchQuery },
                 withCredentials: true,
             });
