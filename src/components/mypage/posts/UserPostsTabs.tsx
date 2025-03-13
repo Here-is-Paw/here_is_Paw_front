@@ -1,36 +1,50 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, AlertCircle, Search } from "lucide-react";
 import { PetList } from "@/types/mypet";
-import { MissingDetail } from "@/components/petPost/missingPost/MissingDetail";
 import { FindingDetail } from "@/components/petPost/findingPost/FindingDetail";
-import { MissingFormPopup } from "@/components/petPost/missingPost/MissingPost";
 import { FindingFormPopup } from "@/components/petPost/findingPost/FindingPost";
+import { MissingDetail } from "@/components/petPost/missingPost/MissingDetail";
+import { MissingFormPopup } from "@/components/petPost/missingPost/MissingPost";
 
 // 게시글 타입 정의
-type PostType = 'missing' | 'finding';
+type PostType = "missing" | "finding";
 
 // 게시글 타입 상수
 const POST_TYPE = {
-  MISSING: 'missing' as PostType,
-  FINDING: 'finding' as PostType
+  MISSING: "missing" as PostType,
+  FINDING: "finding" as PostType,
 };
 
 interface UserPostsTabsProps {
   userMissing: PetList[];
   userFinding: PetList[];
-  refreshPosts: () => Promise<void>
+  refreshPosts: () => Promise<void>;
 }
 
-export function UserPostsTabs({ userMissing, userFinding, refreshPosts }: UserPostsTabsProps) {
+export function UserPostsTabs({
+  userMissing,
+  userFinding,
+  refreshPosts,
+}: UserPostsTabsProps) {
   const [activeTab, setActiveTab] = useState<PostType>(POST_TYPE.MISSING);
 
   // 상세보기 관련 상태
-  const [selectedMissingId, setSelectedMissingId] = useState<number | undefined>(undefined);
-  const [selectedFindingId, setSelectedFindingId] = useState<number | undefined>(undefined);
+  const [selectedMissingId, setSelectedMissingId] = useState<
+    number | undefined
+  >(undefined);
+  const [selectedFindingId, setSelectedFindingId] = useState<
+    number | undefined
+  >(undefined);
   const [isMissingDetailOpen, setIsMissingDetailOpen] = useState(false);
   const [isFindingDetailOpen, setIsFindingDetailOpen] = useState(false);
 
@@ -73,191 +87,233 @@ export function UserPostsTabs({ userMissing, userFinding, refreshPosts }: UserPo
   };
 
   return (
-      <>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-medium">나의 게시글</CardTitle>
-            <CardDescription>
-              등록한 실종/발견 게시글을 확인하고 관리하세요
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PostType)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value={POST_TYPE.MISSING} className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  실종 게시글
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-medium">나의 게시글</CardTitle>
+          <CardDescription>
+            등록한 실종/발견 게시글을 확인하고 관리하세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as PostType)}
+            className="w-full"
+          >
+            <div className="px-6 pb-3">
+              <TabsList className="grid w-full grid-cols-2 h-auto">
+                <TabsTrigger
+                  value={POST_TYPE.MISSING}
+                  className="flex flex-col gap-1 h-full"
+                >
                   {userMissing.length > 0 && (
-                      <Badge variant="secondary" className="ml-1">
-                        {userMissing.length}
-                      </Badge>
+                    <Badge variant="secondary" className="flex-1">
+                      {userMissing.length}
+                    </Badge>
                   )}
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-auto" />
+                    <span className="flex-auto">실종 게시글</span>
+                  </div>
                 </TabsTrigger>
-                <TabsTrigger value={POST_TYPE.FINDING} className="flex items-center gap-2">
-                  <Search className="w-4 h-4" />
-                  발견 게시글
+                <TabsTrigger
+                  value={POST_TYPE.FINDING}
+                  className="flex items-center gap-2 h-full"
+                >
                   {userFinding.length > 0 && (
-                      <Badge variant="secondary" className="ml-1">
-                        {userFinding.length}
-                      </Badge>
+                    <Badge variant="secondary" className="ml-1">
+                      {userFinding.length}
+                    </Badge>
                   )}
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4" />
+                    <span className="flex-auto">발견 게시글</span>
+                  </div>
                 </TabsTrigger>
               </TabsList>
+            </div>
 
-              {/* 실종 게시글 탭 내용 */}
-              <TabsContent value={POST_TYPE.MISSING} className="space-y-4">
-                {userMissing.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="text-gray-400 mb-4">등록된 실종 게시글이 없습니다</div>
-                      <div className="flex justify-center mt-4">
-                        <Button
-                            onClick={() => handleAddPost(POST_TYPE.MISSING)}
-                            variant="outline"
-                            className="flex items-center gap-2"
-                        >
-                          <PlusCircle className="w-4 h-4"/>
-                          실종 게시글 추가
-                        </Button>
-                      </div>
-                    </div>
-                ) : (
-                    <>
-                      <div className="grid gap-4">
-                        {userMissing.map((post) => (
-                            <Card
-                                key={post.id}
-                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => handleViewPost(post.id, POST_TYPE.MISSING)}
-                            >
-                              <div className="flex flex-col sm:flex-row">
-                                <div
-                                    className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
-                                    style={{
-                                      backgroundImage: post.pathUrl ? `url(${post.pathUrl})` : 'none',
-                                      backgroundSize: 'cover',
-                                      backgroundPosition: 'center'
-                                    }}
-                                />
-                                <div className="p-4 flex-1">
-                                  <div className="flex justify-between items-start">
-                                    <h3 className="font-medium line-clamp-1">{post.breed}</h3>
-                                    <Badge variant="destructive">실종</Badge>
-                                  </div>
-                                  <p className="text-sm text-gray-500 mt-1 line-clamp-1">{post.location}</p>
-                                </div>
-                              </div>
-                            </Card>
-                        ))}
-                      </div>
-                      <div className="flex justify-center mt-4">
-                        <Button
-                            onClick={() => handleAddPost(POST_TYPE.MISSING)}
-                            variant="outline"
-                            className="flex items-center gap-2"
-                        >
-                          <PlusCircle className="w-4 h-4" />
-                          실종 게시글 추가
-                        </Button>
-                      </div>
-                    </>
-                )}
-              </TabsContent>
+            {/* 실종 게시글 탭 내용 */}
+            <TabsContent
+              value={POST_TYPE.MISSING}
+              className="space-y-4 mt-0 px-6 pb-6 pt-3 h-96 overflow-y-auto"
+            >
+              {userMissing.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 mb-4">
+                    등록된 실종 게시글이 없습니다
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => handleAddPost(POST_TYPE.MISSING)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      실종 게시글 추가
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4">
+                    {userMissing.map((post) => (
+                      <Card
+                        key={post.id}
+                        className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() =>
+                          handleViewPost(post.id, POST_TYPE.MISSING)
+                        }
+                      >
+                        <div className="flex flex-col sm:flex-row">
+                          <div
+                            className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
+                            style={{
+                              backgroundImage: post.pathUrl
+                                ? `url(${post.pathUrl})`
+                                : "none",
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }}
+                          />
+                          <div className="p-4 flex-1">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-medium line-clamp-1">
+                                {post.breed}
+                              </h4>
+                              <Badge variant="destructive">실종</Badge>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                              {post.location}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => handleAddPost(POST_TYPE.MISSING)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      실종 게시글 추가
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
 
-              {/* 발견 게시글 탭 내용 */}
-              <TabsContent value={POST_TYPE.FINDING} className="space-y-4">
-                {userFinding.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="text-gray-400 mb-4">등록된 발견 게시글이 없습니다</div>
-                      <div className="flex justify-center mt-4">
-                        <Button
-                            onClick={() => handleAddPost(POST_TYPE.FINDING)}
-                            variant="outline"
-                            className="flex items-center gap-2"
-                        >
-                          <PlusCircle className="w-4 h-4"/>
-                          발견 게시글 추가
-                        </Button>
-                      </div>
-                    </div>
-                ) : (
-                    <>
-                      <div className="grid gap-4">
-                        {userFinding.map((post) => (
-                            <Card
-                                key={post.id}
-                                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => handleViewPost(post.id, POST_TYPE.FINDING)}
-                            >
-                              <div className="flex flex-col sm:flex-row">
-                                <div
-                                    className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
-                                    style={{
-                                      backgroundImage: post.pathUrl ? `url(${post.pathUrl})` : 'none',
-                                      backgroundSize: 'cover',
-                                      backgroundPosition: 'center'
-                                    }}
-                                />
-                                <div className="p-4 flex-1">
-                                  <div className="flex justify-between items-start">
-                                    <h3 className="font-medium line-clamp-1">{post.breed}</h3>
-                                    <Badge variant="secondary">발견</Badge>
-                                  </div>
-                                  <p className="text-sm text-gray-500 mt-1 line-clamp-1">{post.location}</p>
-                                </div>
-                              </div>
-                            </Card>
-                        ))}
-                      </div>
-                      <div className="flex justify-center mt-4">
-                        <Button
-                            onClick={() => handleAddPost(POST_TYPE.FINDING)}
-                            variant="outline"
-                            className="flex items-center gap-2"
-                        >
-                          <PlusCircle className="w-4 h-4" />
-                          발견 게시글 추가
-                        </Button>
-                      </div>
-                    </>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+            {/* 발견 게시글 탭 내용 */}
+            <TabsContent
+              value={POST_TYPE.FINDING}
+              className="space-y-4 px-6 pb-6 h-96 overflow-y-auto"
+            >
+              {userFinding.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 mb-4">
+                    등록된 발견 게시글이 없습니다
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => handleAddPost(POST_TYPE.FINDING)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      발견 게시글 추가
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4">
+                    {userFinding.map((post) => (
+                      <Card
+                        key={post.id}
+                        className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() =>
+                          handleViewPost(post.id, POST_TYPE.FINDING)
+                        }
+                      >
+                        <div className="flex flex-col sm:flex-row">
+                          <div
+                            className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
+                            style={{
+                              backgroundImage: post.pathUrl
+                                ? `url(${post.pathUrl})`
+                                : "none",
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }}
+                          />
+                          <div className="p-4 flex-1">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-medium line-clamp-1">
+                                {post.breed}
+                              </h4>
+                              <Badge variant="secondary">발견</Badge>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                              {post.location}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => handleAddPost(POST_TYPE.FINDING)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      발견 게시글 추가
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-        {/* 실종 게시글 상세 보기 모달 */}
-        {selectedMissingId && (
-            <MissingDetail
-                petId={selectedMissingId}
-                open={isMissingDetailOpen}
-                onOpenChange={setIsMissingDetailOpen}
-                onChatModalOpen={handleChatModalOpen}
-            />
-        )}
-
-        {/* 발견 게시글 상세 보기 모달 */}
-        {selectedFindingId && (
-            <FindingDetail
-                petId={selectedFindingId}
-                open={isFindingDetailOpen}
-                onOpenChange={setIsFindingDetailOpen}
-                onChatModalOpen={handleChatModalOpen}
-            />
-        )}
-
-        {/* 실종 게시글 작성 모달 */}
-        <MissingFormPopup
-            open={isMissingFormOpen}
-            onOpenChange={setIsMissingFormOpen}
-            onSuccess={handlePostSuccess}
+      {/* 실종 게시글 상세 보기 모달 */}
+      {selectedMissingId && (
+        <MissingDetail
+          petId={selectedMissingId}
+          open={isMissingDetailOpen}
+          onOpenChange={setIsMissingDetailOpen}
+          onChatModalOpen={handleChatModalOpen}
         />
+      )}
 
-        {/* 발견 게시글 작성 모달 */}
-        <FindingFormPopup
-            open={isFindingFormOpen}
-            onOpenChange={setIsFindingFormOpen}
-            onSuccess={handlePostSuccess}
+      {/* 발견 게시글 상세 보기 모달 */}
+      {selectedFindingId && (
+        <FindingDetail
+          petId={selectedFindingId}
+          open={isFindingDetailOpen}
+          onOpenChange={setIsFindingDetailOpen}
+          onChatModalOpen={handleChatModalOpen}
         />
-      </>
+      )}
+
+      {/* 실종 게시글 작성 모달 */}
+      <MissingFormPopup
+        open={isMissingFormOpen}
+        onOpenChange={setIsMissingFormOpen}
+        onSuccess={handlePostSuccess}
+      />
+
+      {/* 발견 게시글 작성 모달 */}
+      <FindingFormPopup
+        open={isFindingFormOpen}
+        onOpenChange={setIsFindingFormOpen}
+        onSuccess={handlePostSuccess}
+      />
+    </>
   );
 }

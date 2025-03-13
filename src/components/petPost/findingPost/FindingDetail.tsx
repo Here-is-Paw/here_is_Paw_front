@@ -8,8 +8,8 @@ import { chatEventBus } from "@/contexts/ChatContext.tsx";
 import { FindingDetailData } from "@/types/finding.ts";
 import { petUtils } from "@/types/pet.common.ts";
 import { OpenChatRoom } from "@/types/chat.ts";
-
-import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdateTest.tsx";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
+import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdate.tsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 // ChatModal에 필요한 정보를 담는 인터페이스
@@ -41,6 +41,22 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   const { refreshChatRooms } = useChatContext();
 
   // console.log(userData);
+  // Toast 알림 상태
+  const [toast, setToast] = useState({
+    open: false,
+    type: "success" as "success" | "error" | "warning",
+    title: "",
+    message: "",
+  });
+
+  const showToast = (type: "success" | "error" | "warning", title: string, message: string) => {
+    setToast({
+      open: true,
+      type,
+      title,
+      message,
+    });
+  };
 
   useEffect(() => {
     const fetchPetDetail = async () => {
@@ -125,7 +141,8 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
         });
 
         if (response.status === 200 || response.status === 201) {
-          alert("발견 신고가 성공적으로 삭제되었습니다!");
+          // alert("발견 신고가 성공적으로 삭제되었습니다!");
+          showToast("success", "발견 신고 삭제 완료", "발견 신고가 성공적으로 삭제되었습니다.");
 
           await refreshPets();
 
@@ -137,11 +154,12 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
             onSuccess();
           }
         } else {
-          alert("삭제 실패!");
+          showToast("error", "발견 신고 삭제 실패", "발견신고 삭제에 실패했습니다.");
         }
       } catch (err) {
         console.error("Failed to delete pet details:", err);
-        alert("오류가 발생했습니다.");
+        // alert("오류가 발생했습니다.");
+        showToast("error", "발견 신고 삭제 실패", "발견신고 삭제에 실패했습니다.");
       }
     }
   };
@@ -173,13 +191,13 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       console.log("작성자 ID(authorId):", petAny.authorId);
 
       // 우선순위에 따라 ID 필드 확인
-      if (petAny.memberId && typeof petAny.memberId === 'number' && petAny.memberId > 0) {
+      if (petAny.memberId && typeof petAny.memberId === "number" && petAny.memberId > 0) {
         console.log("memberId 필드 사용");
         targetUserId = petAny.memberId;
-      } else if (petAny.member_id && typeof petAny.member_id === 'number' && petAny.member_id > 0) {
+      } else if (petAny.member_id && typeof petAny.member_id === "number" && petAny.member_id > 0) {
         console.log("member_id 필드 사용");
         targetUserId = petAny.member_id;
-      } else if (petAny.authorId && typeof petAny.authorId === 'number' && petAny.authorId > 0) {
+      } else if (petAny.authorId && typeof petAny.authorId === "number" && petAny.authorId > 0) {
         console.log("authorId 필드 사용");
         targetUserId = petAny.authorId;
       } else {
@@ -191,10 +209,10 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       console.log("최종 선택된 targetUserId:", targetUserId);
       console.log("targetUserId 타입:", typeof targetUserId);
 
-      // 🔴 추가: 전역에서 이미 열린 채팅방인지 확인
-      const isAlreadyOpenEvent = new CustomEvent('check_open_chat_room', {
+      // 추가: 전역에서 이미 열린 채팅방인지 확인
+      const isAlreadyOpenEvent = new CustomEvent("check_open_chat_room", {
         detail: { targetUserId: targetUserId },
-        cancelable: true // 이벤트 취소 가능하도록 설정
+        cancelable: true, // 이벤트 취소 가능하도록 설정
       });
 
       const canProceed = window.dispatchEvent(isAlreadyOpenEvent);
@@ -208,12 +226,14 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
 
       // NavBar의 SSE 연결 상태 확인 또는 트리거 - 중요!
       console.log("연락하기 - NavBar SSE 연결 상태 확인");
-      const sseConnected = window.dispatchEvent(new CustomEvent('check_sse_connection', {
-        detail: {
-          userId: targetUserId,
-          source: 'contact_button'
-        }
-      }));
+      const sseConnected = window.dispatchEvent(
+        new CustomEvent("check_sse_connection", {
+          detail: {
+            userId: targetUserId,
+            source: "contact_button",
+          },
+        })
+      );
       console.log("SSE 연결 확인 이벤트 발생:", sseConnected);
 
       // API 요청 - targetUserId를 명시적으로 숫자로 변환하여 전송
@@ -221,19 +241,13 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       console.log("채팅방 생성 API 요청 파라미터:", requestParams);
 
       // NavBar의 createChatRoom 함수와 유사한 방식으로 구현
-      const response = await axios.post(
-        `${backUrl}/api/v1/chat/rooms`,
-        requestParams,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: document.cookie.includes("accessToken")
-              ? `Bearer ${document.cookie.split('accessToken=')[1].split(';')[0]}`
-              : '',
-          },
-          withCredentials: true,
-        }
-      );
+      const response = await axios.post(`${backUrl}/api/v1/chat/rooms`, requestParams, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: document.cookie.includes("accessToken") ? `Bearer ${document.cookie.split("accessToken=")[1].split(";")[0]}` : "",
+        },
+        withCredentials: true,
+      });
 
       // 응답 로깅
       console.log("채팅방 생성/조회 응답:", response.data);
@@ -242,9 +256,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       console.log("타겟 사용자 ID:", response.data.data.targetUserId);
 
       // 타켓 유저 프로필 사진 처리
-      const validImageUrl = getValidImageUrl(
-        response.data.data.targetUserImageUrl
-      );
+      const validImageUrl = getValidImageUrl(response.data.data.targetUserImageUrl);
 
       // 채팅방 정보 설정
       const chatRoomId = response.data.data.id;
@@ -266,30 +278,34 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
         targetUserId: response.data.data.targetUserId,
         chatMessages: [],
         modifiedDate: new Date().toISOString(),
-        isOpen: true // 명시적으로 열린 상태로 설정
+        isOpen: true, // 명시적으로 열린 상태로 설정
       };
 
       // 채팅방 목록에 새 채팅방 추가 이벤트 발행
       chatEventBus.emitAddChatRoom(openChatRoom);
 
       // 채팅방 열림 상태를 전역 상태에 등록 (중요!)
-      window.dispatchEvent(new CustomEvent('chat_room_opened', {
-        detail: {
-          roomId: chatRoomId,
-          isOpen: true
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("chat_room_opened", {
+          detail: {
+            roomId: chatRoomId,
+            isOpen: true,
+          },
+        })
+      );
 
       // 추가: 연락하기에서 열린 채팅방 이벤트 발생 (네이밍 다르게 하여 중복 방지)
       console.log(`FindingDetail에서 채팅방 ${chatRoomId} 열림 이벤트 발생`);
-      window.dispatchEvent(new CustomEvent('contact_chat_opened', {
-        detail: {
-          roomId: chatRoomId,
-          chatRoom: openChatRoom,
-          source: 'finding_detail',
-          timestamp: new Date().getTime()
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("contact_chat_opened", {
+          detail: {
+            roomId: chatRoomId,
+            chatRoom: openChatRoom,
+            source: "finding_detail",
+            timestamp: new Date().getTime(),
+          },
+        })
+      );
 
       // 채팅방 목록 갱신 이벤트 발행
       refreshChatRooms();
@@ -297,11 +313,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
       // 읽음 처리 API 호출 - 중요!
       try {
         console.log(`채팅방 ${chatRoomId} 읽음 처리 API 호출`);
-        await axios.post(
-          `${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`,
-          {},
-          { withCredentials: true }
-        );
+        await axios.post(`${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`, {}, { withCredentials: true });
         console.log(`채팅방 ${chatRoomId} 읽음 처리 성공`);
       } catch (error) {
         console.error(`채팅방 ${chatRoomId} 읽음 처리 실패:`, error);
@@ -325,20 +337,13 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
         console.log("이미 존재하는 채팅방:", err.response.data);
 
         // 이미 존재하는 채팅방 데이터가 있는 경우
-        if (
-          err.response.data &&
-          err.response.data.data &&
-          err.response.data.data.id
-        ) {
+        if (err.response.data && err.response.data.data && err.response.data.data.id) {
           const existingChatRoom = err.response.data.data;
           const chatRoomId = existingChatRoom.id;
 
           // 기존 채팅방 정보 활용하여 채팅방 열기
-          const validImageUrl = getValidImageUrl(
-            existingChatRoom.targetUserImageUrl
-          );
-          const targetUserNickname =
-            existingChatRoom.targetUserNickname || "상대방";
+          const validImageUrl = getValidImageUrl(existingChatRoom.targetUserImageUrl);
+          const targetUserNickname = existingChatRoom.targetUserNickname || "상대방";
 
           // 중요: 채팅방 데이터 메시지 배열 초기화 확인
           if (!existingChatRoom.chatMessages) {
@@ -349,40 +354,41 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
           const openChatRoom: OpenChatRoom = {
             id: chatRoomId,
             chatUserNickname: existingChatRoom.chatUserNickname || "사용자",
-            chatUserImageUrl: getValidImageUrl(
-              existingChatRoom.chatUserImageUrl
-            ),
+            chatUserImageUrl: getValidImageUrl(existingChatRoom.chatUserImageUrl),
             chatUserId: existingChatRoom.chatUserId,
             targetUserNickname: targetUserNickname,
             targetUserImageUrl: validImageUrl,
             targetUserId: existingChatRoom.targetUserId,
             chatMessages: existingChatRoom.chatMessages || [],
-            modifiedDate:
-              existingChatRoom.modifiedDate || new Date().toISOString(),
-            isOpen: true // 명시적으로 열린 상태로 설정
+            modifiedDate: existingChatRoom.modifiedDate || new Date().toISOString(),
+            isOpen: true, // 명시적으로 열린 상태로 설정
           };
 
           // 채팅방 목록에 추가
           chatEventBus.emitAddChatRoom(openChatRoom);
 
           // 채팅방 열림 상태를 전역 상태에 등록 (중요!)
-          window.dispatchEvent(new CustomEvent('chat_room_opened', {
-            detail: {
-              roomId: chatRoomId,
-              isOpen: true
-            }
-          }));
+          window.dispatchEvent(
+            new CustomEvent("chat_room_opened", {
+              detail: {
+                roomId: chatRoomId,
+                isOpen: true,
+              },
+            })
+          );
 
           // 추가: 연락하기에서 열린 채팅방 이벤트 발생 (네이밍 다르게 하여 중복 방지)
           console.log(`FindingDetail에서 채팅방 ${chatRoomId} 열림 이벤트 발생`);
-          window.dispatchEvent(new CustomEvent('contact_chat_opened', {
-            detail: {
-              roomId: chatRoomId,
-              chatRoom: openChatRoom,
-              source: 'finding_detail',
-              timestamp: new Date().getTime()
-            }
-          }));
+          window.dispatchEvent(
+            new CustomEvent("contact_chat_opened", {
+              detail: {
+                roomId: chatRoomId,
+                chatRoom: openChatRoom,
+                source: "finding_detail",
+                timestamp: new Date().getTime(),
+              },
+            })
+          );
 
           // 채팅방 목록 갱신
           refreshChatRooms();
@@ -390,11 +396,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
           // 읽음 처리 API 호출 - 중요!
           try {
             console.log(`채팅방 ${chatRoomId} 읽음 처리 API 호출`);
-            axios.post(
-              `${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`,
-              {},
-              { withCredentials: true }
-            );
+            axios.post(`${backUrl}/api/v1/chat/${chatRoomId}/mark-as-read`, {}, { withCredentials: true });
             console.log(`채팅방 ${chatRoomId} 읽음 처리 성공`);
           } catch (error) {
             console.error(`채팅방 ${chatRoomId} 읽음 처리 실패:`, error);
@@ -469,6 +471,15 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
+        {/* Toast 알림 */}
+        <ToastAlert
+          open={toast.open}
+          type={toast.type}
+          title={toast.title}
+          message={toast.message}
+          duration={3000}
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        />
         <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white" onClick={(e) => e.stopPropagation()}>
           <DialogHeader className="space-y-2 text-center px-6">
             <DialogTitle className="text-2xl font-bold text-primary">발견했개</DialogTitle>
@@ -523,6 +534,10 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
                 <dd>{pet.location || "지역 없음"}</dd>
+              </dl>
+              <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">상세 주소</dt>
+                <dd>{pet.detailAddr || "상세 주소 없음"}</dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">특이사항</dt>

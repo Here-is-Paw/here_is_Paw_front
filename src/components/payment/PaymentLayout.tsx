@@ -1,19 +1,15 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { SuccessPage } from './Success';
-import { FailPage } from './Fail';
-import { CheckoutPage } from './Checkout';
+import { ReactNode } from 'react';
 
-function App() {
+interface PaymentLayoutProps {
+  children: ReactNode;
+}
+
+function PaymentLayout({ children }: PaymentLayoutProps) {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<CheckoutPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/success" element={<SuccessPage />} />
-        <Route path="/fail" element={<FailPage />} />
-      </Routes>
-    </Router>
+      <div className="payment-wrapper">
+        {children}
+      </div>
   );
 }
 
-export default App;
+export default PaymentLayout;
