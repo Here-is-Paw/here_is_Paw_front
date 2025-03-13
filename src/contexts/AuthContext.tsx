@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import axios from 'axios';
 import { backUrl } from '@/constants';
 import {User} from "@/types/user.ts";
+import {useRadius} from "@/contexts/RadiusContext.tsx";
 
 interface AuthContextType {
     isLoggedIn: boolean;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [userData, setUserData] = useState<User | null>(null);
+    const {radius} = useRadius();
 
     // 인증 상태 확인 함수
     const checkAuthStatus = async (): Promise<boolean> => {
@@ -50,9 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             // 백엔드 로그아웃 API가 있다면 호출
-            // await axios.post(`${backUrl}/api/v1/members/logout`, {}, { withCredentials: true });
+            await axios.patch(`${backUrl}/api/v1/members/radius`, {radius}, {withCredentials: true});
+            await axios.delete(`${backUrl}/api/v1/members/logout`, { withCredentials: true });
 
             setIsLoggedIn(false);
+
+            window.location.reload();
+
         } catch (error) {
             console.error('로그아웃 오류:', error);
         }

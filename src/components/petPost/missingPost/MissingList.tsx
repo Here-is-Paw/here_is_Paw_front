@@ -56,14 +56,12 @@ export function MissingList() {
     // observer 콜백 함수
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
-      console.log("헤스모어 : ", missingHasMore);
       if (
           entry.isIntersecting &&
           missingHasMore &&
           !isLoading &&
           !initialLoad
       ) {
-        console.log("Loading more missing data...");
         // 여기를 수정: "missing" 타입 명시적으로 전달
         loadMorePets("missing");
       }
@@ -116,8 +114,6 @@ export function MissingList() {
       loadMorePets("missing");
     }
   };
-
-  console.log("missingPet: ", missingPets);
 
   return (
       <>
