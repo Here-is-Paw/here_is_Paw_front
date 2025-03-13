@@ -16,7 +16,7 @@ export interface MissingFormData {
   file: File;
 }
 
-export const defaultValues: MissingFormData = {
+export const formDefaultValues = {
   id: 0,
   name: "",
   breed: "",
@@ -34,6 +34,59 @@ export const defaultValues: MissingFormData = {
   file: new File([], "placeholder.jpg", { type: "image/jpeg" }),
 };
 
+export interface MissingDetailFormData {
+  id: number;
+
+  // 유저 정보
+  memberId: number;
+  nickname: string;
+
+  // 필수값
+  name: string;
+  breed: string;
+  location: string;
+  x: number; // Point.getX() 대신 사용
+  y: number; // Point.getY() 대신 사용
+  file: File | string;
+  pathUrl: string;
+
+  // 선택 값
+  serialNumber?: string;
+  color?: string;
+  gender?: number;
+  age?: number;
+  neutered?: number;
+  etc?: string;
+  lostDate?: string; // ISO 8601 형식의 문자열로 저장 (ex. "2025-03-09T12:00:00Z")
+  detailAddr?: string;
+  missingState: number;
+
+  // 고유 missing 값
+  reward?: number;
+}
+
+export const defaultValues: MissingDetailFormData = {
+  id: 0,
+  name: "",
+  breed: "",
+  x: 0,
+  y: 0,
+  location: "",
+  color: "",
+  serialNumber: "",
+  gender: 0,
+  neutered: 0,
+  age: 0,
+  lostDate: "",
+  etc: "",
+  reward: 0,
+  missingState: 0,
+  file: new File([], "placeholder.jpg", { type: "image/jpeg" }),
+  memberId: 1,
+  nickname: "",
+  pathUrl: "",
+  detailAddr: "",
+};
 export interface MissingDetailData {
   id: number;
 
@@ -45,8 +98,9 @@ export interface MissingDetailData {
   name: string;
   breed: string;
   location: string;
-  x: number;  // Point.getX() 대신 사용
-  y: number;  // Point.getY() 대신 사용
+  x: number; // Point.getX() 대신 사용
+  y: number; // Point.getY() 대신 사용
+  file: File | string;
   pathUrl: string;
 
   // 선택 값
@@ -57,6 +111,8 @@ export interface MissingDetailData {
   neutered?: number;
   etc?: string;
   lostDate?: string; // ISO 8601 형식의 문자열로 저장 (ex. "2025-03-09T12:00:00Z")
+  detailAddr?: string;
+  missingState: number;
 
   // 고유 missing 값
   reward?: number;
@@ -78,7 +134,6 @@ export const MissingStateText: Record<MissingState, string> = {
 
 // 공통으로 사용되는 유틸리티 함수들
 export const missingUtils = {
-
   // missingState 값에 따른 표시 문자열 결정
   getMissingStateText: (state: number): string => {
     return (
@@ -107,4 +162,23 @@ export const missingUtils = {
     if (!reward) return "사례금 없음";
     return `${reward.toLocaleString()}원`;
   },
+};
+
+export const parseLocation = (locationString: string) => {
+  if (!locationString) return { mainAddress: "", detailAddress: "" };
+
+  const parts = locationString.split("&&");
+
+  if (parts.length > 1) {
+    return {
+      mainAddress: parts[0].trim(),
+      detailAddress: parts[1].trim(),
+    };
+  }
+
+  // If there's no separator, treat the whole string as the main address
+  return {
+    mainAddress: locationString.trim(),
+    detailAddress: "",
+  };
 };
