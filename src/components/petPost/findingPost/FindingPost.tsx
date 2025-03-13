@@ -181,7 +181,7 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
 
       // 지도 주소와 상세 주소를 결합
       const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
-      console.log(data.detailAddr);
+      console.log(data.findDate);
       formData.append("location", combinedAddress);
       formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
@@ -465,7 +465,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                   onSelect={(newDate) => {
                                     setDate(newDate);
                                     if (newDate) {
-                                      field.onChange(newDate.toISOString().split("Z")[0]);
+                                      const dateWith2359 = new Date(newDate);
+                                      dateWith2359.setHours(23, 59, 59);
+
+                                      const isoString = dateWith2359.toISOString().split("Z")[0];
+                                      field.onChange(isoString);
                                     }
                                   }}
                                   initialFocus

@@ -42,8 +42,6 @@ export function ChatRoomList({
   }, [renderTrigger]);
 
   if (!isOpen) return null;
-
-  console.log("채팅방 목록 정보:", chatRooms);
   
   return (
     <div className="absolute top-12 right-16 w-80 bg-white rounded-xl shadow-lg overflow-hidden z-[100] border border-gray-200">
