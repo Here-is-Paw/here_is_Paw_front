@@ -54,7 +54,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
-    const [showUserSearchPopup, setShowUserSearchPopup] = useState<boolean>(false);
+    const [showUserSearchPopup, setShowUserSearchPopup] =
+        useState<boolean>(false);
 
     const {refreshPets} = usePetContext();
     const {mainAddress, detailAddress} = parseLocation(pet?.location || "");
@@ -91,39 +92,6 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         fetchPetDetail();
     }, [petId, open]);
 
-    // 컴포넌트가 마운트되거나 pet 데이터가 변경될 때 콘솔에 데이터 출력
-    useEffect(() => {
-        if (open && pet) {
-            console.log("미씽 디테일 불러온 데이터:", {
-                이름: pet.name,
-                품종: pet.breed,
-                나이: pet.age,
-                성별: pet.gender,
-                색상: pet.color,
-                중성화여부: pet.neutered,
-                등록번호: pet.serialNumber,
-                특이사항: pet.etc,
-                이미지경로: pet.pathUrl,
-                전체데이터: pet,
-            });
-
-            // 작성자 ID 확인 (타입 캐스팅으로 타입 에러 방지)
-            const petAny = pet as any;
-            if (petAny.authorId) {
-                console.log("작성자 ID 확인:", petAny.authorId);
-            } else if (petAny.member_id) {
-                console.log("작성자 ID 확인:", petAny.member_id);
-            } else if (petAny.memberId) {
-                console.log("작성자 ID 확인:", petAny.memberId);
-            } else if (petAny.userId) {
-                console.log("작성자 ID 확인:", petAny.userId);
-            } else if (petAny.ownerId) {
-                console.log("작성자 ID 확인:", petAny.ownerId);
-            } else {
-                console.log("작성자 ID를 찾을 수 없음. 전체 데이터 확인:", pet);
-            }
-        }
-    }, [pet, open]);
 
     if (!pet) return null;
 
