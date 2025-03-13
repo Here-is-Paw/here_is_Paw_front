@@ -734,7 +734,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
               취소
             </Button>
             <Button type="submit" form="missing">
-              등록하기
+              수정하기
             </Button>
           </div>
         </DialogFooter>
