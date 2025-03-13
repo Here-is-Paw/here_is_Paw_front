@@ -12,9 +12,14 @@ interface NcpMapProps {
     error?: { code: number; message: string };
   };
   onLocationSelect?: (location: { lat: number; lng: number }) => void;
+  buttonStates: {
+    lost: boolean;
+    found: boolean;
+    hospital: boolean;
+  };
 }
 
-const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
+const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
@@ -34,8 +39,6 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   const missingMarkersRef = useRef<naver.maps.Marker[]>([]);
   const findingMarkersRef = useRef<naver.maps.Marker[]>([]);
   const careCenterMarkersRef = useRef<naver.maps.Marker[]>([]);
-
-  const [showCareCenters, setShowCareCenters] = useState<boolean>(true);
 
   const getPawMarkerIcon = (isLost: boolean) => {
     const color = isLost ? "#EF4444" : "#22C55E"; // red-500 : green-500
@@ -59,162 +62,93 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     `;
   };
 
+  // Update the createPetMarkers function to show markers when toggle is true
   const createPetMarkers = () => {
     const map = mapInstance.current;
     if (!map) return;
-
+  
     // 기존 마커 제거
     missingMarkersRef.current.forEach((marker) => marker.setMap(null));
     findingMarkersRef.current.forEach((marker) => marker.setMap(null));
-
+  
     // 마커 배열 초기화
     missingMarkersRef.current = [];
     findingMarkersRef.current = [];
-
-    // 잃어버린 반려동물 마커 (빨간색)
-    const newMissingMarkers = missingPets.map((pet) => {
-      const marker = new window.naver.maps.Marker({
-        position: new window.naver.maps.LatLng(pet.y, pet.x),
-        map: map,
-        title: `[실종] ${pet.breed}`,
-        icon: {
-          content: getPawMarkerIcon(true),
-          anchor: new window.naver.maps.Point(12, 12),
-        },
-      });
-
-      window.naver.maps.Event.addListener(marker, "click", () => {
-        alert(
-            `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
-        );
-      });
-
-      return marker;
-    });
-
-    missingMarkersRef.current = newMissingMarkers;
-
-    // 발견된 반려동물 마커 (초록색)
-    const newFindingMarkers = findingPets.map((pet) => {
-      const marker = new window.naver.maps.Marker({
-        position: new window.naver.maps.LatLng(pet.y, pet.x),
-        map: map,
-        title: `[발견] ${pet.breed}`,
-        icon: {
-          content: getPawMarkerIcon(false),
-          anchor: new window.naver.maps.Point(12, 12),
-        },
-      });
-
-      // InfoWindow 생성
-      const infoWindow = new window.naver.maps.InfoWindow({
-        content: `
-          <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; ">
-            <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
-              발견했개
-            </h4>
-            <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-              <tr>
-                <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
-                <td style="color:#333;">${pet.breed ? pet.breed : "미상"}</td>
-              </tr>
-              <tr>
-                <td style="font-weight:bold; color:#555;">특징:</td>
-                <td style="color:#333;">${pet.etc ? pet.etc : "없음"}</td>
-              </tr>
-              <tr>
-                <td style="font-weight:bold; color:#555;">위치:</td>
-                <td style="color:#333;">${pet.location}</td>
-              </tr>
-            </table>
-            <div style="width:100%; height: 300px; margin-bottom:5px;">
-              <img src="${pet.pathUrl}" style="height:100%; width:100%; object-fit: contain;"></img>
-            </div>
-          </div>
-        `,
-        borderWidth: 1,
-        disableAnchor: false, // 앵커 활성화
-        backgroundColor: "white",
-        borderColor: "#08CF5D", // 테두리 색상을 컨텐츠와 일치시킴
-        anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
-        anchorSkew: true, // 앵커 기울임 효과 활성화
-        anchorColor: "white", // 앵커 색상
-
-      });
-
-      // 마커 클릭 이벤트 리스너 추가
-      window.naver.maps.Event.addListener(marker, "click", () => {
-        if (infoWindow.getMap()) {
-          infoWindow.close();
-        } else {
-          infoWindow.open(map, marker);
-        }
-      });
-
-      return marker;
-    });
-
-    findingMarkersRef.current = newFindingMarkers;
-  };
-
-  // 보호센터 마커 생성 함수 수정
-  const createCareCenterMarkers = () => {
-    const map = mapInstance.current;
-    if (!map) return;
   
-    // 기존 보호센터 마커 제거
-    careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
-    careCenterMarkersRef.current = [];
-  
-    // 보호센터 마커 생성
-    const newCareCenterMarkers = careCenters.map((center) => {
-      try {
-        console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
-        
-        const position = new window.naver.maps.LatLng(center.x, center.y);
-        
+    // 잃어버린 반려동물 마커 (빨간색) - buttonStates.lost가 true일 때만 표시
+    if (!buttonStates.lost) {
+      const newMissingMarkers = missingPets.map((pet) => {
         const marker = new window.naver.maps.Marker({
-          position: position,
-          map: showCareCenters ? map : null,
-          title: `[보호소] ${center.name}`,
+          position: new window.naver.maps.LatLng(pet.y, pet.x),
+          map: map,
+          title: `[실종] ${pet.breed}`,
           icon: {
-            content: getCareCenterMarkerIcon(),
-            anchor: new window.naver.maps.Point(18, 18),
+            content: getPawMarkerIcon(true),
+            anchor: new window.naver.maps.Point(12, 12),
           },
-          visible: true,
-          zIndex: 100
         });
-        
-        // 정보창 생성
+  
+        window.naver.maps.Event.addListener(marker, "click", () => {
+          alert(
+              `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
+          );
+        });
+  
+        return marker;
+      });
+  
+      missingMarkersRef.current = newMissingMarkers;
+    }
+  
+    // 발견된 반려동물 마커 (초록색) - buttonStates.found가 true일 때만 표시
+    if (!buttonStates.found) {
+      const newFindingMarkers = findingPets.map((pet) => {
+        const marker = new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(pet.y, pet.x),
+          map: map,
+          title: `[발견] ${pet.breed}`,
+          icon: {
+            content: getPawMarkerIcon(false),
+            anchor: new window.naver.maps.Point(12, 12),
+          },
+        });
+  
+        // InfoWindow 생성
         const infoWindow = new window.naver.maps.InfoWindow({
           content: `
-            <div style="padding:15px; min-width:220px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #000000;">
-              <h4 style="margin:0 0 12px 0; color:#333; font-size:16px; border-bottom:2px solid #000000; padding-bottom:8px;">
-                ${center.name}
+            <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; ">
+              <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
+                발견했개
               </h4>
               <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
                 <tr>
-                  <td style="font-weight:bold; color:#555; width:70px;">주소:</td>
-                  <td style="color:#333;">${center.address}</td>
+                  <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
+                  <td style="color:#333;">${pet.breed ? pet.breed : "미상"}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:bold; color:#555;">전화:</td>
-                  <td style="color:#333;">${center.phoneNumber}</td>
+                  <td style="font-weight:bold; color:#555;">특징:</td>
+                  <td style="color:#333;">${pet.etc ? pet.etc : "없음"}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:bold; color:#555;">운영시간:</td>
-                  <td style="color:#333;">${center.operatingHours}</td>
+                  <td style="font-weight:bold; color:#555;">위치:</td>
+                  <td style="color:#333;">${pet.location}</td>
                 </tr>
               </table>
+              <div style="width:100%; height: 300px; margin-bottom:5px;">
+                <img src="${pet.pathUrl}" style="height:100%; width:100%; object-fit: contain;"></img>
+              </div>
             </div>
           `,
-          borderWidth: 0,
-          disableAnchor: true,
+          borderWidth: 1,
+          disableAnchor: false, // 앵커 활성화
           backgroundColor: "white",
-          borderColor: "transparent",
-          anchorSize: new window.naver.maps.Size(0, 0),
+          borderColor: "#08CF5D", // 테두리 색상을 컨텐츠와 일치시킴
+          anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
+          anchorSkew: true, // 앵커 기울임 효과 활성화
+          anchorColor: "white", // 앵커 색상
+  
         });
-        
+  
         // 마커 클릭 이벤트 리스너 추가
         window.naver.maps.Event.addListener(marker, "click", () => {
           if (infoWindow.getMap()) {
@@ -223,26 +157,94 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             infoWindow.open(map, marker);
           }
         });
-        
-        return marker;
-      } catch (error) {
-        console.error(`마커 생성 오류(${center.name}):`, error);
-        return null;
-      }
-    }).filter(Boolean); // null 값 제거
   
-    // 생성된 마커 배열 저장
-    careCenterMarkersRef.current = newCareCenterMarkers;
-    console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
+        return marker;
+      });
+  
+      findingMarkersRef.current = newFindingMarkers;
+    }
   };
 
-  const toggleCareCenterMarkers = () => {
-    const isVisible = !showCareCenters;
-    setShowCareCenters(isVisible);
+  // Update the createCareCenterMarkers function to show markers when toggle is true
+  const createCareCenterMarkers = () => {
+    const map = mapInstance.current;
+    if (!map) return;
+  
+    // 기존 보호센터 마커 제거
+    careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
+    careCenterMarkersRef.current = [];
+  
+    // buttonStates.hospital이 true일 때만 보호센터 마커 표시
+    if (!buttonStates.hospital) {
+      // 보호센터 마커 생성
+      const newCareCenterMarkers = careCenters.map((center) => {
+        try {
+          console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
+          
+          const position = new window.naver.maps.LatLng(center.x, center.y);
+          
+          const marker = new window.naver.maps.Marker({
+            position: position,
+            map: map,
+            title: `[보호소] ${center.name}`,
+            icon: {
+              content: getCareCenterMarkerIcon(),
+              anchor: new window.naver.maps.Point(18, 18),
+            },
+            visible: true,
+            zIndex: 100
+          });
+          
+          // 정보창 생성
+          const infoWindow = new window.naver.maps.InfoWindow({
+            content: `
+              <div style="padding:15px; min-width:220px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #000000;">
+                <h4 style="margin:0 0 12px 0; color:#333; font-size:16px; border-bottom:2px solid #000000; padding-bottom:8px;">
+                  ${center.name}
+                </h4>
+                <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
+                  <tr>
+                    <td style="font-weight:bold; color:#555; width:70px;">주소:</td>
+                    <td style="color:#333;">${center.address}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:bold; color:#555;">전화:</td>
+                    <td style="color:#333;">${center.phoneNumber}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:bold; color:#555;">운영시간:</td>
+                    <td style="color:#333;">${center.operatingHours}</td>
+                  </tr>
+                </table>
+              </div>
+            `,
+            borderWidth: 0,
+            disableAnchor: true,
+            backgroundColor: "white",
+            borderColor: "transparent",
+            anchorSize: new window.naver.maps.Size(0, 0),
+          });
+          
+          // 마커 클릭 이벤트 리스너 추가
+          window.naver.maps.Event.addListener(marker, "click", () => {
+            if (infoWindow.getMap()) {
+              infoWindow.close();
+            } else {
+              infoWindow.open(map, marker);
+            }
+          });
+          
+          return marker;
+        } catch (error) {
+          console.error(`마커 생성 오류(${center.name}):`, error);
+          return null;
+        }
+      }).filter(Boolean); // null 값 제거
     
-    careCenterMarkersRef.current.forEach(marker => {
-      marker.setMap(isVisible ? mapInstance.current : null);
-    });
+      // 생성된 마커 배열 저장
+      careCenterMarkersRef.current = newCareCenterMarkers;
+      console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
+    }
   };
 
   // 지도 클릭 이벤트 핸들러
@@ -430,32 +432,20 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     };
   }, [currentLocation]);
 
-  // 반려동물 마커 업데이트 - 수정된 코드
+  // 반려동물 마커 업데이트 - 버튼 상태 변경에 반응하도록 수정
   useEffect(() => {
     if (mapInstance.current) {
-      // 조건 제거: 결과가 없어도 항상 createPetMarkers 함수 실행
       createPetMarkers();
     }
-  }, [missingPets, findingPets, mapInstance.current]);
+  }, [missingPets, findingPets, buttonStates.lost, buttonStates.found]);
 
-  // 보호센터 마커 업데이트 - 수정된 코드 
+  // 보호센터 마커 업데이트 - 버튼 상태 변경에 반응하도록 수정
   useEffect(() => {
     if (mapInstance.current) {
-      // 조건 제거: 결과가 없어도 항상 createCareCenterMarkers 함수 실행
       console.log("보호센터 데이터 변경 감지:", careCenters.length);
       createCareCenterMarkers();
     }
-  }, [careCenters, mapInstance.current]);
-
-  // showCareCenters 상태가 변경될 때 마커 표시 여부 업데이트
-  useEffect(() => {
-    if (careCenterMarkersRef.current.length > 0) {
-      careCenterMarkersRef.current.forEach(marker => {
-        marker.setMap(showCareCenters ? mapInstance.current : null);
-      });
-      console.log(`보호센터 마커 표시 상태 변경: ${showCareCenters}`);
-    }
-  }, [showCareCenters]);
+  }, [careCenters, buttonStates.hospital]);
 
   return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
