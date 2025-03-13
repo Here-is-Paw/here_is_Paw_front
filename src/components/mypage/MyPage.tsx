@@ -266,28 +266,6 @@ export function MyPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      console.log("radius 값: ", radius);
-
-      await axios.patch(
-          `${backUrl}/api/v1/members/radius`,
-          { radius },
-          { withCredentials: true }
-      );
-
-      // 백엔드 로그아웃 API 호출 (필요한 경우)
-      await axios.delete(`${backUrl}/api/v1/members/logout`, {
-        withCredentials: true,
-      });
-
-      logout(); // Context 상태 업데이트
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-      showToast("error", "로그아웃 실패", "로그아웃 중 오류가 발생했습니다.");
-    }
-  };
-
   // Render Loading State for Non-Logged In Users
   if (!isLoggedIn) {
     return (
@@ -380,7 +358,7 @@ export function MyPage() {
 
         {/* 로그아웃 버튼 */}
         <SidebarGroup className="p-4">
-          <Button className="w-full" variant="ghost" onClick={handleLogout}>
+          <Button className="w-full" variant="ghost" onClick={logout}>
             로그아웃
           </Button>
         </SidebarGroup>

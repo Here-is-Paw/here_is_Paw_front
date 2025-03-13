@@ -56,7 +56,6 @@ export function FindingList() {
         // observer 콜백 함수
         const handleObserver = (entries: IntersectionObserverEntry[]) => {
             const [entry] = entries;
-            console.log("헤스모어 : ", findingHasMore);
             if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
                 console.log("Loading more finding data...");
                 // 여기를 수정: "finding" 타입 명시적으로 전달
@@ -106,8 +105,6 @@ export function FindingList() {
             loadMorePets("finding");
         }
     };
-
-    console.log("findingPet: ", findingPets);
 
     return (
         <>
