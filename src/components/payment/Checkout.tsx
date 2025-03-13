@@ -89,15 +89,16 @@ export const CheckoutPage: React.FC = () => {
         <div className="box_section" style={{ 
           width: isMobile ? "100%" : "600px", 
           margin: "0 auto", 
-          padding: isMobile ? "20px 15px" : "30px" 
+          padding: isMobile ? "10px 15px 20px" : "15px 30px 30px"
         }}>
-          <div style={{ marginBottom: isMobile ? "20px" : "30px" }}>
+          <div style={{ marginBottom: isMobile ? "15px" : "20px" }}>
             <h2 className="typography--h2" style={{
-              fontSize: isMobile ? "28px" : "48px"
+              fontSize: isMobile ? "18px" : "28px",
+              marginBottom: isMobile ? "10px" : "15px"
             }}>결제 금액 입력</h2>
             <div className="p-flex" style={{ 
               justifyContent: "center", 
-              marginTop: "20px",
+              marginTop: isMobile ? "10px" : "15px",
               flexDirection: isMobile ? "column" : "row"
             }}>
               <input
