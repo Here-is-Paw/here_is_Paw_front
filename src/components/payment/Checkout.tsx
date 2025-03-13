@@ -115,7 +115,8 @@ export const CheckoutPage: React.FC = () => {
                   fontSize: "15px",
                   textAlign: "right",
                   marginRight: isMobile ? "0" : "8px",
-                  marginBottom: isMobile ? "10px" : "0"
+                  marginBottom: isMobile ? "10px" : "0",
+                  backgroundColor: "#ffffff"
                 }}
               />
               <span className="typography--p color--grey700" style={{ 
