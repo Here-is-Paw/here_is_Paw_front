@@ -41,7 +41,11 @@ import LocationPicker from "@/components/location/locationPickerTest.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
 import { ko } from "date-fns/locale";
 import { usePetContext } from "@/contexts/PetContext.tsx";
-import { MissingDetailData, MissingDetailFormData } from "@/types/missing.ts";
+import {
+  MissingDetailData,
+  MissingDetailFormData,
+  parseLocation,
+} from "@/types/missing.ts";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import dayjs from "dayjs";
 
@@ -89,6 +93,8 @@ export const MissingUpdateFormPopup = ({
     missingState: pet.missingState,
   };
 
+  const { mainAddress, detailAddress } = parseLocation(pet.location);
+
   useEffect(() => {
     form.setValue("id", pet.id);
     form.setValue("name", pet.name);
@@ -96,6 +102,7 @@ export const MissingUpdateFormPopup = ({
     form.setValue("x", pet.x);
     form.setValue("y", pet.y);
     form.setValue("location", pet.location);
+    form.setValue("detailAddr", detailAddress);
     form.setValue("color", pet.color);
     form.setValue("serialNumber", pet.serialNumber);
     form.setValue("gender", pet.gender);
@@ -111,10 +118,6 @@ export const MissingUpdateFormPopup = ({
     // reward 상태 업데이트 추가
     setReward(pet.reward || "");
     form.setValue("missingState", pet.missingState);
-    setTimeout(() => {
-      // setImagePreview(pet.pathUrl);
-      console.log(pet.detailAddr);
-    }, 100);
   }, []);
 
   const form = useForm<MissingDetailData>({
@@ -126,6 +129,10 @@ export const MissingUpdateFormPopup = ({
     y: location.coordinates.lng,
     address: "서울시 용산구",
   });
+  // 추가 상세 주소 입력을 위한 상태 추가
+  const [additionalAddressDetails, setAdditionalAddressDetails] =
+    useState(detailAddress);
+
   const [date, setDate] = React.useState<Date>();
 
   const [reward, setReward] = useState<number | "">("");
@@ -182,8 +189,6 @@ export const MissingUpdateFormPopup = ({
 
   const { refreshPets } = usePetContext();
 
-  console.log("수정", pet);
-
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
     if (location.loaded && !location.error) {
@@ -194,9 +199,6 @@ export const MissingUpdateFormPopup = ({
   }, [location, form]);
 
   // 기존 코드는 그대로 유지...
-
-  // 추가 상세 주소 입력을 위한 상태 추가
-  const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
 
   // 위치 선택 핸들러
   const handleLocationSelect = (location: {
@@ -238,7 +240,7 @@ export const MissingUpdateFormPopup = ({
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      setAdditionalAddressDetails("");
+      setAdditionalAddressDetails(detailAddress);
 
       // 날짜 초기화
       setDate(undefined);
@@ -261,6 +263,8 @@ export const MissingUpdateFormPopup = ({
       form.setValue("x", currentGeo.x);
       form.setValue("y", currentGeo.y);
     }
+
+    console.log("additionalAddressDetails---", additionalAddressDetails);
   }, [open, location, form]);
 
   // 팝업 닫기 핸들러
@@ -741,7 +745,7 @@ export const MissingUpdateFormPopup = ({
                         </FormControl>
                         <LocationPicker
                           onLocationSelect={handleLocationSelect}
-                          isMissing={false}
+                          isMissing={true}
                           initialLocation={{
                             x: pet.x,
                             y: pet.y,

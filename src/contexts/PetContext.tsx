@@ -294,7 +294,6 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
                             const newFindingPets = findingResponse.data.data.content || [];
                             setFindingPets(newFindingPets);
                             setFindingHasMore(!findingResponse.data.data.last);
-                            console.log("로그--------------", findingResponse.data.data.last);
                         })
                 );
             } else if (activeFilter === "잃어버렸개") {
