@@ -3,6 +3,7 @@ import { useRadius } from "@/contexts/RadiusContext.tsx";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx";
+import { Hospital } from "lucide-react";
 
 interface NcpMapProps {
   currentLocation: {
@@ -48,9 +49,12 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
   const getCareCenterMarkerIcon = () => {
     return `
-      <svg width="36" height="36" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M30 5C19.5066 5 11 13.5066 11 24C11 28.3085 12.4324 32.3654 14.9001 35.5456L30 55L45.0999 35.5456C47.5676 32.3654 49 28.3085 49 24C49 13.5066 40.4934 5 30 5ZM30 32C25.5817 32 22 28.4183 22 24C22 19.5817 25.5817 16 30 16C34.4183 16 38 19.5817 38 24C38 28.4183 34.4183 32 30 32Z" fill="#000000"/>
-        <circle cx="30" cy="24" r="8" fill="white"/>
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="18" fill="#4B5563"/>
+          <svg x="6" y="6" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 2C8.55228 2 9 2.44772 9 3V5H13V3C13 2.44772 13.4477 2 14 2C14.5523 2 15 2.44772 15 3V5H19V3C19 2.44772 19.4477 2 20 2C20.5523 2 21 2.44772 21 3V5H22C22.5523 5 23 5.44772 23 6V20C23 20.5523 22.5523 21 22 21H2C1.44772 21 1 20.5523 1 20V6C1 5.44772 1.44772 5 2 5H3V3C3 2.44772 3.44772 2 4 2C4.55228 2 5 2.44772 5 3V5H9V3C9 2.44772 8.55228 2 8 2Z" fill="#4B5563" stroke="white" stroke-width="1.5"/>
+          <path d="M12 16V10M9 13H15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
       </svg>
     `;
   };
