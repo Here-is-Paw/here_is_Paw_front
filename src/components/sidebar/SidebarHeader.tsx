@@ -36,7 +36,7 @@ export const SidebarHeader: FC<SidebarHeaderProps> = () => {
             <img src={paw} alt="Logo" className="md:w-8 md:h-8 w-6 h-6" />
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 text-black">
             <NavBar />
           </div>
         </div>
