@@ -65,11 +65,11 @@ export function AppSidebarMobile() {
                 "h-full", // 부모 높이를 채우도록
                 {
                   "overflow-y-auto h-[calc(100vh-80px)]": snap === 1, // 전체 화면 모드일 때 스크롤 가능
-                  "overflow-y-auto max-h-[355px]": snap === "355px", // 작은 모드일 때 높이 제한
+                  "overflow-y-auto max-h-[100vh-80px]": snap === "200px", // 작은 모드일 때 높이 제한
                 }
               )}
             >
-              <div className="min-h-[355px]">
+              <div className="">
                 {/* 최소 높이 보장 */}
                 {renderContent()}
               </div>
