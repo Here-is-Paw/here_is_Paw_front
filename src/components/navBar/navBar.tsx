@@ -13,6 +13,7 @@ import * as StompJs from "@stomp/stompjs";
 import {ChatRoom, OpenChatRoom} from "@/types/chat";
 import {FindingFormPopup} from "@/components/petPost/findingPost/FindingPost.tsx";
 import {NotificationBell} from "@/components/notification/notification";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NavBarProps {
     buttonStates: {
@@ -27,6 +28,7 @@ const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
 export function NavBar({buttonStates, toggleButton}: NavBarProps) {
+    const isMobile = useIsMobile();
     const [isMissingAddOpen, setIsMissingAddOpen] = useState(false);
     const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
 
@@ -917,27 +919,38 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     return (
         <>
-            <nav className="mt-4 fixed right-0 z-[5] w-[calc(100%-24.5rem)]">
-                <div className="relative px-4">
+            <nav
+                className={`fixed right-0
+                ${
+                  !isMobile
+                    ? "mt-4 z-[5] w-[calc(100%-24.5rem)]"
+                    : "mt-2 z-10 w-[calc(100%-8rem)]"
+                }
+                `}
+              >
+                <div className="relative px-4 max-md:px-2">
                     <div
-                        className="relative z-10 flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
+                        className={`relative z-10 flex gap-1 justify-between items-center py-1 min-h-12  backdrop-blur-sm rounded-full
+                          ${!isMobile ? "shadow-lg bg-white " : "border border-green-500"}
+                        `}>
                         <div className="flex-none pl-2">
                             <Button
                                 variant="outline"
                                 size="icon"
-                                className="bg-green-600 rounded-full"
+                                className={`bg-green-600 rounded-full hover:bg-green-700
+                                  ${isMobile && "shadow-lg"}
+                                `}
                                 onClick={() => setIsResistModalOpen(true)}
                             >
                                 <Plus className="h-4 w-4 text-white"/>
                             </Button>
                             {isResistModalOpen && (
-                                <div
-                                    className="absolute top-[3%] left-[0%] bg-white rounded-2xl w-[200px] overflow-hidden z-50 shadow">
+                                <div className="absolute top-0 left-0 bg-white rounded-3xl w-[200px] overflow-hidden z-50 shadow">
                                     <div className="flex-none px-2 py-1">
                                         <Button
                                             variant="outline"
                                             size="icon"
-                                            className="bg-green-600 rounded-full"
+                                            className="bg-green-600 rounded-full hover:bg-green-600"
                                             onClick={() => {
                                                 setIsResistModalOpen(false);
                                             }}
@@ -949,7 +962,11 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                                 variant="ghost"
                                                 className="flex items-center justify-start w-full py-4 pl-0 hover:bg-gray-100 bgr-white h-12"
                                                 onClick={() => {
+                                                  if (!isLoggedIn) {
+                                                    alert("로그인 후 이용해주세요!");
+                                                  } else {
                                                     setIsMissingAddOpen(true);
+                                                  }
                                                 }}
                                             >
                                                 <div
@@ -1017,6 +1034,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
+                                            className={`${isMobile && "text-white"}`}
                                             onClick={handleChatListToggle}
                                         >
                                             <MessageSquare className="h-4 w-4"/>
@@ -1036,10 +1054,15 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                         />
                                     </div>
                                     <NotificationBell/>
-                                    <Button variant="ghost" onClick={logout}>
-                                        <LogOut className="h-4 w-4 mr-2"/>
-                                        로그아웃
-                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size={`${isMobile ? "icon" : "default"}`}
+                                        onClick={logout}
+                                        className={`${isMobile && "text-white"}`}
+                                      >
+                                        <LogOut className="h-4 w-4 md:mr-2" />
+                                        <span className="max-md:sr-only">로그아웃</span>
+                                      </Button>
                                 </>
                             ) : (
                                 <KakaoLoginPopup/>
@@ -1048,12 +1071,19 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     </div>
 
                     {/* FilterButton을 NavBar 아래에 배치 */}
-                    <div className="absolute top-[calc(100%+0.75rem)] right-4">
+                    <div
+                        className={`
+                        ${
+                          !isMobile
+                            ? "absolute top-[calc(100%+0.75rem)] right-4"
+                            : "fixed top-[169px] mt-2 right-2"
+                        }`}
+                      >
                         <FilterButton
-                            buttonStates={buttonStates}
-                            toggleButton={toggleButton}
+                          buttonStates={buttonStates}
+                          toggleButton={toggleButton}
                         />
-                    </div>
+                      </div>
                 </div>
             </nav>
 

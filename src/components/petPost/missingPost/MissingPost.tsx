@@ -482,9 +482,9 @@ export const MissingFormPopup = ({
 
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white"
+        className="max-w-4xl w-[calc(100%-1rem)] h-5/6 py-6 px-0 bg-white rounded"
       >
-        <DialogHeader className="space-y-2 text-center px-6">
+        <DialogHeader className="space-y-2 text-left px-3 md:px-6">
           <DialogTitle className="text-2xl font-bold text-primary">
             반려동물 실종 신고
           </DialogTitle>
@@ -493,14 +493,14 @@ export const MissingFormPopup = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto px-6">
+        <div className="flex-1 overflow-auto px-3 md:px-6">
           <Form {...form}>
             <form
               id="missing"
               onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-4"
             >
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-4">
                   {/* 필수 입력 필드 */}
                   <FormField
@@ -879,8 +879,8 @@ export const MissingFormPopup = ({
             </form>
           </Form>
         </div>
-        <DialogFooter className="px-6">
-          <div>
+        <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6">
+          <div className="w-full">
             {!loginUser.isLoggedIn && (
               <p className="text-xs text-red-600 text-right mb-1">
                 로그인 후 등록가능합니다.

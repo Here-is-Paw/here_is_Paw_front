@@ -19,7 +19,11 @@ interface NcpMapProps {
   };
 }
 
-const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps) => {
+const NcpMap = ({
+  currentLocation,
+  onLocationSelect,
+  buttonStates,
+}: NcpMapProps) => {
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
@@ -30,10 +34,15 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
   const [selectedLocation, setSelectedLocation] =
     useState<naver.maps.LatLng | null>(null);
   const { setUserLocation } = useMapLocation();
-  const { refreshPets, setSearchMode, findingPets, missingPets } = usePetContext();
+  const { refreshPets, setSearchMode, findingPets, missingPets } =
+    usePetContext();
 
   // 동물보호센터 컨텍스트 추가
-  const { careCenters, refreshCenters, setSearchMode: setCenterSearchMode } = useCareCenterContext();
+  const {
+    careCenters,
+    refreshCenters,
+    setSearchMode: setCenterSearchMode,
+  } = useCareCenterContext();
 
   // 마커 레퍼런스 배열 추가
   const missingMarkersRef = useRef<naver.maps.Marker[]>([]);
@@ -90,7 +99,7 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
 
         window.naver.maps.Event.addListener(marker, "click", () => {
           alert(
-              `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
+            `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
           );
         });
 
@@ -135,7 +144,9 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
                 </tr>
               </table>
               <div style="width:100%; height: 300px; margin-bottom:5px;">
-                <img src="${pet.pathUrl}" style="height:100%; width:100%; object-fit: contain;"></img>
+                <img src="${
+                  pet.pathUrl
+                }" style="height:100%; width:100%; object-fit: contain;"></img>
               </div>
             </div>
           `,
@@ -146,7 +157,6 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
           anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
           anchorSkew: true, // 앵커 기울임 효과 활성화
           anchorColor: "white", // 앵커 색상
-
         });
 
         // 마커 클릭 이벤트 리스너 추가
@@ -177,27 +187,30 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
     // buttonStates.hospital이 true일 때만 보호센터 마커 표시
     if (!buttonStates.hospital) {
       // 보호센터 마커 생성
-      const newCareCenterMarkers = careCenters.map((center) => {
-        try {
-          console.log(`보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`);
+      const newCareCenterMarkers = careCenters
+        .map((center) => {
+          try {
+            console.log(
+              `보호센터 좌표: ${center.name}, x=${center.x}, y=${center.y}`
+            );
 
-          const position = new window.naver.maps.LatLng(center.x, center.y);
+            const position = new window.naver.maps.LatLng(center.x, center.y);
 
-          const marker = new window.naver.maps.Marker({
-            position: position,
-            map: map,
-            title: `[보호소] ${center.name}`,
-            icon: {
-              content: getCareCenterMarkerIcon(),
-              anchor: new window.naver.maps.Point(18, 18),
-            },
-            visible: true,
-            zIndex: 100
-          });
+            const marker = new window.naver.maps.Marker({
+              position: position,
+              map: map,
+              title: `[보호소] ${center.name}`,
+              icon: {
+                content: getCareCenterMarkerIcon(),
+                anchor: new window.naver.maps.Point(18, 18),
+              },
+              visible: true,
+              zIndex: 100,
+            });
 
-          // 정보창 생성
-          const infoWindow = new window.naver.maps.InfoWindow({
-            content: `
+            // 정보창 생성
+            const infoWindow = new window.naver.maps.InfoWindow({
+              content: `
               <div style="padding:15px; min-width:220px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #000000;">
                 <h4 style="margin:0 0 12px 0; color:#333; font-size:16px; border-bottom:2px solid #000000; padding-bottom:8px;">
                   ${center.name}
@@ -218,32 +231,37 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
                 </table>
               </div>
             `,
-            borderWidth: 0,
-            disableAnchor: true,
-            backgroundColor: "white",
-            borderColor: "transparent",
-            anchorSize: new window.naver.maps.Size(0, 0),
-          });
+              borderWidth: 0,
+              disableAnchor: true,
+              backgroundColor: "white",
+              borderColor: "transparent",
+              anchorSize: new window.naver.maps.Size(0, 0),
+            });
 
-          // 마커 클릭 이벤트 리스너 추가
-          window.naver.maps.Event.addListener(marker, "click", () => {
-            if (infoWindow.getMap()) {
-              infoWindow.close();
-            } else {
-              infoWindow.open(map, marker);
-            }
-          });
+            // 마커 클릭 이벤트 리스너 추가
+            window.naver.maps.Event.addListener(marker, "click", () => {
+              if (infoWindow.getMap()) {
+                infoWindow.close();
+              } else {
+                infoWindow.open(map, marker);
+              }
+            });
 
-          return marker;
-        } catch (error) {
-          console.error(`마커 생성 오류(${center.name}):`, error);
-          return null;
-        }
-      }).filter(Boolean); // null 값 제거
+            return marker;
+          } catch (error) {
+            console.error(`마커 생성 오류(${center.name}):`, error);
+            return null;
+          }
+        })
+        .filter(Boolean); // null 값 제거
 
       // 생성된 마커 배열 저장
-      careCenterMarkersRef.current = newCareCenterMarkers;
-      console.log(`${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`);
+      careCenterMarkersRef.current = newCareCenterMarkers.filter(
+        (marker): marker is naver.maps.Marker => marker !== null
+      );
+      console.log(
+        `${newCareCenterMarkers.length}개의 보호센터 마커가 지도에 표시되었습니다.`
+      );
     }
   };
 
@@ -305,13 +323,13 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
     if (!selectedLocation) return;
 
     // 검색 전 모든 마커 명시적 초기화 추가
-    careCenterMarkersRef.current.forEach(marker => marker.setMap(null));
+    careCenterMarkersRef.current.forEach((marker) => marker.setMap(null));
     careCenterMarkersRef.current = [];
 
-    missingMarkersRef.current.forEach(marker => marker.setMap(null));
+    missingMarkersRef.current.forEach((marker) => marker.setMap(null));
     missingMarkersRef.current = [];
 
-    findingMarkersRef.current.forEach(marker => marker.setMap(null));
+    findingMarkersRef.current.forEach((marker) => marker.setMap(null));
     findingMarkersRef.current = [];
 
     // UserLocation 상태 업데이트
@@ -359,11 +377,11 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
       try {
         const defaultCenter = new window.naver.maps.LatLng(37.52133, 126.9522);
         const center = currentLocation.coordinates
-            ? new window.naver.maps.LatLng(
-                currentLocation.coordinates.lat,
-                currentLocation.coordinates.lng
+          ? new window.naver.maps.LatLng(
+              currentLocation.coordinates.lat,
+              currentLocation.coordinates.lng
             )
-            : defaultCenter;
+          : defaultCenter;
 
         const mapOptions = {
           center: center,
@@ -419,7 +437,7 @@ const NcpMap = ({ currentLocation, onLocationSelect, buttonStates }: NcpMapProps
     } else {
       const script = document.createElement("script");
       script.src =
-          "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
+        "https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=ozayj4fkh5";
       script.onload = initializeMap;
       document.head.appendChild(script);
     }

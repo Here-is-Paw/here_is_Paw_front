@@ -186,7 +186,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   if (error || !pet) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+        <DialogContent className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white">
           <div className="flex justify-center items-center h-full flex-col">
             <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
             <Button onClick={() => onOpenChange(false)} className="mt-4">
@@ -201,8 +201,8 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
-          <DialogHeader className="space-y-2 text-center px-6">
+        <DialogContent className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white">
+          <DialogHeader className="space-y-2 text-left px-3 md:px-6">
             <DialogTitle className="text-2xl font-bold text-primary">
               잃어버렸개
             </DialogTitle>
@@ -212,7 +212,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
           </DialogHeader>
 
           {/* 내용 영역 */}
-          <div className="px-6 py-4 overflow-auto">
+          <div className="px-3 md:px-6 py-4 overflow-auto">
             <div className="flex flex-col items-center mb-6">
               <div className="h-60 w-full mb-4">
                 {pet?.pathUrl && (
@@ -284,7 +284,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
             </div>
           </div>
 
-          <DialogFooter className="px-6 gap-2">
+          <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6 gap-2">
             {loginUser.userData?.id === pet.memberId && (
               <div className="flex-1 flex gap-1">
                 <Button
@@ -305,7 +305,7 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
                   }}
                 >
                   <Pencil className="h-4 w-4" />
-                  <span>정보 수정</span>
+                  <span>수정</span>
                 </Button>
               </div>
             )}
