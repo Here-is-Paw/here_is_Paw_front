@@ -11,7 +11,6 @@ import {ChatRoomList} from "@/components/chat/ChatRoomList";
 import {ChatModal} from "@/components/chat/ChatModal";
 import * as StompJs from "@stomp/stompjs";
 import {ChatRoom, OpenChatRoom} from "@/types/chat";
-import {useRadius} from "@/contexts/RadiusContext.tsx";
 import {FindingFormPopup} from "@/components/petPost/findingPost/FindingPost.tsx";
 import {NotificationBell} from "@/components/notification/notification";
 
@@ -48,17 +47,23 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
     // 마지막 메시지 시간으로 채팅방 정렬 함수
     const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
         return [...rooms].sort((a, b) => {
-            const aLastMessageTime = a.chatMessages && a.chatMessages.length > 0
-                ? new Date(a.chatMessages[a.chatMessages.length - 1].createdDate ||
-                    a.chatMessages[a.chatMessages.length - 1].createDate ||
-                    a.modifiedDate).getTime()
-                : new Date(a.modifiedDate).getTime();
+            const aLastMessageTime =
+                a.chatMessages && a.chatMessages.length > 0
+                    ? new Date(
+                        a.chatMessages[a.chatMessages.length - 1].createdDate ||
+                        a.chatMessages[a.chatMessages.length - 1].createDate ||
+                        a.modifiedDate
+                    ).getTime()
+                    : new Date(a.modifiedDate).getTime();
 
-            const bLastMessageTime = b.chatMessages && b.chatMessages.length > 0
-                ? new Date(b.chatMessages[b.chatMessages.length - 1].createdDate ||
-                    b.chatMessages[b.chatMessages.length - 1].createDate ||
-                    b.modifiedDate).getTime()
-                : new Date(b.modifiedDate).getTime();
+            const bLastMessageTime =
+                b.chatMessages && b.chatMessages.length > 0
+                    ? new Date(
+                        b.chatMessages[b.chatMessages.length - 1].createdDate ||
+                        b.chatMessages[b.chatMessages.length - 1].createDate ||
+                        b.modifiedDate
+                    ).getTime()
+                    : new Date(b.modifiedDate).getTime();
 
             return bLastMessageTime - aLastMessageTime;
         });
@@ -72,7 +77,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
         // 이벤트 유형에 따른 처리
         const eventType = eventData.type || eventData.eventType;
 
-        if (eventType === 'READ_STATUS') {
+        if (eventType === "READ_STATUS") {
             // 채팅방 ID 확인
             const roomId = eventData.chatRoomId || eventData.roomId;
 
@@ -82,8 +87,8 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
             }
 
             // 채팅방 목록 상태 업데이트 (unreadCount를 0으로)
-            setChatRooms(prevRooms => {
-                return prevRooms.map(room => {
+            setChatRooms((prevRooms) => {
+                return prevRooms.map((room) => {
                     if (room.id === roomId) {
                         return {...room, unreadCount: 0} as ChatRoom;
                     }
@@ -94,10 +99,13 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
             return;
         }
 
-        if (eventType === 'unreadMessages' || eventType === 'NEW_MESSAGE' ||
-            eventType === 'FIRST_MESSAGE' || eventType === 'MESSAGE' ||
-            eventType === 'CHAT_UPDATED') {
-
+        if (
+            eventType === "unreadMessages" ||
+            eventType === "NEW_MESSAGE" ||
+            eventType === "FIRST_MESSAGE" ||
+            eventType === "MESSAGE" ||
+            eventType === "CHAT_UPDATED"
+        ) {
             // 메시지가 내가 보낸 것인지 확인
             const isMyMessage = eventData.memberId === loginUserId;
             if (isMyMessage) {
@@ -105,7 +113,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                 return;
             }
 
-            fetchChatRooms().catch(err => {
+            fetchChatRooms().catch((err) => {
                 console.error("SSE 이벤트 후 채팅방 목록 갱신 실패:", err);
             });
         }
@@ -125,7 +133,9 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                 try {
                     // SSE 연결 설정
                     const sseUrl = `${backUrl}/api/v1/sse/connect?userId=${loginUserId}`;
-                    const eventSource = new EventSource(sseUrl, {withCredentials: true});
+                    const eventSource = new EventSource(sseUrl, {
+                        withCredentials: true,
+                    });
                     sseRef.current = eventSource;
 
                     // 연결 성공 핸들러
@@ -144,7 +154,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     };
 
                     // 특정 이벤트 타입 핸들러 등록
-                    eventSource.addEventListener('message', (event) => {
+                    eventSource.addEventListener("message", (event) => {
                         try {
                             const eventData = JSON.parse(event.data);
                             handleSseEvent(eventData);
@@ -153,7 +163,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                         }
                     });
 
-                    eventSource.addEventListener('new_message', (event) => {
+                    eventSource.addEventListener("new_message", (event) => {
                         try {
                             const eventData = JSON.parse(event.data);
                             handleSseEvent(eventData);
@@ -163,11 +173,11 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     });
 
                     // 읽음 상태 이벤트 핸들러 등록 (추가)
-                    eventSource.addEventListener('read_status', (event) => {
+                    eventSource.addEventListener("read_status", (event) => {
                         try {
                             const eventData = JSON.parse(event.data);
                             // READ_STATUS 이벤트 타입 명시
-                            eventData.eventType = 'READ_STATUS';
+                            eventData.eventType = "READ_STATUS";
                             handleSseEvent(eventData);
                         } catch (error) {
                             console.error("'read_status' 이벤트 파싱 오류:", error);
@@ -190,9 +200,13 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
             // SSE 연결 확인 이벤트 리스너 추가
             const checkSSEConnection = (event: Event) => {
                 const customEvent = event as CustomEvent;
-                if (customEvent.detail && customEvent.detail.source === 'contact_button') {
+                if (
+                    customEvent.detail &&
+                    customEvent.detail.source === "contact_button"
+                ) {
                     // SSE 연결 상태 확인
-                    const isConnected = sseRef.current && sseRef.current.readyState === EventSource.OPEN;
+                    const isConnected =
+                        sseRef.current && sseRef.current.readyState === EventSource.OPEN;
                     // 연결이 끊어진 경우 재연결
                     if (!isConnected) {
                         // 기존 연결 정리
@@ -205,14 +219,14 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     }
 
                     // 데이터 갱신 트리거
-                    fetchChatRooms().catch(err => {
+                    fetchChatRooms().catch((err) => {
                         console.error("SSE 연결 확인 후 채팅방 목록 갱신 실패:", err);
                     });
                 }
                 return true;
             };
 
-            window.addEventListener('check_sse_connection', checkSSEConnection);
+            window.addEventListener("check_sse_connection", checkSSEConnection);
 
             // 채팅방 열림 상태 확인 이벤트 리스너 추가 (MissingDetail에서 발생)
             const handleChatRoomOpened = (event: Event) => {
@@ -221,27 +235,31 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     const {roomId, isOpen} = customEvent.detail;
                     // openChatRooms 상태 업데이트 (기존 방식 재사용)
                     if (isOpen) {
-                        const chatRoom = chatRooms.find(room => room.id === roomId);
+                        const chatRoom = chatRooms.find((room) => room.id === roomId);
                         if (chatRoom) {
                             // 이미 있는지 확인
-                            const isAlreadyOpen = openChatRooms.some(room => room.id === roomId);
+                            const isAlreadyOpen = openChatRooms.some(
+                                (room) => room.id === roomId
+                            );
 
                             if (isAlreadyOpen) {
                                 // 이미 열려있는 채팅방의 isOpen 상태만 true로 설정
-                                setOpenChatRooms(prev => prev.map(r => ({
-                                    ...r,
-                                    isOpen: r.id === roomId
-                                })));
+                                setOpenChatRooms((prev) =>
+                                    prev.map((r) => ({
+                                        ...r,
+                                        isOpen: r.id === roomId,
+                                    }))
+                                );
                             } else {
                                 // 새로운 채팅방 열기
                                 const openRoom: OpenChatRoom = {
                                     ...chatRoom,
-                                    isOpen: true
+                                    isOpen: true,
                                 };
                                 // 다른 채팅방은 isOpen을 false로 설정하고 새 채팅방 추가
-                                setOpenChatRooms(prev => [
-                                    ...prev.map(r => ({...r, isOpen: false})),
-                                    openRoom
+                                setOpenChatRooms((prev) => [
+                                    ...prev.map((r) => ({...r, isOpen: false})),
+                                    openRoom,
                                 ]);
                             }
                         }
@@ -250,7 +268,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                 return true;
             };
 
-            window.addEventListener('chat_room_opened', handleChatRoomOpened);
+            window.addEventListener("chat_room_opened", handleChatRoomOpened);
 
             // 연락하기에서 열린 채팅방 이벤트 처리 (새로 추가)
             const handleContactChatOpened = (event: Event) => {
@@ -260,12 +278,14 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     // 채팅방 목록 갱신
                     fetchChatRooms().then(() => {
                         // 해당 채팅방 찾기
-                        const existingRoom = chatRooms.find(r => r.id === roomId);
+                        const existingRoom = chatRooms.find((r) => r.id === roomId);
 
                         if (existingRoom) {
                             // 로컬 상태에서 카운트 초기화
-                            setChatRooms(prevRooms =>
-                                prevRooms.map(r => r.id === roomId ? {...r, unreadCount: 0} : r)
+                            setChatRooms((prevRooms) =>
+                                prevRooms.map((r) =>
+                                    r.id === roomId ? {...r, unreadCount: 0} : r
+                                )
                             );
                         }
                     });
@@ -279,8 +299,8 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     const {targetUserId} = customEvent.detail;
 
                     // 현재 열린 채팅방 목록에서 확인
-                    const isAlreadyOpen = openChatRooms.some(room =>
-                        room.targetUserId === targetUserId && room.isOpen
+                    const isAlreadyOpen = openChatRooms.some(
+                        (room) => room.targetUserId === targetUserId && room.isOpen
                     );
                     if (isAlreadyOpen) {
                         event.preventDefault(); // 이벤트 취소
@@ -290,10 +310,10 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                 return true; // 채팅방 열기 진행
             };
 
-            window.addEventListener('contact_chat_opened', handleContactChatOpened);
+            window.addEventListener("contact_chat_opened", handleContactChatOpened);
 
             // 채팅방 중복 확인 이벤트 리스너 추가
-            window.addEventListener('check_open_chat_room', handleCheckOpenChatRoom);
+            window.addEventListener("check_open_chat_room", handleCheckOpenChatRoom);
 
             // 컴포넌트 언마운트 시 정리
             return () => {
@@ -303,10 +323,16 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                 }
 
                 // 이벤트 리스너 제거
-                window.removeEventListener('check_sse_connection', checkSSEConnection);
-                window.removeEventListener('chat_room_opened', handleChatRoomOpened);
-                window.removeEventListener('contact_chat_opened', handleContactChatOpened);
-                window.removeEventListener('check_open_chat_room', handleCheckOpenChatRoom);
+                window.removeEventListener("check_sse_connection", checkSSEConnection);
+                window.removeEventListener("chat_room_opened", handleChatRoomOpened);
+                window.removeEventListener(
+                    "contact_chat_opened",
+                    handleContactChatOpened
+                );
+                window.removeEventListener(
+                    "check_open_chat_room",
+                    handleCheckOpenChatRoom
+                );
             };
         }
     }, [isLoggedIn, loginUserId, chatRooms, openChatRooms]);
@@ -320,8 +346,8 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     const handleEnterChatRoom = (room: ChatRoom) => {
         // 즉시 로컬 상태 업데이트 - 카운트 증가 로직과 동일한 패턴 사용
-        setChatRooms(prevRooms => {
-            return prevRooms.map(r => {
+        setChatRooms((prevRooms) => {
+            return prevRooms.map((r) => {
                 if (r.id === room.id) {
                     return {...r, unreadCount: 0} as ChatRoom;
                 }
@@ -330,24 +356,28 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
         });
 
         // 이미 열려있는 채팅방인지 확인
-        const isAlreadyOpen = openChatRooms.some(openRoom => openRoom.id === room.id);
+        const isAlreadyOpen = openChatRooms.some(
+            (openRoom) => openRoom.id === room.id
+        );
 
         if (isAlreadyOpen) {
             // 이미 열려있는 채팅방의 isOpen 상태만 true로 설정
-            setOpenChatRooms(prev => prev.map(r => ({
-                ...r,
-                isOpen: r.id === room.id
-            })));
+            setOpenChatRooms((prev) =>
+                prev.map((r) => ({
+                    ...r,
+                    isOpen: r.id === room.id,
+                }))
+            );
         } else {
             // 새로운 채팅방 열기
             const openRoom: OpenChatRoom = {
                 ...room,
-                isOpen: true
+                isOpen: true,
             };
             // 다른 채팅방은 isOpen을 false로 설정하고 새 채팅방 추가
-            setOpenChatRooms(prev => [
-                ...prev.map(r => ({...r, isOpen: false})),
-                openRoom
+            setOpenChatRooms((prev) => [
+                ...prev.map((r) => ({...r, isOpen: false})),
+                openRoom,
             ]);
         }
     };
@@ -379,64 +409,86 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
             try {
                 // axios로 요청 전환 (fetch API 대신)
-                const response = await axios.get(`${backUrl}/api/v1/chat/rooms/list-with-unread`, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    withCredentials: true,
-                    timeout: 10000 // 10초 타임아웃 설정
-                });
+                const response = await axios.get(
+                    `${backUrl}/api/v1/chat/rooms/list-with-unread`,
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        withCredentials: true,
+                        timeout: 10000, // 10초 타임아웃 설정
+                    }
+                );
 
                 if (response.data && response.data.data) {
                     // 필터링 및 정렬 로직
                     const filteredRooms = response.data.data.filter(
-                        (room: ChatRoom) => room.chatUserId === loginUserId || room.targetUserId === loginUserId
+                        (room: ChatRoom) =>
+                            room.chatUserId === loginUserId ||
+                            room.targetUserId === loginUserId
                     );
 
                     // 서버 응답에서 안 읽은 메시지 카운트 필드 적용
                     const roomsWithUnreadCount = filteredRooms.map((room: ChatRoom) => {
                         // 서버 응답에서 unreadCount 또는 unreadMessageCount 필드 확인
-                        const serverUnreadCount = room.unreadCount !== undefined
-                            ? room.unreadCount
-                            : (room as any).unreadMessageCount || 0;
+                        const serverUnreadCount =
+                            room.unreadCount !== undefined
+                                ? room.unreadCount
+                                : (room as any).unreadMessageCount || 0;
 
                         // 기존 채팅방 객체에 안 읽은 메시지 카운트 추가
                         return {
                             ...room,
-                            unreadCount: serverUnreadCount
+                            unreadCount: serverUnreadCount,
                         };
                     });
 
-                    const sortedRooms = sortChatRoomsByLastMessageTime(roomsWithUnreadCount);
+                    const sortedRooms =
+                        sortChatRoomsByLastMessageTime(roomsWithUnreadCount);
                     setChatRooms(sortedRooms);
                 } else {
-                    console.log("응답 데이터가 없거나 형식이 올바르지 않습니다:", response.data);
+                    console.log(
+                        "응답 데이터가 없거나 형식이 올바르지 않습니다:",
+                        response.data
+                    );
                     setChatRooms([]);
                 }
             } catch (error: unknown) {
                 if (axios.isAxiosError(error)) {
-                    if (error.code === 'ECONNABORTED') {
+                    if (error.code === "ECONNABORTED") {
                         setError("요청 시간이 초과되었습니다. 나중에 다시 시도해주세요.");
                     } else if (error.response) {
                         // 서버가 응답을 반환했지만 2xx 범위가 아닌 경우
-                        setError(`서버 오류: ${error.response.status} - ${error.response.data?.message || '알 수 없는 오류'}`);
+                        setError(
+                            `서버 오류: ${error.response.status} - ${
+                                error.response.data?.message || "알 수 없는 오류"
+                            }`
+                        );
                         console.error("상세 응답:", error.response.data);
                     } else if (error.request) {
                         // 요청이 전송되었지만 응답이 없는 경우
-                        setError("서버로부터 응답이 없습니다. 백엔드 서버가 실행 중인지 확인하세요.");
+                        setError(
+                            "서버로부터 응답이 없습니다. 백엔드 서버가 실행 중인지 확인하세요."
+                        );
                     } else {
                         setError(`요청 설정 중 오류: ${error.message}`);
                     }
                 } else {
-                    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
-                    setError(`채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
+                    const errorMessage =
+                        error instanceof Error ? error.message : "알 수 없는 오류";
+                    setError(
+                        `채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`
+                    );
                 }
                 setChatRooms([]);
             }
             setLoading(false);
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
-            setError(`채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
+            const errorMessage =
+                error instanceof Error ? error.message : "알 수 없는 오류";
+            setError(
+                `채팅방 목록을 불러오는 중 오류가 발생했습니다: ${errorMessage}`
+            );
             setLoading(false);
         }
     };
@@ -448,11 +500,13 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
         try {
             const response = await axios.post(
-                `${backUrl}/api/v1/chat/rooms/${roomId}/leave`, {withCredentials: true}
+                `${backUrl}/api/v1/chat/rooms/${roomId}/leave`,
+                {},
+                {withCredentials: true}
             );
             if (response.status === 200) {
-                setChatRooms(prev => prev.filter(room => room.id !== roomId));
-                setOpenChatRooms(prev => prev.filter(room => room.id !== roomId));
+                setChatRooms((prev) => prev.filter((room) => room.id !== roomId));
+                setOpenChatRooms((prev) => prev.filter((room) => room.id !== roomId));
             } else {
                 alert("채팅방 나가기에 실패했습니다.");
             }
@@ -464,7 +518,11 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     const formatLastMessage = (room: ChatRoom) => {
         try {
-            if (!room.chatMessages || !Array.isArray(room.chatMessages) || room.chatMessages.length === 0) {
+            if (
+                !room.chatMessages ||
+                !Array.isArray(room.chatMessages) ||
+                room.chatMessages.length === 0
+            ) {
                 return "새로운 채팅방이 열렸습니다.";
             }
 
@@ -496,9 +554,9 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
         if (isToday) {
             const hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, "0");
 
-            return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
+            return `${hours < 12 ? "오전" : "오후"} ${hours % 12 || 12}:${minutes}`;
         } else {
             return `${date.getMonth() + 1}/${date.getDate()}`;
         }
@@ -506,7 +564,9 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     const getValidImageUrl = (imageUrl: string | undefined) => {
         const isKakaoDefaultProfile = (url: string) => {
-            return url && url.includes('kakaocdn.net') && url.includes('default_profile');
+            return (
+                url && url.includes("kakaocdn.net") && url.includes("default_profile")
+            );
         };
         if (
             !imageUrl ||
@@ -521,11 +581,14 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
     const getOtherUserInfo = (room: ChatRoom) => {
         // loginUserId가 없는 경우 기본값 설정
         if (loginUserId == null || undefined) {
-            console.warn('[getOtherUserInfo] 현재 사용자 ID가 없습니다. 기본값으로 처리합니다.');
+            console.warn(
+                "[getOtherUserInfo] 현재 사용자 ID가 없습니다. 기본값으로 처리합니다."
+            );
             return {
-                nickname: room.targetUserNickname || '사용자',
-                imageUrl: getValidImageUrl(room.targetUserImageUrl) || DEFAULT_IMAGE_URL,
-                userId: room.targetUserId
+                nickname: room.targetUserNickname || "사용자",
+                imageUrl:
+                    getValidImageUrl(room.targetUserImageUrl) || DEFAULT_IMAGE_URL,
+                userId: room.targetUserId,
             };
         }
 
@@ -539,8 +602,10 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
         // 상대방 정보 반환
         return {
             nickname: isMyChat ? room.targetUserNickname : room.chatUserNickname,
-            imageUrl: getValidImageUrl(isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl),
-            userId: isMyChat ? room.targetUserId : room.chatUserId
+            imageUrl: getValidImageUrl(
+                isMyChat ? room.targetUserImageUrl : room.chatUserImageUrl
+            ),
+            userId: isMyChat ? room.targetUserId : room.chatUserId,
         };
     };
 
@@ -549,7 +614,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     // 채팅 목록 강제 리렌더링 함수
     const forceUpdateChatList = () => {
-        fetchChatRooms().catch(err => {
+        fetchChatRooms().catch((err) => {
             console.error("채팅방 목록 강제 갱신 실패:", err);
         });
     };
@@ -557,7 +622,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
     // 주기적 채팅방 목록 갱신 설정 추가
     useEffect(() => {
         if (loginUserId == null || undefined) {
-            console.log("미로그인 유저, 로그인하세요.")
+            console.log("미로그인 유저, 로그인하세요.");
             return;
         }
 
@@ -565,7 +630,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
         const intervalId = setInterval(() => {
             // 채팅방 목록이 열려있는 경우에만 갱신
             if (isChatListOpen) {
-                fetchChatRooms().catch(err => {
+                fetchChatRooms().catch((err) => {
                     console.error("주기적 채팅방 목록 갱신 실패:", err);
                 });
             }
@@ -581,73 +646,93 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
     useEffect(() => {
         if (isLoggedIn && isChatListOpen) {
             const stompClient = new StompJs.Client({
-                brokerURL: backUrl.replace('https://', 'wss://').replace('http://', 'ws://') + '/ws',
+                brokerURL:
+                    backUrl.replace("https://", "wss://").replace("http://", "ws://") +
+                    "/ws",
                 connectHeaders: {},
                 debug: function (str) {
-                    console.log('STOMP Debug:', str);
+                    console.log("STOMP Debug:", str);
                 },
                 reconnectDelay: 5000,
                 heartbeatIncoming: 4000,
                 heartbeatOutgoing: 4000,
                 webSocketFactory: () => {
-                    const ws = new WebSocket(backUrl.replace('https://', 'wss://').replace('http://', 'ws://') + '/ws');
+                    const ws = new WebSocket(
+                        backUrl.replace("https://", "wss://").replace("http://", "ws://") +
+                        "/ws"
+                    );
                     ws.onerror = (err) => {
-                        console.error('WebSocket 에러:', err);
+                        console.error("WebSocket 에러:", err);
                     };
                     return ws;
-                }
+                },
             });
 
             client.current = stompClient;
 
             stompClient.onConnect = () => {
                 // 새 채팅방 생성 이벤트 구독
-                stompClient.subscribe('/topic/api/v1/chat/new-room', (message) => {
+                stompClient.subscribe("/topic/api/v1/chat/new-room", (message) => {
                     try {
                         const newRoomData = JSON.parse(message.body);
 
-                        if (newRoomData.chatUserId === loginUserId || newRoomData.targetUserId === loginUserId) {
-                            setChatRooms(prevRooms => {
-                                if (!prevRooms.some(room => room.id === newRoomData.id)) {
+                        if (
+                            newRoomData.chatUserId === loginUserId ||
+                            newRoomData.targetUserId === loginUserId
+                        ) {
+                            setChatRooms((prevRooms) => {
+                                if (!prevRooms.some((room) => room.id === newRoomData.id)) {
                                     const newRoom = {
                                         id: newRoomData.id,
                                         chatUserNickname: newRoomData.chatUserNickname,
-                                        chatUserImageUrl: newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
+                                        chatUserImageUrl:
+                                            newRoomData.chatUserImageUrl || DEFAULT_IMAGE_URL,
                                         chatUserId: newRoomData.chatUserId,
                                         targetUserNickname: newRoomData.targetUserNickname,
-                                        targetUserImageUrl: newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
+                                        targetUserImageUrl:
+                                            newRoomData.targetUserImageUrl || DEFAULT_IMAGE_URL,
                                         targetUserId: newRoomData.targetUserId,
                                         chatMessages: [],
-                                        modifiedDate: new Date().toISOString()
+                                        modifiedDate: new Date().toISOString(),
                                     };
 
                                     subscribeToRoom(newRoomData.id);
 
-                                    return sortChatRoomsByLastMessageTime([...prevRooms, newRoom]);
+                                    return sortChatRoomsByLastMessageTime([
+                                        ...prevRooms,
+                                        newRoom,
+                                    ]);
                                 }
                                 return prevRooms;
                             });
                         } else {
-                            console.log('새 채팅방이 현재 사용자와 관련이 없어 무시됨:', newRoomData);
+                            console.log(
+                                "새 채팅방이 현재 사용자와 관련이 없어 무시됨:",
+                                newRoomData
+                            );
                         }
                     } catch (error) {
-                        console.error('새로운 채팅방 데이터 처리 오류:', error);
+                        console.error("새로운 채팅방 데이터 처리 오류:", error);
                     }
                 });
 
                 // 읽음 상태 변경 이벤트 구독
-                stompClient.subscribe('/topic/api/v1/chat/read-status', (message) => {
+                stompClient.subscribe("/topic/api/v1/chat/read-status", (message) => {
                     try {
                         const readStatusData = JSON.parse(message.body);
 
                         // 로컬 상태 즉시 업데이트 (roomId가 있는 경우)
                         if (readStatusData.roomId) {
                             // 즉시 UI 업데이트를 위한 로컬 상태 변경
-                            setChatRooms(prevRooms => {
+                            setChatRooms((prevRooms) => {
                                 // 해당 채팅방 찾기
-                                const roomIndex = prevRooms.findIndex(room => room.id === readStatusData.roomId);
+                                const roomIndex = prevRooms.findIndex(
+                                    (room) => room.id === readStatusData.roomId
+                                );
                                 if (roomIndex === -1) {
-                                    console.log(`채팅방 ${readStatusData.roomId}가 현재 목록에 없어 업데이트 무시`);
+                                    console.log(
+                                        `채팅방 ${readStatusData.roomId}가 현재 목록에 없어 업데이트 무시`
+                                    );
                                     return prevRooms; // 채팅방이 없으면 변경 없음
                                 }
 
@@ -657,7 +742,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                 // 이 부분에서 카운트 명시적으로 0으로 설정 (읽음 처리)
                                 updatedRooms[roomIndex] = {
                                     ...updatedRooms[roomIndex],
-                                    unreadCount: 0
+                                    unreadCount: 0,
                                 } as any;
 
                                 return updatedRooms;
@@ -665,128 +750,142 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
                             // API 새로고침은 백그라운드로 진행 (UI는 이미 업데이트됨)
                             fetchChatRooms().then(() => {
-                                console.log('읽음 상태 변경 후 채팅방 목록 새로 로드 완료');
+                                console.log("읽음 상태 변경 후 채팅방 목록 새로 로드 완료");
                             });
                         } else {
-                            console.log('이벤트에 roomId가 없어 로컬 상태 업데이트 무시');
+                            console.log("이벤트에 roomId가 없어 로컬 상태 업데이트 무시");
                         }
                     } catch (error) {
-                        console.error('읽음 상태 변경 이벤트 처리 오류:', error);
+                        console.error("읽음 상태 변경 이벤트 처리 오류:", error);
                     }
                 });
 
                 // 채팅방 구독 함수
                 const subscribeToRoom = (roomId: number) => {
-                    stompClient.subscribe(`/topic/api/v1/chat/${roomId}/messages`, (message) => {
-                        try {
-                            const messageData = JSON.parse(message.body);
-                            setChatRooms(prevRooms => {
-                                // 현재 채팅방이 목록에 없는 경우 변경하지 않음
-                                const roomIndex = prevRooms.findIndex(room => room.id === roomId);
-                                if (roomIndex === -1) {
-                                    console.log(`채팅방 ${roomId}가 목록에 없어 메시지 무시`);
-                                    return prevRooms;
-                                }
+                    stompClient.subscribe(
+                        `/topic/api/v1/chat/${roomId}/messages`,
+                        (message) => {
+                            try {
+                                const messageData = JSON.parse(message.body);
+                                setChatRooms((prevRooms) => {
+                                    // 현재 채팅방이 목록에 없는 경우 변경하지 않음
+                                    const roomIndex = prevRooms.findIndex(
+                                        (room) => room.id === roomId
+                                    );
+                                    if (roomIndex === -1) {
+                                        console.log(`채팅방 ${roomId}가 목록에 없어 메시지 무시`);
+                                        return prevRooms;
+                                    }
 
-                                const updatedRooms = prevRooms.map(room => {
-                                    if (room.id === roomId) {
-                                        // 기존 메시지 배열 복사
-                                        const updatedMessages = room.chatMessages ? [...room.chatMessages] : [];
+                                    const updatedRooms = prevRooms.map((room) => {
+                                        if (room.id === roomId) {
+                                            // 기존 메시지 배열 복사
+                                            const updatedMessages = room.chatMessages
+                                                ? [...room.chatMessages]
+                                                : [];
 
-                                        // 중복 메시지 확인
-                                        const isDuplicate = updatedMessages.some(
-                                            msg => msg.id === messageData.chatMessageId
-                                        );
+                                            // 중복 메시지 확인
+                                            const isDuplicate = updatedMessages.some(
+                                                (msg) => msg.id === messageData.chatMessageId
+                                            );
 
-                                        // 메시지 발신자가 현재 사용자인지 확인 (읽음 상태 결정에 필요)
-                                        const isMessageFromCurrentUser = messageData.memberId === loginUserId;
+                                            // 메시지 발신자가 현재 사용자인지 확인 (읽음 상태 결정에 필요)
+                                            const isMessageFromCurrentUser =
+                                                messageData.memberId === loginUserId;
 
-                                        // 현재 사용자가 채팅 사용자인지 대상 사용자인지 확인
-                                        const isCurrentUserChatUser = room.chatUserId === loginUserId;
-                                        const isCurrentUserTargetUser = room.targetUserId === loginUserId;
+                                            // 현재 사용자가 채팅 사용자인지 대상 사용자인지 확인
+                                            const isCurrentUserChatUser =
+                                                room.chatUserId === loginUserId;
+                                            const isCurrentUserTargetUser =
+                                                room.targetUserId === loginUserId;
 
-                                        // 현재 unreadCount 가져오기 (없으면 0으로 초기화)
-                                        let unreadCount = (room as any).unreadCount || 0;
+                                            // 현재 unreadCount 가져오기 (없으면 0으로 초기화)
+                                            let unreadCount = (room as any).unreadCount || 0;
 
-                                        // 현재 이 채팅방이 열려있는지 확인
-                                        const isRoomCurrentlyOpen = openChatRooms.some(openRoom =>
-                                            openRoom.id === roomId && openRoom.isOpen
-                                        );
+                                            // 현재 이 채팅방이 열려있는지 확인
+                                            const isRoomCurrentlyOpen = openChatRooms.some(
+                                                (openRoom) => openRoom.id === roomId && openRoom.isOpen
+                                            );
 
-                                        // 중복이 아닌 경우에만 메시지 추가 및 unreadCount 업데이트
-                                        if (!isDuplicate) {
-                                            // 새 메시지 객체 생성
-                                            const newMessage = {
-                                                id: messageData.chatMessageId,
-                                                content: messageData.content,
-                                                createdDate: messageData.createdDate,
-                                                createDate: messageData.createdDate,
-                                                memberId: messageData.memberId,
-                                                // 현재 사용자가 보낸 메시지인 경우 읽음으로 표시
-                                                chatUserRead: isCurrentUserChatUser ? isMessageFromCurrentUser : true,
-                                                targetUserRead: isCurrentUserTargetUser ? isMessageFromCurrentUser : true
-                                            };
+                                            // 중복이 아닌 경우에만 메시지 추가 및 unreadCount 업데이트
+                                            if (!isDuplicate) {
+                                                // 새 메시지 객체 생성
+                                                const newMessage = {
+                                                    id: messageData.chatMessageId,
+                                                    content: messageData.content,
+                                                    createdDate: messageData.createdDate,
+                                                    createDate: messageData.createdDate,
+                                                    memberId: messageData.memberId,
+                                                    // 현재 사용자가 보낸 메시지인 경우 읽음으로 표시
+                                                    chatUserRead: isCurrentUserChatUser
+                                                        ? isMessageFromCurrentUser
+                                                        : true,
+                                                    targetUserRead: isCurrentUserTargetUser
+                                                        ? isMessageFromCurrentUser
+                                                        : true,
+                                                };
 
-                                            // 메시지 추가 (한 번만 추가)
-                                            updatedMessages.push(newMessage as any);
+                                                // 메시지 추가 (한 번만 추가)
+                                                updatedMessages.push(newMessage as any);
 
-                                            // 첫 번째 메시지인지 확인 (추가 후 길이가 1이면 첫 메시지)
-                                            const isFirstMessage = updatedMessages.length === 1;
+                                                // 첫 번째 메시지인지 확인 (추가 후 길이가 1이면 첫 메시지)
+                                                const isFirstMessage = updatedMessages.length === 1;
 
-                                            if (isFirstMessage) {
-                                                // 내가 보낸 메시지가 아닌 경우에만 처리
-                                                if (!isMessageFromCurrentUser) {
-                                                    // 채팅방이 닫혀 있으면 카운트 증가
-                                                    if (!isRoomCurrentlyOpen) {
+                                                if (isFirstMessage) {
+                                                    // 내가 보낸 메시지가 아닌 경우에만 처리
+                                                    if (!isMessageFromCurrentUser) {
+                                                        // 채팅방이 닫혀 있으면 카운트 증가
+                                                        if (!isRoomCurrentlyOpen) {
+                                                            unreadCount += 1;
+                                                            // 첫 메시지 후 UI 강제 업데이트
+                                                            setTimeout(() => {
+                                                                forceUpdateChatList();
+                                                            }, 200);
+                                                        }
+                                                    }
+                                                } else {
+                                                    // 일반 메시지 처리 (첫 번째 메시지가 아닌 경우)
+                                                    if (isMessageFromCurrentUser) {
+                                                        // 내가 보낸 메시지는 카운트 증가하지 않음
+                                                        // console.log(`내가 보낸 메시지 - 안읽음 카운트 유지: ${unreadCount}`);
+                                                    } else if (isRoomCurrentlyOpen) {
+                                                        // 열려있는 채팅방에 메시지가 오면 unreadCount는 항상 0
+                                                        unreadCount = 0;
+                                                    } else {
+                                                        // 채팅방 닫혀있고 상대방이 보낸 메시지면 카운트 증가
                                                         unreadCount += 1;
-                                                        // 첫 메시지 후 UI 강제 업데이트
-                                                        setTimeout(() => {
-                                                            forceUpdateChatList();
-                                                        }, 200);
                                                     }
                                                 }
-                                            } else {
-                                                // 일반 메시지 처리 (첫 번째 메시지가 아닌 경우)
-                                                if (isMessageFromCurrentUser) {
-                                                    // 내가 보낸 메시지는 카운트 증가하지 않음
-                                                    // console.log(`내가 보낸 메시지 - 안읽음 카운트 유지: ${unreadCount}`);
-                                                } else if (isRoomCurrentlyOpen) {
-                                                    // 열려있는 채팅방에 메시지가 오면 unreadCount는 항상 0
-                                                    unreadCount = 0;
-                                                } else {
-                                                    // 채팅방 닫혀있고 상대방이 보낸 메시지면 카운트 증가
-                                                    unreadCount += 1;
-                                                }
                                             }
+                                            // 채팅방이 열려있는지 명시적으로 다시 확인 (OpenChatRoom 상태 확인)
+                                            const isThisRoomOpen = openChatRooms.some(
+                                                (openRoom) => openRoom.id === room.id && openRoom.isOpen
+                                            );
+
+                                            // 업데이트된 채팅방 반환
+                                            return {
+                                                ...room,
+                                                chatMessages: updatedMessages,
+                                                modifiedDate:
+                                                    messageData.createdDate || new Date().toISOString(),
+                                                unreadCount: isThisRoomOpen ? 0 : unreadCount, // 열린 채팅방은 항상 unreadCount를 0으로 설정
+                                            };
                                         }
-                                        // 채팅방이 열려있는지 명시적으로 다시 확인 (OpenChatRoom 상태 확인)
-                                        const isThisRoomOpen = openChatRooms.some(openRoom =>
-                                            openRoom.id === room.id && openRoom.isOpen
-                                        );
+                                        return room;
+                                    });
 
-
-                                        // 업데이트된 채팅방 반환
-                                        return {
-                                            ...room,
-                                            chatMessages: updatedMessages,
-                                            modifiedDate: messageData.createdDate || new Date().toISOString(),
-                                            unreadCount: isThisRoomOpen ? 0 : unreadCount // 열린 채팅방은 항상 unreadCount를 0으로 설정
-                                        };
-                                    }
-                                    return room;
+                                    // 최근 메시지 순으로 정렬
+                                    return sortChatRoomsByLastMessageTime(updatedRooms);
                                 });
-
-                                // 최근 메시지 순으로 정렬
-                                return sortChatRoomsByLastMessageTime(updatedRooms);
-                            });
-                        } catch (error) {
-                            console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
+                            } catch (error) {
+                                console.error(`채팅방 ${roomId} 메시지 처리 오류:`, error);
+                            }
                         }
-                    });
+                    );
                 };
 
                 // 이미 로드된 모든 채팅방에 대한 구독 설정
-                chatRooms.forEach(room => {
+                chatRooms.forEach((room) => {
                     subscribeToRoom(room.id);
                 });
             };
@@ -818,10 +917,10 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
 
     return (
         <>
-            <nav className="mt-5 fixed right-0 z-[5] w-[calc(100%-24rem)] max-lg:w-[calc(100%-18rem)]">
-                <div className="px-4 max-lg:px-1">
+            <nav className="mt-4 fixed right-0 z-[5] w-[calc(100%-24.5rem)]">
+                <div className="relative px-4">
                     <div
-                        className="flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
+                        className="relative z-10 flex gap-1 justify-between items-center py-1 min-h-12 bg-white backdrop-blur-sm rounded-full shadow-lg">
                         <div className="flex-none pl-2">
                             <Button
                                 variant="outline"
@@ -833,7 +932,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                             </Button>
                             {isResistModalOpen && (
                                 <div
-                                    className="absolute top-[3%] left-[0%] bg-white rounded-2xl w-[200px] overflow-hidden z-50">
+                                    className="absolute top-[3%] left-[0%] bg-white rounded-2xl w-[200px] overflow-hidden z-50 shadow">
                                     <div className="flex-none px-2 py-1">
                                         <Button
                                             variant="outline"
@@ -848,7 +947,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                         <div className="py-1">
                                             <Button
                                                 variant="ghost"
-                                                className="flex items-center justify-start w-full p-4 hover:bg-gray-100 bgr-white h-12"
+                                                className="flex items-center justify-start w-full py-4 pl-0 hover:bg-gray-100 bgr-white h-12"
                                                 onClick={() => {
                                                     setIsMissingAddOpen(true);
                                                 }}
@@ -875,7 +974,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                                             </Button>
                                             <Button
                                                 variant="ghost"
-                                                className="flex items-center justify-start w-full p-4 hover:bg-gray-100 bgr-white h-12"
+                                                className="flex items-center justify-start w-full py-4 pl-0 hover:bg-gray-100 bgr-white h-12"
                                                 onClick={() => {
                                                     if (!isLoggedIn) {
                                                         alert("로그인 후 이용해주세요!");
@@ -947,16 +1046,16 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                             )}
                         </div>
                     </div>
+
+                    {/* FilterButton을 NavBar 아래에 배치 */}
+                    <div className="absolute top-[calc(100%+0.75rem)] right-4">
+                        <FilterButton
+                            buttonStates={buttonStates}
+                            toggleButton={toggleButton}
+                        />
+                    </div>
                 </div>
             </nav>
-
-            {/* FilterButton을 NavBar 아래에 배치 */}
-            <div className="fixed top-[75px] right-8 z-[3]">
-                <FilterButton
-                    buttonStates={buttonStates}
-                    toggleButton={toggleButton}
-                />
-            </div>
 
             <MissingFormPopup
                 open={isMissingAddOpen}
@@ -976,7 +1075,7 @@ export function NavBar({buttonStates, toggleButton}: NavBarProps) {
                     chatRoomId={room.id}
                     targetUserImageUrl={room.targetUserImageUrl}
                     targetUserNickname={room.targetUserNickname}
-                    chatRoom={chatRooms.find(cr => cr.id === room.id) || null}
+                    chatRoom={chatRooms.find((cr) => cr.id === room.id) || null}
                 />
             ))}
         </>

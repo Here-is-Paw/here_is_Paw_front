@@ -209,3 +209,8 @@ button:focus-visible {
 .swiper-button-next:after {
   @apply text-2xl text-green-600;
 }
+
+.swiper-pagination-lock,
+.swiper-button-lock {
+  display: block;
+}

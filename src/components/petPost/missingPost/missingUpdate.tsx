@@ -48,6 +48,8 @@ import {
 } from "@/types/missing.ts";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import dayjs from "dayjs";
+import { useAuth } from "@/contexts/AuthContext";
+import { ToastAlert } from "@/components/alert/ToastAlert";
 
 interface MissingUpdateFormPopup {
   open: boolean;
@@ -94,6 +96,9 @@ export const MissingUpdateFormPopup = ({
   };
 
   const { mainAddress, detailAddress } = parseLocation(pet.location);
+
+  // 제출 상태를 추적하는 상태 변수 추가
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     form.setValue("id", pet.id);
@@ -188,6 +193,29 @@ export const MissingUpdateFormPopup = ({
   // };
 
   const { refreshPets } = usePetContext();
+
+  // Toast 알림 상태
+  const [toast, setToast] = useState({
+    open: false,
+    type: "success" as "success" | "error" | "warning",
+    title: "",
+    message: "",
+  });
+
+  const showToast = (
+    type: "success" | "error" | "warning",
+    title: string,
+    message: string
+  ) => {
+    setToast({
+      open: true,
+      type,
+      title,
+      message,
+    });
+  };
+
+  const loginUser = useAuth();
 
   // 위치 정보가 로드되면 초기 geo 값 설정
   useEffect(() => {
@@ -291,24 +319,19 @@ export const MissingUpdateFormPopup = ({
   };
 
   const handleSubmit = async (data: MissingDetailData) => {
+    // 이미 제출 중이면 중복 제출 방지
+    if (isSubmitting) return;
+
     const formData = new FormData();
 
     try {
+      // 제출 시작 시 상태 변경
+      setIsSubmitting(true);
+
       // MissingDetailFormData에서 MissingFormData로 변환
       formData.append("id", data.id.toString());
       formData.append("name", data.name);
       formData.append("breed", data.breed);
-
-      // x, y 좌표를 geo 문자열로 변환
-      if (locationInfo.x && locationInfo.y) {
-        formData.append(
-          "geo",
-          JSON.stringify({ x: locationInfo.x, y: locationInfo.y })
-        );
-      } else {
-        alert("실종 위치를 지도에서 선택해주세요.");
-        return;
-      }
 
       // 지도 주소와 상세 주소를 결합
       const combinedAddress = locationInfo.address
@@ -322,12 +345,6 @@ export const MissingUpdateFormPopup = ({
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
 
-      if (data.lostDate) {
-        formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
-      } else if (pet.lostDate) {
-        formData.append("lostDate", dayjs(pet.lostDate).format("YYYY-MM-DD"));
-      }
-
       formData.append("etc", data.etc || "");
       formData.append("reward", data.reward?.toString() || "0");
       formData.append("missingState", data.missingState?.toString() || "0");
@@ -340,7 +357,41 @@ export const MissingUpdateFormPopup = ({
         // 기존 이미지를 사용하는 경우
         formData.append("pathUrl", pet.pathUrl);
       } else {
-        alert("반려동물 사진은 필수입니다.");
+        showToast(
+          "warning",
+          "반려동물 사진은 필수입니다.",
+          "사진 등록 후 다시 시도해주세요."
+        );
+        return;
+      }
+
+      if (!data.lostDate) {
+        showToast(
+          "warning",
+          "실종 날짜 선택은 필수입니다.",
+          "실종 날짜를 선택해주세요."
+        );
+        return;
+      }
+
+      if (data.lostDate) {
+        formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+      } else if (pet.lostDate) {
+        formData.append("lostDate", dayjs(pet.lostDate).format("YYYY-MM-DD"));
+      }
+
+      // x, y 좌표를 geo 문자열로 변환
+      if (locationInfo.x && locationInfo.y) {
+        formData.append(
+          "geo",
+          JSON.stringify({ x: locationInfo.x, y: locationInfo.y })
+        );
+      } else {
+        showToast(
+          "warning",
+          "실종 위치 선택은 필수입니다.",
+          "실종 위치를 지도에서 선택해주세요."
+        );
         return;
       }
 
@@ -349,6 +400,12 @@ export const MissingUpdateFormPopup = ({
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      showToast(
+        "success",
+        "실종 신고 수정 완료",
+        "실종 신고가 성공적으로 수정되었습니다."
+      );
 
       // 성공 후 처리
       form.reset(defaultValues);
@@ -360,8 +417,15 @@ export const MissingUpdateFormPopup = ({
         onSuccess();
       }
     } catch (error) {
-      console.error("발견신고 등록 오류:", error);
-      alert("발견신고 등록에 실패했습니다");
+      console.error("발견신고 수정 오류:", error);
+      showToast(
+        "error",
+        "실종 신고 수정 실패",
+        "실종 신고 수정에 실패했습니다."
+      );
+    } finally {
+      // 성공하든 실패하든 제출 상태 초기화
+      setIsSubmitting(false);
     }
   };
 
@@ -387,13 +451,23 @@ export const MissingUpdateFormPopup = ({
         onOpenChange(newOpen);
       }}
     >
+      {/* Toast 알림 */}
+      <ToastAlert
+        open={toast.open}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        duration={1000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+      />
+
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white"
       >
         <DialogHeader className="space-y-2 text-center px-6">
           <DialogTitle className="text-2xl font-bold text-primary">
-            반려동물 실종 신고
+            반려동물 실종 신고 수정
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             반려동물 정보를 입력해주세요
@@ -691,6 +765,12 @@ export const MissingUpdateFormPopup = ({
                                       field.onChange(isoString);
                                     }
                                   }}
+                                  disabled={(date) => {
+                                    // 오늘 날짜 이후의 날짜를 비활성화
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+                                    return date > today;
+                                  }}
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -833,8 +913,12 @@ export const MissingUpdateFormPopup = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               취소
             </Button>
-            <Button type="submit" form="missing">
-              등록하기
+            <Button
+              type="submit"
+              form="missing"
+              disabled={!loginUser.isLoggedIn || isSubmitting}
+            >
+              {isSubmitting ? "수정 중..." : "수정하기"}
             </Button>
           </div>
         </DialogFooter>

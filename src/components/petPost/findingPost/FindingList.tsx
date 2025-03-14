@@ -55,6 +55,7 @@ export function FindingList() {
     // observer 콜백 함수
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
+
       if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
         console.log("Loading more finding data...");
         // 여기를 수정: "finding" 타입 명시적으로 전달
@@ -98,6 +99,7 @@ export function FindingList() {
   };
 
   const handleSwiperReachEnd = () => {
+
     if (findingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
       console.log("Swiper reached end, loading more finding data...");
       // 여기를 수정: "finding" 타입 명시적으로 전달
