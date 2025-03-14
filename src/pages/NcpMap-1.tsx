@@ -4,6 +4,7 @@ import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx";
 import { Hospital } from "lucide-react";
+import { useButtonState } from "@/contexts/ButtonState";
 
 interface NcpMapProps {
   currentLocation: {
@@ -12,18 +13,12 @@ interface NcpMapProps {
     error?: { code: number; message: string };
   };
   onLocationSelect?: (location: { lat: number; lng: number }) => void;
-  buttonStates: {
-    lost: boolean;
-    found: boolean;
-    hospital: boolean;
-  };
 }
 
-const NcpMap = ({
-  currentLocation,
-  onLocationSelect,
-  buttonStates,
-}: NcpMapProps) => {
+const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
+  // Get buttonStates from context
+  const { buttonStates } = useButtonState();
+
   const mapElement = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<naver.maps.Map | null>(null);
   const isInitialized = useRef<boolean>(false);
@@ -71,6 +66,50 @@ const NcpMap = ({
     `;
   };
 
+  const infoWidowHTML = (
+    title: string,
+    pet: {
+      breed?: string;
+      etc?: string;
+      location: string;
+      pathUrl: string;
+    }
+  ): string => {
+    return `
+    <div class="py-2 px-3 w-56 max-h-52">
+      ${
+        title === "발견했개"
+          ? '<h4 class="mb-1 text-base font-bold text-green-600 text-center">'
+          : title === "잃어버렸개"
+          ? '<h4 class="mb-1 text-base font-bold text-red-500 text-center">'
+          : "<h4>"
+      }
+        ${title}
+      </h4>
+
+      <div class="w-full h-20">
+        <img src="${pet.pathUrl}" class="h-full w-full object-contain" />
+      </div>
+
+      <div class="mt-2 text-xs text-gray-600">
+        <dl class="flex gap-1">
+          <dt class="font-bold">품종:</dt>
+          <dd class="flex-1 truncate">${pet.breed ? pet.breed : "미상"}</dd>
+        </dl>
+        <dl class="flex gap-1">
+          <dt class="font-bold">특징:</dt>
+          <dd class="flex-1 truncate">${pet.etc ? pet.etc : "없음"}</dd>
+        </dl>
+        <dl class="flex gap-1">
+          <dt class="font-bold">위치:</dt>
+          <dd class="flex-1 truncate">${pet.location}</dd>
+        </dl>
+      </div>
+      
+    </div>
+      `;
+  };
+
   // Update the createPetMarkers function to show markers when toggle is true
   const createPetMarkers = () => {
     const map = mapInstance.current;
@@ -97,10 +136,22 @@ const NcpMap = ({
           },
         });
 
+        // InfoWindow 생성
+        const infoWindow = new window.naver.maps.InfoWindow({
+          content: infoWidowHTML("잃어버렸개", pet),
+          borderWidth: 0,
+          disableAnchor: false, // 앵커 활성화
+          anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
+          anchorSkew: true, // 앵커 기울임 효과 활성화
+          anchorColor: "white", // 앵커 색상
+        });
+
         window.naver.maps.Event.addListener(marker, "click", () => {
-          alert(
-            `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
-          );
+          if (infoWindow.getMap()) {
+            infoWindow.close();
+          } else {
+            infoWindow.open(map, marker);
+          }
         });
 
         return marker;
@@ -124,36 +175,9 @@ const NcpMap = ({
 
         // InfoWindow 생성
         const infoWindow = new window.naver.maps.InfoWindow({
-          content: `
-            <div style="padding:15px; min-width:220px; height:475px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; ">
-              <h4 style="margin:0 0 12px 0; color:rgb(22, 163, 74); font-size:16px; border-bottom:2px solid #08CF5D; padding-bottom:8px;">
-                발견했개
-              </h4>
-              <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-                <tr>
-                  <td style="font-weight:bold; color:#555; width:70px;">품종:</td>
-                  <td style="color:#333;">${pet.breed ? pet.breed : "미상"}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:bold; color:#555;">특징:</td>
-                  <td style="color:#333;">${pet.etc ? pet.etc : "없음"}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:bold; color:#555;">위치:</td>
-                  <td style="color:#333;">${pet.location}</td>
-                </tr>
-              </table>
-              <div style="width:100%; height: 300px; margin-bottom:5px;">
-                <img src="${
-                  pet.pathUrl
-                }" style="height:100%; width:100%; object-fit: contain;"></img>
-              </div>
-            </div>
-          `,
-          borderWidth: 1,
+          content: infoWidowHTML("발견했개", pet),
+          borderWidth: 0,
           disableAnchor: false, // 앵커 활성화
-          backgroundColor: "white",
-          borderColor: "#08CF5D", // 테두리 색상을 컨텐츠와 일치시킴
           anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
           anchorSkew: true, // 앵커 기울임 효과 활성화
           anchorColor: "white", // 앵커 색상
