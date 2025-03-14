@@ -52,6 +52,13 @@ interface SearchParams {
     filter: SearchFilter;
 }
 
+interface SearchParamsType {
+    kw: string;
+    page: number;
+    size: number;
+    genre?: string; // genre를 선택적 속성(optional)으로 정의
+}
+
 export interface SearchResponse {
     id: number;
     pathUrl: string;
@@ -137,7 +144,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             } else {
                 // 반경 모드 검색
                 console.log("반경 모드 검색:", params);
-                setLastSearchQuery("");
+                setLastSearchQuery(query);
                 setLastSearchCategory("전체");
                 await loadRadiusData(query, category);
             }
@@ -147,6 +154,13 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        // 검색 모드가 변경되었고 검색어가 있을 때
+        if (lastSearchQuery) {
+            refreshPets(); // 이 함수는 이미 lastSearchQuery를 고려하도록 수정됨
+        }
+    }, [searchMode]);
 
     // 검색어를 이용한 검색 함수 수정
     const searchWithKeyword = async (keyword: string, category: SearchCategory) => {
@@ -237,9 +251,23 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
     }, [searchMode]);
 
     useEffect(() => {
-        console.log("현재 활성화 탭 :", activeFilter);
-        console.log("실종 펫 정보:", missingPets);
-        console.log("발견 펫 정보:", findingPets);
+        // 검색어가 있을 때만 재검색 수행
+        if (lastSearchQuery) {
+            // 비동기 함수를 만들어 호출
+            const reapplySearch = async () => {
+                setIsLoading(true);
+                try {
+                    await searchWithKeyword(lastSearchQuery, lastSearchCategory);
+                } catch (error) {
+                    console.error("탭 변경 후 재검색 오류:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            reapplySearch();
+        }
+        // 검색어가 없을 때는 일반 데이터 로드 (기존 useEffect에서 처리됨)
     }, [activeFilter]);
 
     // 기존 refreshPets 함수 수정
@@ -251,11 +279,17 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
 
         try {
             if (searchMode === "전체") {
-                // 전체 모드: 일반 페이징 API 사용
-                await loadNormalData();
+                // 전체 모드일 때, 검색어가 있으면 검색 결과를 유지
+                if (lastSearchQuery) {
+                    await searchWithKeyword(lastSearchQuery, lastSearchCategory);
+                } else {
+                    // 검색어가 없으면 일반 데이터 로드
+                    await loadNormalData();
+                }
             } else {
-                // 반경 모드: 반경 검색 API 사용 (검색어 없이 기본 반경 검색)
-                await loadRadiusData("", "");
+                // 반경 모드: 반경 검색 API 사용
+                // 검색어가 있으면 해당 검색어로 반경 검색
+                await loadRadiusData(lastSearchQuery, lastSearchCategory);
             }
         } catch (error) {
             console.error("데이터 로드 오류:", error);
@@ -468,13 +502,27 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
         category: SearchCategory,
         currentPage: number
     ) => {
+        console.log(`loadMoreSearchResultsByType 호출: type=${type}, keyword=${keyword}, category=${category}, page=${currentPage}`);
+
         // 특정 타입에 대한 로딩 중 상태 확인
-        if (type === "missing" && missingLoading) return;
-        if (type === "finding" && findingLoading) return;
+        if (type === "missing" && missingLoading) {
+            console.log("이미 missing 검색 결과를 로딩 중입니다.");
+            return;
+        }
+        if (type === "finding" && findingLoading) {
+            console.log("이미 finding 검색 결과를 로딩 중입니다.");
+            return;
+        }
 
         // 더 불러올 수 있는지 확인
-        if (type === "missing" && !missingHasMore) return;
-        if (type === "finding" && !findingHasMore) return;
+        if (type === "missing" && !missingHasMore) {
+            console.log("더 불러올 missing 검색 결과가 없습니다.");
+            return;
+        }
+        if (type === "finding" && !findingHasMore) {
+            console.log("더 불러올 finding 검색 결과가 없습니다.");
+            return;
+        }
 
         try {
             if (type === "missing") {
@@ -492,12 +540,18 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             }
 
             const nextPage = currentPage + 1;
-            const searchParams = {
+            console.log(`${type} 검색 결과 다음 페이지 로드: ${nextPage}`);
+
+            const searchParams: SearchParamsType = {
                 kw: keyword,
-                genre: genre || undefined,
                 page: nextPage,
                 size: 10,
             };
+            if (genre !== "") {
+                searchParams.genre = genre;
+            }
+
+            console.log("검색 파라미터:", searchParams);
 
             // 타입에 따른 API 호출
             if (type === "missing") {
@@ -507,10 +561,15 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
                 });
 
                 const missingResults = missingResponse.data.data?.content || [];
+                console.log("검색 결과 데이터:", missingResults);
+
                 const convertedMissingPets = convertSearchToPetList(missingResults);
                 setMissingPets(prev => [...prev, ...convertedMissingPets]);
                 setMissingHasMore(!missingResponse.data.data?.last);
                 setMissingPage(nextPage);
+
+                console.log("missing 검색 결과 더 불러오기 완료, 개수:", missingResults.length);
+                console.log("더 불러올 데이터 있음:", !missingResponse.data.data?.last);
             } else if (type === "finding") {
                 const findingResponse = await axios.get(`${backUrl}/api/v1/searchPost/finding`, {
                     params: searchParams,
@@ -518,10 +577,15 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
                 });
 
                 const findingResults = findingResponse.data.data?.content || [];
+                console.log("검색 결과 데이터:", findingResults);
+
                 const convertedFindingPets = convertSearchToPetList(findingResults);
                 setFindingPets(prev => [...prev, ...convertedFindingPets]);
                 setFindingHasMore(!findingResponse.data.data?.last);
                 setFindingPage(nextPage);
+
+                console.log("finding 검색 결과 더 불러오기 완료, 개수:", findingResults.length);
+                console.log("더 불러올 데이터 있음:", !findingResponse.data.data?.last);
             }
         } catch (error) {
             console.error(`${type} 검색 추가 로드 오류:`, error);
@@ -533,36 +597,6 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             }
         }
     };
-
-    // // 검색 결과 더 불러오기 함수 (이전 함수, 호환성을 위해 유지)
-    // const loadMoreSearchResults = async (
-    //     keyword: string,
-    //     category: SearchCategory,
-    //     nextPage: number
-    // ) => {
-    //     try {
-    //         setIsLoading(true);
-    //         // activeFilter에 따라 적절한 type으로 위임
-    //         if (activeFilter === "잃어버렸개") {
-    //             await loadMoreSearchResultsByType("missing", keyword, category, missingPage);
-    //         } else if (activeFilter === "발견했개") {
-    //             await loadMoreSearchResultsByType("finding", keyword, category, findingPage);
-    //         } else if (activeFilter === "전체") {
-    //             // 전체 탭인 경우 두 가지 모두 로드
-    //             if (missingHasMore) {
-    //                 await loadMoreSearchResultsByType("missing", keyword, category, missingPage);
-    //             }
-    //             if (findingHasMore) {
-    //                 await loadMoreSearchResultsByType("finding", keyword, category, findingPage);
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error("검색 추가 로드 오류:", error);
-    //         throw error;
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
 
     // Context 값 제공 - value 객체에 searchPets 추가
     const value: PetContext = {
