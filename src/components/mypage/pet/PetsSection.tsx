@@ -58,7 +58,7 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
     <>
       {/* <h3 className="text-xl font-bold mb-1">내 반려동물</h3> */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="max-md:px-3 pb-3">
           <CardTitle className="text-lg font-medium">내 반려동물</CardTitle>
           <CardDescription>
             <p>등록한 실종/발견 게시글을 확인하고 관리하세요</p>
@@ -72,7 +72,7 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-4 pt-3 pb-4 max-h-96 overflow-y-auto">
+        <CardContent className="px-3 md:px-6 pt-3 pb-4 max-h-96 overflow-y-auto">
           {userPets.length > 0 ? (
             <div className="grid gap-4">
               {userPets.map((pet, index) => (
@@ -98,9 +98,10 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium">{pet.name || "이름 없음"}</h4>
-                      <p className="text-gray-500 text-sm">
-                        {pet.breed || "품종 미상"} •{" "}
-                        {pet.age ? `${pet.age}살` : "나이 미상"}
+                      <p className="flex flex-wrap gap-1 text-gray-500 text-sm">
+                        <span>{pet.breed || "품종 미상"}</span>
+                        <span>•</span>
+                        <span>{pet.age ? `${pet.age}살` : "나이 미상"}</span>
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

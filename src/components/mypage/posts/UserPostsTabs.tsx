@@ -89,7 +89,7 @@ export function UserPostsTabs({
   return (
     <>
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="max-md:px-4 pb-3">
           <CardTitle className="text-lg font-medium">나의 게시글</CardTitle>
           <CardDescription>
             등록한 실종/발견 게시글을 확인하고 관리하세요
@@ -101,7 +101,7 @@ export function UserPostsTabs({
             onValueChange={(value) => setActiveTab(value as PostType)}
             className="w-full"
           >
-            <div className="px-6 pb-3">
+            <div className="px-3 md:px-6 md:pb-3">
               <TabsList className="grid w-full grid-cols-2 h-auto">
                 <TabsTrigger
                   value={POST_TYPE.MISSING}
@@ -119,10 +119,10 @@ export function UserPostsTabs({
                 </TabsTrigger>
                 <TabsTrigger
                   value={POST_TYPE.FINDING}
-                  className="flex items-center gap-2 h-full"
+                  className="flex flex-col gap-1 h-full"
                 >
                   {userFinding.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="flex-1">
                       {userFinding.length}
                     </Badge>
                   )}
@@ -137,7 +137,7 @@ export function UserPostsTabs({
             {/* 실종 게시글 탭 내용 */}
             <TabsContent
               value={POST_TYPE.MISSING}
-              className="space-y-4 mt-0 px-6 pb-6 pt-3 h-96 overflow-y-auto"
+              className="space-y-4 mt-0 px-3 md:px-6 pb-6 pt-3 h-96 overflow-y-auto"
             >
               {userMissing.length === 0 ? (
                 <div className="text-center py-8">
@@ -166,9 +166,9 @@ export function UserPostsTabs({
                           handleViewPost(post.id, POST_TYPE.MISSING)
                         }
                       >
-                        <div className="flex flex-col sm:flex-row">
+                        <div className="flex flex-row">
                           <div
-                            className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
+                            className="w-24 h-24 bg-gray-200 flex-shrink-0"
                             style={{
                               backgroundImage: post.pathUrl
                                 ? `url(${post.pathUrl})`
@@ -209,7 +209,7 @@ export function UserPostsTabs({
             {/* 발견 게시글 탭 내용 */}
             <TabsContent
               value={POST_TYPE.FINDING}
-              className="space-y-4 px-6 pb-6 h-96 overflow-y-auto"
+              className="space-y-4 px-3 md:px-6 pb-6 h-96 overflow-y-auto"
             >
               {userFinding.length === 0 ? (
                 <div className="text-center py-8">
@@ -238,9 +238,9 @@ export function UserPostsTabs({
                           handleViewPost(post.id, POST_TYPE.FINDING)
                         }
                       >
-                        <div className="flex flex-col sm:flex-row">
+                        <div className="flex flex-row">
                           <div
-                            className="w-full sm:w-24 h-24 bg-gray-200 flex-shrink-0"
+                            className="w-24 h-24 bg-gray-200 flex-shrink-0"
                             style={{
                               backgroundImage: post.pathUrl
                                 ? `url(${post.pathUrl})`

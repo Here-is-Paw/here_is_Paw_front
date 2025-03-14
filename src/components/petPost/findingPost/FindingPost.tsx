@@ -1,25 +1,61 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl, aiUrl } from "@/constants";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { useForm } from "react-hook-form";
 import React, { useEffect, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
-import { cn } from "@/lib/utils.ts";
-import { format } from "date-fns";
-import { FindingDetailFormData, defaultValues } from "@/types/finding";
+import { useForm } from "react-hook-form";
+
+// UI Components
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog.tsx";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select.tsx";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover.tsx";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
-import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { cn } from "@/lib/utils.ts";
+
+// Context and Constants
+import { backUrl, aiUrl } from "@/constants";
+import { usePetContext } from "@/contexts/PetContext.tsx";
+
+// Type
+import { FindingDetailFormData, defaultValues } from "@/types/finding";
+
+// Map
+import { format } from "date-fns";
 import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
+
+// Date
 import { ko } from "date-fns/locale";
-import { usePetContext } from "@/contexts/PetContext.tsx";
+import { CalendarIcon } from "lucide-react";
+
+// File
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 
 interface FindingFormPopup {
   open: boolean;
@@ -27,7 +63,11 @@ interface FindingFormPopup {
   onSuccess?: () => void;
 }
 
-export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormPopup) => {
+export const FindingFormPopup = ({
+  open,
+  onOpenChange,
+  onSuccess,
+}: FindingFormPopup) => {
   const form = useForm<FindingDetailFormData>({
     defaultValues,
   });
@@ -41,7 +81,18 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
 
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
 
-  const { file, imagePreview, isAnalyzing, hasExistingImage, handleFileChange, resetFileUpload, removeImage } = useFileUpload({
+  // 제출 상태를 추적하는 상태 변수 추가
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    file,
+    imagePreview,
+    isAnalyzing,
+    hasExistingImage,
+    handleFileChange,
+    resetFileUpload,
+    removeImage,
+  } = useFileUpload({
     aiUrl, // 상수에서 가져온 AI API URL
     initialImageUrl: null,
     onFileChangeCallback: (selectedFile) => {
@@ -59,7 +110,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     message: "",
   });
 
-  const showToast = (type: "success" | "error" | "warning", title: string, message: string) => {
+  const showToast = (
+    type: "success" | "error" | "warning",
+    title: string,
+    message: string
+  ) => {
     setToast({
       open: true,
       type,
@@ -83,7 +138,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   // const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
 
   // 위치 선택 핸들러
-  const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
+  const handleLocationSelect = (location: {
+    x: number;
+    y: number;
+    address: string;
+  }) => {
     setLocationInfo(location);
     // geo 필드 업데이트 (JSON 문자열로 저장)
     form.setValue("x", location.x);
@@ -91,16 +150,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     // location 필드 업데이트 (주소 문자열로 저장)
     form.setValue("location", location.address);
   };
-
-  // 추가 상세 주소 변경 핸들러
-  // const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setAdditionalAddressDetails(e.target.value);
-
-  //   // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
-  //   const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
-
-  //   form.setValue("location", combinedAddress);
-  // };
 
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
@@ -112,11 +161,9 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      // setAdditionalAddressDetails("");
 
       // 날짜 초기화
       setDate(undefined);
-      // 혹은 오늘 날짜로 설정하고 싶다면: setDate(new Date());
 
       // form의 lostDate 필드도 초기화
       form.setValue("findDate", "");
@@ -159,12 +206,21 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
   };
 
   const handleSubmit = async (data: FindingDetailFormData) => {
+    // 이미 제출 중이면 중복 제출 방지
+    if (isSubmitting) return;
+
     if (!data.findDate) {
-      // alert("발견 날짜를 선택해주세요.");
-      showToast("warning", "발견 날짜 선택은 필수입니다.", "발견 날짜를 선택해주세요.");
+      showToast(
+        "warning",
+        "발견 날짜 선택은 필수입니다.",
+        "발견 날짜를 선택해주세요."
+      );
       return;
     }
     try {
+      // 제출 시작 시 상태 변경
+      setIsSubmitting(true);
+
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("breed", data.breed);
@@ -174,14 +230,20 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         formData.append("x", locationInfo.x.toString());
         formData.append("y", locationInfo.y.toString());
       } else {
-        // alert("발견 위치를 지도에서 선택해주세요.");
-        showToast("warning", "발견 위치 선택은 필수입니다.", "발견 위치를 지도에서 선택해주세요.");
+        showToast(
+          "warning",
+          "발견 위치 선택은 필수입니다.",
+          "발견 위치를 지도에서 선택해주세요."
+        );
         return;
       }
 
       // 지도 주소와 상세 주소를 결합
-      const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
-      console.log(data.findDate);
+      const combinedAddress = locationInfo.address
+        ? `${locationInfo.address}`.trim()
+        : data.location;
+
+      //
       formData.append("location", combinedAddress);
       formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
@@ -189,14 +251,20 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       formData.append("gender", data.gender?.toString() || "0");
       formData.append("neutered", data.neutered?.toString() || "0");
       formData.append("age", data.age?.toString() || "0");
-      formData.append("findDate", new Date(data.findDate).toISOString().split("Z")[0]);
+      formData.append(
+        "findDate",
+        new Date(data.findDate).toISOString().split("Z")[0]
+      );
       formData.append("etc", data.etc || "");
 
       if (file) {
         formData.append("file", file);
       } else {
-        // alert("반려동물 사진은 필수입니다.");
-        showToast("warning", "반려동물 사진은 필수입니다.", "사진 등록 후 다시 시도해주세요.");
+        showToast(
+          "warning",
+          "반려동물 사진은 필수입니다.",
+          "사진 등록 후 다시 시도해주세요."
+        );
         return;
       }
 
@@ -205,7 +273,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      showToast("success", "발견 신고 등록 완료", "발견 신고가 성공적으로 등록되었습니다.");
+      showToast(
+        "success",
+        "발견 신고 등록 완료",
+        "발견 신고가 성공적으로 등록되었습니다."
+      );
 
       form.reset(defaultValues);
       resetFileUpload();
@@ -229,8 +301,14 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       }
     } catch (error) {
       console.error("발견신고 등록 오류:", error);
-      // alert("발견신고 등록에 실패했습니다");
-      showToast("error", "발견 신고 등록 실패", "발견신고 등록에 실패했습니다.");
+      showToast(
+        "error",
+        "발견 신고 등록 실패",
+        "발견신고 등록에 실패했습니다."
+      );
+    } finally {
+      // 성공하든 실패하든 제출 상태 초기화
+      setIsSubmitting(false);
     }
   };
 
@@ -251,7 +329,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             y: location.coordinates.lat,
             address: "서울시 용산구",
           });
-          // setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
@@ -262,20 +339,31 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         type={toast.type}
         title={toast.title}
         message={toast.message}
-        duration={3000}
+        duration={1000}
         onClose={() => setToast((prev) => ({ ...prev, open: false }))}
       />
 
-      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white">
-        <DialogHeader className="space-y-2 text-center px-6">
-          <DialogTitle className="text-2xl font-bold text-primary">반려동물 발견 신고</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">반려동물 정보를 입력해주세요</DialogDescription>
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        className="max-w-4xl w-[calc(100%-1rem)] h-5/6 py-6 px-0 bg-white rounded"
+      >
+        <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+          <DialogTitle className="text-2xl font-bold text-primary">
+            반려동물 발견 신고
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            반려동물 정보를 입력해주세요
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto px-6">
+        <div className="flex-1 overflow-auto px-3 md:px-6">
           <Form {...form}>
-            <form id="missing" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form
+              id="finding"
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-4">
                   {/* 필수 입력 필드 */}
                   <FormField
@@ -285,7 +373,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       <FormItem>
                         <FormLabel>이름</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="반려동물 이름" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="반려동물 이름"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -328,7 +420,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       <FormItem>
                         <FormLabel>등록번호</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="마이크로칩 등록번호" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="마이크로칩 등록번호"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -367,7 +463,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                         <FormItem>
                           <FormLabel>나이</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="나이" min={0} max={100} {...field} />
+                            <Input
+                              type="number"
+                              placeholder="나이"
+                              min={0}
+                              max={100}
+                              {...field}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -386,8 +488,20 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                           <FormLabel>반려동물 사진 *</FormLabel>
                           {isAnalyzing && (
                             <div className="flex items-center gap-2 text-green-600 text-sm">
-                              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <svg
+                                className="animate-spin h-5 w-5"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
                                 <path
                                   className="opacity-75"
                                   fill="currentColor"
@@ -405,10 +519,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                             accept="image/*"
                             className="sr-only"
                             onChange={handleFileChange}
-                            // onChange={(e) => {
-                            //     handleFileChange(e);
-                            //     field.onChange(e.target.files?.[0]);
-                            // }}
                           />
                         </FormControl>
 
@@ -418,14 +528,21 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                           className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
                         >
                           {imagePreview ? (
-                            <img src={imagePreview} alt="미리보기" className="w-full h-full object-contain m-auto" />
+                            <img
+                              src={imagePreview}
+                              alt="미리보기"
+                              className="w-full h-full object-contain m-auto"
+                            />
                           ) : (
-                            <span className="text-sm text-muted-foreground p-2">반려견 사진을 첨부해주세요.</span>
+                            <span className="text-sm text-muted-foreground p-2">
+                              반려견 사진을 첨부해주세요.
+                            </span>
                           )}
                         </label>
                         {hasExistingImage && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            * 이미 등록된 사진이 있습니다. 새 사진을 선택하지 않으면 기존 사진이 사용됩니다.
+                            * 이미 등록된 사진이 있습니다. 새 사진을 선택하지
+                            않으면 기존 사진이 사용됩니다.
                           </p>
                         )}
                         <FormMessage />
@@ -445,14 +562,26 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                                  onClick={() => setCalendarIsOpen((open) => !open)}
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                  onClick={() =>
+                                    setCalendarIsOpen((open) => !open)
+                                  }
                                 >
                                   <CalendarIcon />
-                                  {date ? format(date, "yyyy-MM-dd") : <span>Pick a date</span>}
+                                  {date ? (
+                                    format(date, "yyyy-MM-dd")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   className="min-h-80"
                                   mode="single"
@@ -468,9 +597,17 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                                       const dateWith2359 = new Date(newDate);
                                       dateWith2359.setHours(23, 59, 59);
 
-                                      const isoString = dateWith2359.toISOString().split("Z")[0];
+                                      const isoString = dateWith2359
+                                        .toISOString()
+                                        .split("Z")[0];
                                       field.onChange(isoString);
                                     }
+                                  }}
+                                  disabled={(date) => {
+                                    // 오늘 날짜 이후의 날짜를 비활성화
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+                                    return date > today;
                                   }}
                                   initialFocus
                                 />
@@ -515,9 +652,19 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       <FormItem className="">
                         <FormLabel>발견 위치(지도) *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="geo" className="sr-only" {...field} readOnly disabled />
+                          <Input
+                            type="text"
+                            placeholder="geo"
+                            className="sr-only"
+                            {...field}
+                            readOnly
+                            disabled
+                          />
                         </FormControl>
-                        <LocationPicker onLocationSelect={handleLocationSelect} isMissing={false} />
+                        <LocationPicker
+                          onLocationSelect={handleLocationSelect}
+                          isMissing={false}
+                        />
                       </FormItem>
                     )}
                   />
@@ -530,7 +677,11 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>상세 주소</FormLabel>
-                          <Input type="text" placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="상세 주소를 입력하세요 (예: 아파트 동/호수, 건물 내 위치 등)"
+                            {...field}
+                          />
                         </FormItem>
                       )}
                     />
@@ -540,12 +691,17 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                   <FormField
                     control={form.control}
                     name="location"
-                    rules={{ required: "실종 위치는 필수입니다" }}
+                    rules={{ required: "발견 위치는 필수입니다" }}
                     render={({ field }) => (
                       <FormItem className="sr-only">
                         <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="실종 위치" {...field} disabled />
+                          <Input
+                            type="text"
+                            placeholder="발견 위치"
+                            {...field}
+                            disabled
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -556,9 +712,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                     name="etc"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>특이사항</FormLabel>
+                        <FormLabel>발견 상황</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="반려동물에 대한 추가 정보를 입력하세요" className="min-h-[80px]" {...field} />
+                          <Textarea
+                            placeholder="반려동물에 대한 정보와 상황을 입력하세요"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -568,13 +728,13 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             </form>
           </Form>
         </div>
-        <DialogFooter className="px-6">
-          <div className="flex justify-end gap-2">
+        <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6">
+          <div className="flex justify-end gap-2 w-full">
             <Button type="button" variant="outline" onClick={handleClose}>
               취소
             </Button>
-            <Button type="submit" form="missing">
-              등록하기
+            <Button type="submit" form="finding" disabled={isSubmitting}>
+              {isSubmitting ? "등록 중..." : "등록하기"}
             </Button>
           </div>
         </DialogFooter>

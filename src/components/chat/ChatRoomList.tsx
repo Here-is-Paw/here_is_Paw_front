@@ -139,7 +139,6 @@ export function ChatRoomList({
                           alt={otherUser.nickname}
                           className="object-cover w-full h-full"
                           onError={(e) => {
-                            // @ts-ignore - src 속성 접근 오류 방지
                             e.currentTarget.src = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
                           }}
                         />

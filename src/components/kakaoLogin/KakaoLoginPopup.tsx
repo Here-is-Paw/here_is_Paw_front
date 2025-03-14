@@ -14,6 +14,7 @@ import { X } from "lucide-react";
 import { backUrl, frontUrl, kakaoUrl } from "@/constants";
 import { AdminLoginPopup } from "@/components/admin/AdminLoginPopup.tsx";
 import { useState } from "react";
+import IconKakaoLargeWide from "../icons/IconKakaoLargeWide";
 
 export const KakaoLoginPopup = () => {
   const [isKakaoOpen, setIsKakaoOpen] = useState(false);
@@ -34,9 +35,9 @@ export const KakaoLoginPopup = () => {
         <AlertDialogTrigger asChild>
           <Button
             variant="ghost"
-            className="h-8 bg-primary text-white hover:bg-primary/80"
+            className="h-8 bg-primary hover:bg-primary/80"
           >
-            <span className="text-xs">로그인</span>
+            <span className="text-xs text-white">로그인</span>
           </Button>
         </AlertDialogTrigger>
 
@@ -63,15 +64,11 @@ export const KakaoLoginPopup = () => {
 
               <button
                 onClick={handleKakaoLogin}
-                className="w-full h-12 bg-[#FEE500] text-[#191919] font-medium rounded-lg
-                         flex items-center justify-center hover:bg-[#FDD800]
-                         transition-colors my-4"
+                className="w-full p-0
+                         flex items-center justify-center
+                         transition-opacity my-4 hover:opacity-90"
               >
-                <img
-                  src="/assets/login/kakao_login_large_wide.svg"
-                  alt="카카오 로그인"
-                  className="w-full max-w-[300px]"
-                />
+                <IconKakaoLargeWide width={"100%"} height={"auto"} />
               </button>
 
               <p className="text-xs text-gray-500 text-center px-4">

@@ -7,31 +7,34 @@ import {AuthProvider} from "@/contexts/AuthContext";
 import {RadiusProvider} from "@/contexts/RadiusContext.tsx";
 import {ChatProvider} from "./contexts/ChatContext";
 
-import {MapLocationProvider} from "@/contexts/MapLocationContext.tsx";
-import {PetProvider} from "@/contexts/PetContext.tsx";
+import { MapLocationProvider } from "@/contexts/MapLocationContext.tsx";
+import { PetProvider } from "@/contexts/PetContext.tsx";
+import { CareCenterProvider } from "./contexts/CareCenterContext.tsx";
 
 // RadiusProvider, MapLocationProvider가 PetProvider보다 상위여야함
 // > Pet에서 두개의 전역을 사용하기 때문
 function App() {
-    return (
-        <BrowserRouter>
-            <RadiusProvider>
-                <MapLocationProvider>
-                    <PetProvider>
-                        <AuthProvider>
-                            <ChatProvider>
-                                <SidebarProvider>
-                                    <RootLayout>
-                                        <AppRoutes/>
-                                    </RootLayout>
-                                </SidebarProvider>
-                            </ChatProvider>
-                        </AuthProvider>
-                    </PetProvider>
-                </MapLocationProvider>
-            </RadiusProvider>
-        </BrowserRouter>
-    );
+  return (
+    <BrowserRouter>
+      <RadiusProvider>
+        <MapLocationProvider>
+          <PetProvider>
+            <CareCenterProvider>
+              <ChatProvider>
+                <AuthProvider>
+                  <SidebarProvider>
+                    <RootLayout>
+                      <AppRoutes />
+                    </RootLayout>
+                  </SidebarProvider>
+                </AuthProvider>
+              </ChatProvider>
+            </CareCenterProvider>
+          </PetProvider>
+        </MapLocationProvider>
+      </RadiusProvider>
+    </BrowserRouter>
+  );
 }
 
 export default App;
