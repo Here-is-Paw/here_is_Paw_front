@@ -40,63 +40,90 @@ export function NotificationBell() {
 
   const unreadCount = notifications.filter((notif) => !notif.read).length;
 
-  // SSE 연결 설정
+  // // SSE 연결 설정
+  // useEffect(() => {
+  //   let eventSource: EventSource | null = null;
+  //
+  //   const connectSSE = async () => {
+  //     try {
+  //       // SSE 연결
+  //       eventSource = new EventSource(`${backUrl}/api/v1/sse/connect`, {
+  //         withCredentials: true,
+  //       });
+  //
+  //       // 연결 성공 이벤트
+  //       eventSource.addEventListener("connect", (event) => {
+  //         console.log("SSE 연결 성공:", event);
+  //         setSseConnected(true);
+  //       });
+  //
+  //       // 알림 이벤트 수신
+  //       eventSource.addEventListener("noti", (event) => {
+  //         try {
+  //           const newNoti = JSON.parse(event.data) as Noti;
+  //           console.log("새 알림 수신:", newNoti);
+  //
+  //           setNotifications((prev) => {
+  //             // 이미 존재하는 알림인지 확인
+  //             const exists = prev.some((n) => n.id === newNoti.id);
+  //             if (exists) return prev;
+  //
+  //             // 새 알림을 맨 앞에 추가
+  //             return [newNoti, ...prev];
+  //           });
+  //         } catch (error) {
+  //           console.error("알림 데이터 파싱 오류:", error);
+  //         }
+  //       });
+  //
+  //       // 에러 처리
+  //       eventSource.onerror = (error) => {
+  //         console.error("SSE 연결 오류:", error);
+  //         eventSource?.close();
+  //         setSseConnected(false);
+  //
+  //         // 재연결 시도
+  //         setTimeout(connectSSE, 5000);
+  //       };
+  //     } catch (error) {
+  //       console.error("SSE 연결 실패:", error);
+  //     }
+  //   };
+  //
+  //   connectSSE();
+  //
+  //   // 컴포넌트 언마운트 시 SSE 연결 종료
+  //   return () => {
+  //     if (eventSource) {
+  //       eventSource.close();
+  //     }
+  //   };
+  // }, []);
+
+  // notification.tsx의 SSE 관련 코드 수정
   useEffect(() => {
-    let eventSource: EventSource | null = null;
+    // NavBar에서 발생시키는 알림 이벤트 리스너 추가
+    const handleNewNotification = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.notification) {
+        const newNoti = customEvent.detail.notification as Noti;
 
-    const connectSSE = async () => {
-      try {
-        // SSE 연결
-        eventSource = new EventSource(`${backUrl}/api/v1/sse/connect`, {
-          withCredentials: true,
+        setNotifications((prev) => {
+          // 이미 존재하는 알림인지 확인
+          const exists = prev.some((n) => n.id === newNoti.id);
+          if (exists) return prev;
+
+          // 새 알림을 맨 앞에 추가
+          return [newNoti, ...prev];
         });
-
-        // 연결 성공 이벤트
-        eventSource.addEventListener("connect", (event) => {
-          console.log("SSE 연결 성공:", event);
-          setSseConnected(true);
-        });
-
-        // 알림 이벤트 수신
-        eventSource.addEventListener("noti", (event) => {
-          try {
-            const newNoti = JSON.parse(event.data) as Noti;
-            console.log("새 알림 수신:", newNoti);
-
-            setNotifications((prev) => {
-              // 이미 존재하는 알림인지 확인
-              const exists = prev.some((n) => n.id === newNoti.id);
-              if (exists) return prev;
-
-              // 새 알림을 맨 앞에 추가
-              return [newNoti, ...prev];
-            });
-          } catch (error) {
-            console.error("알림 데이터 파싱 오류:", error);
-          }
-        });
-
-        // 에러 처리
-        eventSource.onerror = (error) => {
-          console.error("SSE 연결 오류:", error);
-          eventSource?.close();
-          setSseConnected(false);
-
-          // 재연결 시도
-          setTimeout(connectSSE, 5000);
-        };
-      } catch (error) {
-        console.error("SSE 연결 실패:", error);
       }
     };
 
-    connectSSE();
+    window.addEventListener("new_notification", handleNewNotification);
 
-    // 컴포넌트 언마운트 시 SSE 연결 종료
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
     return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
+      window.removeEventListener("new_notification", handleNewNotification);
     };
   }, []);
 
