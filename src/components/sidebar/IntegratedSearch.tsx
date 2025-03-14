@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { usePetContext } from "@/contexts/PetContext";
 import { useMapLocation } from "@/contexts/MapLocationContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface IntegratedSearchProps {
   onSearchStart?: () => void;
@@ -17,6 +18,8 @@ interface IntegratedSearchProps {
 export const IntegratedSearch: FC<IntegratedSearchProps> = ({
   onSearchStart,
 }) => {
+  const isMobile = useIsMobile();
+
   const [searchQuery, setSearchQuery] = useState("");
   const {
     searchMode,
@@ -108,14 +111,9 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
       </div>
 
       {searchMode === "반경" && (
-        <div
-          className="
-            max-md:fixed max-md:top-[169px] max-md:max-w-[calc(100%-350px)] max-md:backdrop-blur-md max-md:p-1 max-md:rounded
-            mt-1 text-xs text-black md:text-white
-          "
-        >
+        <p className="mt-1 text-xs text-white">
           지도에서 위치를 클릭하고 검색하면 설정된 반경 내에서 검색합니다.
-        </div>
+        </p>
       )}
     </div>
   );

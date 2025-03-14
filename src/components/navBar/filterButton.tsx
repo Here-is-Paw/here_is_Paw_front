@@ -2,20 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Hospital } from "lucide-react";
 import pawGreen from "../../assets/paw_green.svg";
 import pawRed from "../../assets/paw_red.svg";
+import { useButtonState } from "@/contexts/ButtonState";
 
-interface FilterButtonProps {
-  buttonStates: {
-    lost: boolean;
-    found: boolean;
-    hospital: boolean;
-  };
-  toggleButton: (buttonName: "lost" | "found" | "hospital") => void;
-}
+export function FilterButton() {
+  // Get buttonStates and toggleButton from context
+  const { buttonStates, toggleButton } = useButtonState();
 
-export function FilterButton({
-  buttonStates,
-  toggleButton,
-}: FilterButtonProps) {
   // Helper to determine visibility status text - false means visible, true means hidden
   const getVisibilityText = (isHidden: boolean) => (isHidden ? "숨김" : "표시");
 
