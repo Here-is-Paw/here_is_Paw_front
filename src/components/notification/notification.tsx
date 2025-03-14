@@ -13,8 +13,8 @@ import axios from "axios";
 import {backUrl} from "@/constants";
 import {useIsMobile} from "@/hooks/use-mobile";
 // MissingDetail 컴포넌트와 ChatModalInfo 타입 가져오기
-import {MissingDetail, ChatModalInfo} from "@/components/petPost/missingPost/MissingDetail";
-import {ChatModal} from "@/components/chat/ChatModal"; // ChatModal 컴포넌트 추가
+import {ChatModal} from "@/components/chat/ChatModal";
+import {FindingDetail, ChatModalInfo} from "@/components/petPost/findingPost/FindingDetail.tsx"; // ChatModal 컴포넌트 추가
 
 // 알림 타입 정의
 interface Noti {
@@ -419,7 +419,7 @@ export function NotificationBell() {
 
             {/* MissingDetail 컴포넌트 추가 */}
             {selectedPostId !== null && (
-                <MissingDetail
+                <FindingDetail
                     petId={selectedPostId}
                     open={detailOpen}
                     onOpenChange={setDetailOpen}
