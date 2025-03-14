@@ -1,14 +1,11 @@
+import { useEffect, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import { useEffect, useRef, useState } from "react";
 import { FindingCard } from "./FindingCard.tsx";
 import { ChatModal } from "@/components/chat/ChatModal.tsx";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 import { PetList } from "@/types/mypet.ts";
-import {
-  ChatModalInfo,
-  FindingDetail,
-} from "@/components/petPost/findingPost/FindingDetail.tsx";
+import { ChatModalInfo, FindingDetail } from "@/components/petPost/findingPost/FindingDetail.tsx";
 
 export function FindingList() {
   // Context에서 데이터와 상태 가져오기
@@ -38,8 +35,7 @@ export function FindingList() {
     chatRoomId: null,
   });
 
-  const DEFAULT_IMAGE_URL =
-    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+  const DEFAULT_IMAGE_URL = "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
 
   // 초기 로드 상태 업데이트
   useEffect(() => {
@@ -59,12 +55,8 @@ export function FindingList() {
     // observer 콜백 함수
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
-      if (
-        entry.isIntersecting &&
-        findingHasMore &&
-        !isLoading &&
-        !initialLoad
-      ) {
+
+      if (entry.isIntersecting && findingHasMore && !isLoading && !initialLoad) {
         console.log("Loading more finding data...");
         // 여기를 수정: "finding" 타입 명시적으로 전달
         loadMorePets("finding");
@@ -107,12 +99,8 @@ export function FindingList() {
   };
 
   const handleSwiperReachEnd = () => {
-    if (
-      findingHasMore &&
-      !isLoading &&
-      !initialLoad &&
-      activeFilter === "전체"
-    ) {
+
+    if (findingHasMore && !isLoading && !initialLoad && activeFilter === "전체") {
       console.log("Swiper reached end, loading more finding data...");
       // 여기를 수정: "finding" 타입 명시적으로 전달
       loadMorePets("finding");
@@ -129,11 +117,7 @@ export function FindingList() {
         <>
           {findingPets.length > 0 ? (
             <>
-              <div
-                className={`h-auto ${
-                  activeFilter !== "전체" ? `overflow-y-auto` : ``
-                }`}
-              >
+              <div className={`h-auto ${activeFilter !== "전체" ? `overflow-y-auto` : ``}`}>
                 {activeFilter === "전체" ? (
                   <Swiper
                     slidesPerView={"auto"}
@@ -150,15 +134,8 @@ export function FindingList() {
                     className="relative"
                   >
                     {findingPets.map((pet, index) => (
-                      <SwiperSlide
-                        key={`finding-slide${pet.id}${index}`}
-                        className="w-40 pb-2"
-                      >
-                        <button
-                          type="button"
-                          className="text-left p-0"
-                          onClick={() => handlePetSelect(pet)}
-                        >
+                      <SwiperSlide key={`finding-slide${pet.id}${index}`} className="w-40 pb-2">
+                        <button type="button" className="text-left p-0" onClick={() => handlePetSelect(pet)}>
                           <div>
                             <FindingCard activeFilter={"전체"} pet={pet} />
                           </div>
@@ -168,22 +145,12 @@ export function FindingList() {
                   </Swiper>
                 ) : (
                   <div className="p-2">
-                    <p className="mb-2 text-sm text-right text-gray-400">
-                      발견 게시글: {findingPets.length}
-                    </p>
                     <ul className="grid grid-cols-2 gap-2">
                       {findingPets.map((pet, index) => (
                         <li key={`finding-list${pet.id}${index}`}>
-                          <button
-                            type="button"
-                            className="text-left w-full p-0"
-                            onClick={() => handlePetSelect(pet)}
-                          >
+                          <button type="button" className="text-left w-full p-0" onClick={() => handlePetSelect(pet)}>
                             <div className="w-full">
-                              <FindingCard
-                                activeFilter={"잃어버렸개"}
-                                pet={pet}
-                              />
+                              <FindingCard activeFilter={"잃어버렸개"} pet={pet} />
                             </div>
                           </button>
                         </li>
@@ -193,11 +160,7 @@ export function FindingList() {
                     {/* 로딩 상태 표시 및 Intersection Observer 타겟 */}
                     <div ref={loadingRef} className="py-4 text-center">
                       {isLoading && findingHasMore && <p>더 불러오는 중...</p>}
-                      {!findingHasMore && findingPets.length > 0 && (
-                        <p className="text-gray-500 text-sm">
-                          모든 데이터를 불러왔습니다
-                        </p>
-                      )}
+                      {!findingHasMore && findingPets.length > 0 && <p className="text-gray-500 text-sm">모든 데이터를 불러왔습니다</p>}
                     </div>
                   </div>
                 )}
@@ -226,9 +189,7 @@ export function FindingList() {
             </>
           ) : (
             <>
-              <p className="p-4 text-center text-gray-400">
-                등록된 발견 게시글이 없습니다.
-              </p>
+              <p className="p-4 text-center text-red-500">데이터가 없습니다.</p>
             </>
           )}
         </>

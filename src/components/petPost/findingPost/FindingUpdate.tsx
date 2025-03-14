@@ -1,26 +1,38 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl, aiUrl } from "@/constants";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { useForm } from "react-hook-form";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+
+// UI Components
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
-import { cn } from "@/lib/utils.ts";
-import { format } from "date-fns";
-import { FindingDetailFormData } from "@/types/finding";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { cn } from "@/lib/utils.ts";
+
+// Context and Constants
+import { backUrl, aiUrl } from "@/constants";
+import { usePetContext } from "@/contexts/PetContext.tsx";
+
+// Type
+import { FindingDetailFormData } from "@/types/finding";
+import { FindingDetailData } from "@/types/finding.ts";
+
+// Date
 import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+
+// Map
 import LocationPicker from "@/components/location/locationPickerTest.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
-import { ko } from "date-fns/locale";
-import { usePetContext } from "@/contexts/PetContext.tsx";
-import { FindingDetailData } from "@/types/finding.ts";
+
+// File
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 
 interface FindingUpdateFormPopup {
   open: boolean;
@@ -77,7 +89,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     form.setValue("situation", pet.situation);
     form.setValue("shelterId", pet.shelterId);
     setTimeout(() => {
-      // setImagePreview(pet.pathUrl);
       console.log(pet.detailAddr)
     }, 100);
   }, []);
@@ -93,12 +104,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   });
   const [date, setDate] = React.useState<Date>();
 
-  // const [imagePreview, setImagePreview] = useState<string | null>(pet.pathUrl);
-  // const [file, setFile] = useState<File | string>("");
   const [calendarIsOpen, setCalendarIsOpen] = useState(false);
-  // const [fileUrl, setFileUrl] = useState<string | "">(pet.pathUrl);
-  // const [gender, setGender] = useState("");
-  // const [neutered, setNeutered] = useState("");
 
   const {
     file,
@@ -136,18 +142,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     });
   };
 
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const selectedFile = e.target.files?.[0]; // 첫 번째 파일만 가져오기
-  //
-  //   if (selectedFile) {
-  //     setFile(selectedFile);
-  //     setImagePreview(URL.createObjectURL(selectedFile)); // 이미지 미리보기 생성
-  //   } else {
-  //     setFileUrl(pet.pathUrl);
-  //     setImagePreview(fileUrl);
-  //   }
-  // };
-
   const { refreshPets } = usePetContext();
 
   // 위치 정보가 로드되면 초기 geo 값 설정
@@ -159,11 +153,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     }
   }, [location, form]);
 
-  // 기존 코드는 그대로 유지...
-
-  // 추가 상세 주소 입력을 위한 상태 추가
-  // const [additionalAddressDetails, setAdditionalAddressDetails] = useState("");
-
   // 위치 선택 핸들러
   const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
     setLocationInfo(location);
@@ -174,33 +163,19 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     form.setValue("location", location.address);
   };
 
-  // 추가 상세 주소 변경 핸들러
-  // const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setAdditionalAddressDetails(e.target.value);
-
-  //   // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
-  //   const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
-
-  //   form.setValue("location", combinedAddress);
-  // };
-
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
       resetFileUpload();
-      // setFile("");
-      // setImagePreview(null);
       setLocationInfo({
         x: location.coordinates.lng,
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      // setAdditionalAddressDetails("");
 
       // 날짜 초기화
       setDate(undefined);
-      // 혹은 오늘 날짜로 설정하고 싶다면: setDate(new Date());
 
       // form의 lostDate 필드도 초기화
       form.setValue("findDate", "");
@@ -225,8 +200,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   const handleClose = () => {
     form.reset(defaultValues);
     resetFileUpload();
-    // setFile("");
-    // setImagePreview(null);
     onOpenChange(false);
 
     // 날짜 초기화
@@ -291,8 +264,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
 
       form.reset(defaultValues);
       resetFileUpload();
-      // setImagePreview(null);
-      // setFile("");
 
       await refreshPets();
 
@@ -313,7 +284,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
       }
     } catch (error) {
       console.error("발견신고 등록 오류:", error);
-      // alert("발견신고 등록에 실패했습니다");
       showToast("error", "발견 신고 수정 실패", "발견신고 수정에 실패했습니다.");
     }
   };
@@ -335,7 +305,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
             y: location.coordinates.lat,
             address: "서울시 용산구",
           });
-          // setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
@@ -544,41 +513,6 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                           </FormItem>
                       )}
                   />
-                  {/*<FormField*/}
-                  {/*  control={form.control}*/}
-                  {/*  name="file"*/}
-                  {/*  rules={{ required: "사진은 필수입니다" }}*/}
-                  {/*  render={({ field }) => (*/}
-                  {/*    <FormItem>*/}
-                  {/*      <FormLabel>반려동물 사진 *</FormLabel>*/}
-                  {/*      <FormControl>*/}
-                  {/*        <Input*/}
-                  {/*          type="file"*/}
-                  {/*          id="file01"*/}
-                  {/*          accept="image/*"*/}
-                  {/*          className="sr-only"*/}
-                  {/*          onChange={(e) => {*/}
-                  {/*            handleFileChange(e);*/}
-                  {/*            field.onChange(e.target.files?.[0]);*/}
-                  {/*          }}*/}
-                  {/*        />*/}
-                  {/*      </FormControl>*/}
-
-                  {/*      /!* 미리보기 (이미지 선택 시만 표시) *!/*/}
-                  {/*      <label*/}
-                  {/*        htmlFor="file01"*/}
-                  {/*        className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"*/}
-                  {/*      >*/}
-                  {/*        {imagePreview ? (*/}
-                  {/*          <img src={imagePreview} alt="미리보기" className="w-full h-full object-contain m-auto" />*/}
-                  {/*        ) : (*/}
-                  {/*          <span className="text-sm text-muted-foreground p-2">반려견 사진을 첨부해주세요.</span>*/}
-                  {/*        )}*/}
-                  {/*      </label>*/}
-                  {/*    </FormItem>*/}
-                  {/*  )}*/}
-                  {/*/>*/}
-
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -716,9 +650,9 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                     name="etc"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>특이사항</FormLabel>
+                        <FormLabel>발견 상황</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="반려동물에 대한 추가 정보를 입력하세요" className="min-h-[80px]" {...field} />
+                          <Textarea placeholder="반려동물에 대한 정보와 상황을 입력하세요" className="min-h-[80px]" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
