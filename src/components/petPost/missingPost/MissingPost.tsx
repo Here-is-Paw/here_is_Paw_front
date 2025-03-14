@@ -95,11 +95,11 @@ export const MissingFormPopup = ({
 
   // 제출 상태를 추적하는 상태 변수 추가
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
 
   //
   // const [imagePreview, setImagePreview] = useState<string | null>(null);
   // const [file, setFile] = useState<File | null>(null);
-  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
   // const [hasExistingImage, setHasExistingImage] = useState(false);
   // const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   // const [isAnalyzing, setIsAnalyzing] = useState(false);
