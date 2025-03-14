@@ -474,12 +474,12 @@ const NcpMap = ({
       />
 
       {/* 검색 버튼 */}
-      <div className="absolute bottom-5 right-4 z-50">
+      <div className="absolute bottom-32 max-md:right-1/2 max-md:translate-x-1/2 md:bottom-5 right-4">
         <button
           onClick={handleSearchClick}
           disabled={!selectedLocation}
           className={`
-            bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center w-[11.25rem]
+            bg-green-600 bg-opacity-95 text-white p-2 px-6 rounded-3xl shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center text-sm w-[11.25rem]
             ${selectedLocation || "opacity-60"}
           `}
         >

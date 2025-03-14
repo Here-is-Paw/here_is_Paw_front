@@ -155,9 +155,9 @@ export const MissingUpdateFormPopup = ({
     }
   };
 
+  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
   // const [imagePreview, setImagePreview] = useState<string | null>(pet.pathUrl);
   // const [file, setFile] = useState<File | string>("");
-  const [calendarIsOpen, setCalendarIsOpen] = useState(false);
   // const [fileUrl, setFileUrl] = useState<string | "">(pet.pathUrl);
   // const [gender, setGender] = useState("");
   // const [neutered, setNeutered] = useState("");
@@ -365,19 +365,19 @@ export const MissingUpdateFormPopup = ({
         return;
       }
 
-      if (!data.lostDate) {
+      if (data.lostDate) {
+        formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
+      } else if (pet.lostDate) {
+        formData.append("lostDate", dayjs(pet.lostDate).format("YYYY-MM-DD"));
+      }
+
+      if (!pet.lostDate) {
         showToast(
           "warning",
           "실종 날짜 선택은 필수입니다.",
           "실종 날짜를 선택해주세요."
         );
         return;
-      }
-
-      if (data.lostDate) {
-        formData.append("lostDate", dayjs(data.lostDate).format("YYYY-MM-DD"));
-      } else if (pet.lostDate) {
-        formData.append("lostDate", dayjs(pet.lostDate).format("YYYY-MM-DD"));
       }
 
       // x, y 좌표를 geo 문자열로 변환
@@ -487,6 +487,7 @@ export const MissingUpdateFormPopup = ({
                   <FormField
                     control={form.control}
                     name="name"
+                    rules={{ required: "반려동물 이름은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>이름</FormLabel>
@@ -505,6 +506,7 @@ export const MissingUpdateFormPopup = ({
                   <FormField
                     control={form.control}
                     name="breed"
+                    rules={{ required: "품종은 필수입니다" }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>품종</FormLabel>

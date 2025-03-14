@@ -264,14 +264,19 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
 
                 <dd>
-                  {`${mainAddress} ${detailAddress || ""}`}
+                  {mainAddress || "지역 없음"}
 
                   <div className="mt-1">
                     <LocationViewMap
                       location={{ x: pet.x, y: pet.y, address: pet.location }}
+                      isMissing={true}
                     />
                   </div>
                 </dd>
+              </dl>
+              <dl className="col-span-2">
+                <dt className="text-sm font-medium text-gray-500">상세 주소</dt>
+                <dd>{detailAddress || "상세 주소 없음"}</dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">특이사항</dt>

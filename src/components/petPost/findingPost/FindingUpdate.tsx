@@ -3,10 +3,34 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // UI Components
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog.tsx";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select.tsx";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover.tsx";
 import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
@@ -42,7 +66,13 @@ interface FindingUpdateFormPopup {
   onSuccess?: () => void;
 }
 
-export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSuccess }: FindingUpdateFormPopup) => {
+export const FindingUpdateFormPopup = ({
+  open,
+  onOpenChange,
+  findId,
+  pet,
+  onSuccess,
+}: FindingUpdateFormPopup) => {
   const defaultValues: FindingDetailFormData = {
     id: pet.id,
     name: pet.name,
@@ -67,6 +97,9 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     shelterId: pet.shelterId,
   };
 
+  // 제출 상태를 추적하는 상태 변수 추가
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     form.setValue("id", pet.id);
     form.setValue("name", pet.name);
@@ -89,7 +122,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     form.setValue("situation", pet.situation);
     form.setValue("shelterId", pet.shelterId);
     setTimeout(() => {
-      console.log(pet.detailAddr)
+      console.log(pet.detailAddr);
     }, 100);
   }, []);
 
@@ -113,7 +146,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     hasExistingImage,
     handleFileChange,
     resetFileUpload,
-    removeImage
+    removeImage,
   } = useFileUpload({
     aiUrl,
     useAnalysis: true, // AI 분석 사용
@@ -122,7 +155,7 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
       if (selectedFile) {
         form.setValue("file", selectedFile);
       }
-    }
+    },
   });
 
   // Toast 알림 상태
@@ -133,7 +166,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     message: "",
   });
 
-  const showToast = (type: "success" | "error" | "warning", title: string, message: string) => {
+  const showToast = (
+    type: "success" | "error" | "warning",
+    title: string,
+    message: string
+  ) => {
     setToast({
       open: true,
       type,
@@ -154,7 +191,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   }, [location, form]);
 
   // 위치 선택 핸들러
-  const handleLocationSelect = (location: { x: number; y: number; address: string }) => {
+  const handleLocationSelect = (location: {
+    x: number;
+    y: number;
+    address: string;
+  }) => {
     setLocationInfo(location);
     // geo 필드 업데이트 (JSON 문자열로 저장)
     form.setValue("x", location.x);
@@ -218,12 +259,18 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
   };
 
   const handleSubmit = async (data: FindingDetailFormData) => {
+    // 이미 제출 중이면 중복 제출 방지
+    if (isSubmitting) return;
+
     const formData = new FormData();
     if (pet.findDate) {
       formData.append("findDate", pet.findDate);
     }
 
     try {
+      // 제출 시작 시 상태 변경
+      setIsSubmitting(true);
+
       formData.append("name", data.name);
       formData.append("breed", data.breed);
 
@@ -232,12 +279,18 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
         formData.append("x", locationInfo.x.toString());
         formData.append("y", locationInfo.y.toString());
       } else {
-        showToast("warning", "발견 위치 선택은 필수입니다.", "발견 위치를 지도에서 선택해주세요.");
+        showToast(
+          "warning",
+          "발견 위치 선택은 필수입니다.",
+          "발견 위치를 지도에서 선택해주세요."
+        );
         return;
       }
 
       // 지도 주소와 상세 주소를 결합
-      const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
+      const combinedAddress = locationInfo.address
+        ? `${locationInfo.address}`.trim()
+        : data.location;
 
       formData.append("location", combinedAddress);
       formData.append("detailAddr", data.detailAddr);
@@ -260,7 +313,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      showToast("success", "발견 신고 수정 완료", "발견 신고가 성공적으로 업데이트 되었습니다.");
+      showToast(
+        "success",
+        "발견 신고 수정 완료",
+        "발견 신고가 성공적으로 업데이트 되었습니다."
+      );
 
       form.reset(defaultValues);
       resetFileUpload();
@@ -284,7 +341,14 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
       }
     } catch (error) {
       console.error("발견신고 등록 오류:", error);
-      showToast("error", "발견 신고 수정 실패", "발견신고 수정에 실패했습니다.");
+      showToast(
+        "error",
+        "발견 신고 수정 실패",
+        "발견신고 수정에 실패했습니다."
+      );
+    } finally {
+      // 성공하든 실패하든 제출 상태 초기화
+      setIsSubmitting(false);
     }
   };
 
@@ -311,23 +375,34 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
     >
       {/* Toast 알림 */}
       <ToastAlert
-            open={toast.open}
-            type={toast.type}
-            title={toast.title}
-            message={toast.message}
-            duration={3000}
-            onClose={() => setToast(prev => ({ ...prev, open: false }))}
-        />
-      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="max-w-4xl w-[500px] h-5/6 py-6 px-0 bg-white">
-        <DialogHeader className="space-y-2 text-center px-6">
-          <DialogTitle className="text-2xl font-bold text-primary">반려동물 발견 신고</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">반려동물 정보를 입력해주세요</DialogDescription>
+        open={toast.open}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        duration={1000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+      />
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        className="max-w-4xl w-[calc(100%-1rem)] h-5/6 py-6 px-0 bg-white rounded"
+      >
+        <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+          <DialogTitle className="text-2xl font-bold text-primary">
+            반려동물 발견 신고 수정
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            반려동물 정보를 입력해주세요
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto px-6">
+        <div className="flex-1 overflow-auto px-3 md:px-6">
           <Form {...form}>
-            <form id="missing" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form
+              id="finding"
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-4">
                   {/* 필수 입력 필드 */}
                   <FormField
@@ -337,7 +412,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                       <FormItem>
                         <FormLabel>이름</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="반려동물 이름" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="반려동물 이름"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -380,7 +459,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                       <FormItem>
                         <FormLabel>등록번호</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="마이크로칩 등록번호" {...field} />
+                          <Input
+                            type="text"
+                            placeholder="마이크로칩 등록번호"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -419,7 +502,13 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                         <FormItem>
                           <FormLabel>나이</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="나이" min={0} max={100} {...field} />
+                            <Input
+                              type="number"
+                              placeholder="나이"
+                              min={0}
+                              max={100}
+                              {...field}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -427,91 +516,92 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                   </div>
                   {/* 파일 업로드 필드 수정 - useFileUpload 훅 사용 */}
                   <FormField
-                      control={form.control}
-                      name="file"
-                      rules={{
-                        required: hasExistingImage ? false : "사진은 필수입니다"
-                      }}
-                      render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center gap-2">
-                              <FormLabel>반려동물 사진 *</FormLabel>
-                              {isAnalyzing && (
-                                  <div className="flex items-center gap-2 text-green-600 text-sm">
-                                    <svg
-                                        className="animate-spin h-5 w-5"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                      <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                      />
-                                      <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                      />
-                                    </svg>
-                                    <span>이미지 분석 중...</span>
-                                  </div>
-                              )}
-                            </div>
-                            <FormControl>
-                              <Input
-                                  type="file"
-                                  id="file01"
-                                  accept="image/*"
-                                  className="sr-only"
-                                  onChange={handleFileChange}
-                                  disabled={isAnalyzing}
-                              />
-                            </FormControl>
-
-                            {/* 미리보기 (이미지 선택 시만 표시) */}
-                            <div className="relative">
-                              <label
-                                  htmlFor="file01"
-                                  className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                    control={form.control}
+                    name="file"
+                    rules={{
+                      required: hasExistingImage ? false : "사진은 필수입니다",
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>반려동물 사진 *</FormLabel>
+                          {isAnalyzing && (
+                            <div className="flex items-center gap-2 text-green-600 text-sm">
+                              <svg
+                                className="animate-spin h-5 w-5"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
                               >
-                                {imagePreview ? (
-                                    <img
-                                        src={imagePreview}
-                                        alt="미리보기"
-                                        className="w-full h-full object-contain m-auto"
-                                    />
-                                ) : (
-                                    <span className="text-sm text-muted-foreground p-2">
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                              <span>이미지 분석 중...</span>
+                            </div>
+                          )}
+                        </div>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            id="file01"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleFileChange}
+                            disabled={isAnalyzing}
+                          />
+                        </FormControl>
+
+                        {/* 미리보기 (이미지 선택 시만 표시) */}
+                        <div className="relative">
+                          <label
+                            htmlFor="file01"
+                            className="w-full h-40 rounded-lg border border-dotted m-auto flex justify-center items-center break-all hover:bg-slate-50 cursor-pointer transition-colors"
+                          >
+                            {imagePreview ? (
+                              <img
+                                src={imagePreview}
+                                alt="미리보기"
+                                className="w-full h-full object-contain m-auto"
+                              />
+                            ) : (
+                              <span className="text-sm text-muted-foreground p-2">
                                 반려견 사진을 첨부해주세요.
                               </span>
-                                )}
-                              </label>
-
-                              {imagePreview && (
-                                  <button
-                                      type="button"
-                                      onClick={removeImage}
-                                      disabled={isAnalyzing}
-                                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center"
-                                  >
-                                    ✕
-                                  </button>
-                              )}
-                            </div>
-
-                            {hasExistingImage && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  * 이미 등록된 사진이 있습니다. 새 사진을 선택하지 않으면 기존 사진이 사용됩니다.
-                                </p>
                             )}
-                            <FormMessage />
-                          </FormItem>
-                      )}
+                          </label>
+
+                          {imagePreview && (
+                            <button
+                              type="button"
+                              onClick={removeImage}
+                              disabled={isAnalyzing}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {hasExistingImage && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            * 이미 등록된 사진이 있습니다. 새 사진을 선택하지
+                            않으면 기존 사진이 사용됩니다.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -525,18 +615,29 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                                  onClick={() => setCalendarIsOpen((open) => !open)}
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                  onClick={() =>
+                                    setCalendarIsOpen((open) => !open)
+                                  }
                                 >
                                   <CalendarIcon />
                                   {
                                     date
                                       ? format(date, "yyyy-MM-dd") // date가 있다면 날짜 포맷 적용
-                                      : format(new Date(pet.findDate), "yyyy-MM-dd") // pet.findDate를 Date 객체로 변환 후 포맷 적용
+                                      : format(
+                                          new Date(pet.findDate),
+                                          "yyyy-MM-dd"
+                                        ) // pet.findDate를 Date 객체로 변환 후 포맷 적용
                                   }
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   className="min-h-80"
                                   mode="single"
@@ -554,9 +655,17 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                                       dateWith2359.setHours(23, 59, 59);
 
                                       // ISO 문자열로 변환하되 타임존 오프셋 고려
-                                      const isoString = dateWith2359.toISOString().split("Z")[0];
+                                      const isoString = dateWith2359
+                                        .toISOString()
+                                        .split("Z")[0];
                                       field.onChange(isoString);
                                     }
+                                  }}
+                                  disabled={(date) => {
+                                    // 오늘 날짜 이후의 날짜를 비활성화
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+                                    return date > today;
                                   }}
                                   initialFocus
                                 />
@@ -601,12 +710,23 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                       <FormItem className="">
                         <FormLabel>발견 위치(지도) *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="geo" className="sr-only" {...field} readOnly disabled />
+                          <Input
+                            type="text"
+                            placeholder="geo"
+                            className="sr-only"
+                            {...field}
+                            readOnly
+                            disabled
+                          />
                         </FormControl>
                         <LocationPicker
                           onLocationSelect={handleLocationSelect}
                           isMissing={false}
-                          initialLocation={{ x: pet.x, y: pet.y, location: pet.location }}
+                          initialLocation={{
+                            x: pet.x,
+                            y: pet.y,
+                            location: pet.location,
+                          }}
                         />
                       </FormItem>
                     )}
@@ -639,7 +759,12 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                       <FormItem className="sr-only">
                         <FormLabel>전체 위치 (자동 생성됨) *</FormLabel>
                         <FormControl>
-                          <Input type="text" placeholder="실종 위치" {...field} disabled />
+                          <Input
+                            type="text"
+                            placeholder="실종 위치"
+                            {...field}
+                            disabled
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -652,7 +777,11 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
                       <FormItem>
                         <FormLabel>발견 상황</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="반려동물에 대한 정보와 상황을 입력하세요" className="min-h-[80px]" {...field} />
+                          <Textarea
+                            placeholder="반려동물에 대한 정보와 상황을 입력하세요"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -662,13 +791,13 @@ export const FindingUpdateFormPopup = ({ open, onOpenChange, findId, pet, onSucc
             </form>
           </Form>
         </div>
-        <DialogFooter className="px-6">
-          <div className="flex justify-end gap-2">
+        <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6">
+          <div className="w-full flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
               취소
             </Button>
-            <Button type="submit" form="missing">
-              수정하기
+            <Button type="submit" form="finding" disabled={isSubmitting}>
+              {isSubmitting ? "수정 중..." : "수정하기"}
             </Button>
           </div>
         </DialogFooter>

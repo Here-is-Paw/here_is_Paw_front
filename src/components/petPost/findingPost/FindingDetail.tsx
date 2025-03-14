@@ -2,7 +2,14 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 
 // UI Components
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogHeader,
+  DialogFooter,
+} from "@/components/ui/dialog.tsx";
 import { FindingUpdateFormPopup } from "@/components/petPost/findingPost/FindingUpdate.tsx";
 import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -19,6 +26,8 @@ import { petUtils } from "@/types/pet.common.ts";
 // Chat
 import { useChatContact } from "@/hooks/chat/useChatContact.tsx";
 import { useChatContext } from "@/contexts/ChatContext.tsx";
+import LocationViewMap from "@/components/location/locationViewMap";
+import { Pencil } from "lucide-react";
 
 // ChatModal에 필요한 정보를 담는 인터페이스
 export interface ChatModalInfo {
@@ -37,7 +46,13 @@ interface FindingDetailProps {
   onSuccess?: () => void;
 }
 
-export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpenChange, onChatModalOpen, onSuccess }) => {
+export const FindingDetail: React.FC<FindingDetailProps> = ({
+  petId,
+  open,
+  onOpenChange,
+  onChatModalOpen,
+  onSuccess,
+}) => {
   const [pet, setPet] = useState<FindingDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +70,11 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
     message: "",
   });
 
-  const showToast = (type: "success" | "error" | "warning", title: string, message: string) => {
+  const showToast = (
+    type: "success" | "error" | "warning",
+    title: string,
+    message: string
+  ) => {
     setToast({
       open: true,
       type,
@@ -130,12 +149,19 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   const handleDeleteClick = async (findId: number) => {
     if (confirm("정말 삭제하시겠습니까?")) {
       try {
-        const response = await axios.delete(`${backUrl}/api/v1/finding/${findId}`, {
-          withCredentials: true,
-        });
+        const response = await axios.delete(
+          `${backUrl}/api/v1/finding/${findId}`,
+          {
+            withCredentials: true,
+          }
+        );
 
         if (response.status === 200 || response.status === 201) {
-          showToast("success", "발견 신고 삭제 완료", "발견 신고가 성공적으로 삭제되었습니다.");
+          showToast(
+            "success",
+            "발견 신고 삭제 완료",
+            "발견 신고가 성공적으로 삭제되었습니다."
+          );
 
           await refreshPets();
 
@@ -147,11 +173,19 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
             onSuccess();
           }
         } else {
-          showToast("error", "발견 신고 삭제 실패", "발견신고 삭제에 실패했습니다.");
+          showToast(
+            "error",
+            "발견 신고 삭제 실패",
+            "발견신고 삭제에 실패했습니다."
+          );
         }
       } catch (err) {
         console.error("Failed to delete pet details:", err);
-        showToast("error", "발견 신고 삭제 실패", "발견신고 삭제에 실패했습니다.");
+        showToast(
+          "error",
+          "발견 신고 삭제 실패",
+          "발견신고 삭제에 실패했습니다."
+        );
       }
     }
   };
@@ -180,7 +214,7 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
   if (error || !pet) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white">
+        <DialogContent className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white">
           <div className="flex justify-center items-center h-full flex-col">
             <p className="text-red-500">데이터를 불러올 수 없습니다.</p>
             <Button onClick={() => onOpenChange(false)} className="mt-4">
@@ -204,21 +238,30 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
           duration={3000}
           onClose={() => setToast((prev) => ({ ...prev, open: false }))}
         />
-        <DialogContent className="max-full w-[500px] h-5/6 py-6 px-0 bg-white" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader className="space-y-2 text-center px-6">
-            <DialogTitle className="text-2xl font-bold text-primary">발견했개</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">발견했개 상세정보</DialogDescription>
+        <DialogContent
+          className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+            <DialogTitle className="text-2xl font-bold text-primary">
+              발견했개
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              발견했개 상세정보
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-center items-center">
-            <h3 className="text-2xl font-bold text-primary text-center">{pet.title}</h3>
-          </div>
-
           {/* 내용 영역 */}
-          <div className="px-6 py-4 overflow-auto">
+          <div className="px-3 md:px-6 py-4 overflow-auto">
             <div className="flex flex-col items-center mb-6">
               <div className="h-60 w-full mb-4">
-                {pet?.pathUrl && <img src={pet.pathUrl} alt={pet.name || "이름 없음"} className="object-contain w-full h-full" />}
+                {pet?.pathUrl && (
+                  <img
+                    src={pet.pathUrl}
+                    alt={pet.name || "이름 없음"}
+                    className="object-contain w-full h-full"
+                  />
+                )}
               </div>
             </div>
 
@@ -244,7 +287,9 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
                 <dd>{petUtils.getGenderText(pet.gender || 0)}</dd>
               </dl>
               <dl>
-                <dt className="text-sm font-medium text-gray-500">중성화 여부</dt>
+                <dt className="text-sm font-medium text-gray-500">
+                  중성화 여부
+                </dt>
                 <dd>{petUtils.getNeuteredText(pet.neutered || 0)}</dd>
               </dl>
               <dl>
@@ -253,11 +298,22 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
               </dl>
               <dl>
                 <dt className="text-sm font-medium text-gray-500">발견 날짜</dt>
-                <dd>{pet.findDate ? pet.findDate.split("T")[0] : "발견 날짜 없음"}</dd>
+                <dd>
+                  {pet.findDate ? pet.findDate.split("T")[0] : "발견 날짜 없음"}
+                </dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">지역</dt>
-                <dd>{pet.location || "지역 없음"}</dd>
+                <dd>
+                  {pet.location || "지역 없음"}
+
+                  <div className="mt-1">
+                    <LocationViewMap
+                      location={{ x: pet.x, y: pet.y, address: pet.location }}
+                      isMissing={false}
+                    />
+                  </div>
+                </dd>
               </dl>
               <dl className="col-span-2">
                 <dt className="text-sm font-medium text-gray-500">상세 주소</dt>
@@ -274,37 +330,51 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({ petId, open, onOpe
             </div>
           </div>
 
-          {userData?.id === pet.memberId ? (
-            <DialogFooter className="px-6">
-              <div className="flex justify-end gap-2">
-                <Button type="button" className="bg-red-600" onClick={() => handleDeleteClick(pet.id)}>
-                  삭제하기
-                </Button>
-              </div>
-              <div className="flex justify-end gap-2">
+          <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6 gap-2">
+            {userData?.id === pet.memberId ? (
+              <div className="flex-1 flex gap-1">
                 <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center gap-1 bg-destructive focus:outline-none hover:bg-destructive/80"
+                  onClick={() => handleDeleteClick(pet.id)}
+                >
+                  <span className="text-destructive-foreground">삭제</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1"
                   onClick={(e) => {
                     e.stopPropagation(); // 이벤트 전파 중지
                     setIsFindingAddOpen(true);
                     onOpenChange(false);
                   }}
                 >
-                  수정하기
+                  <Pencil className="h-4 w-4" />
+                  <span>수정</span>
                 </Button>
               </div>
-            </DialogFooter>
-          ) : (
-            <DialogFooter className="px-6">
-              <div className="flex justify-end gap-2">
-                <Button type="button" className="bg-green-600" onClick={handleContactButtonClick} disabled={isContacting}>
+            ) : (
+              <div className="flex-1 flex justify-end gap-1">
+                <Button
+                  type="button"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleContactButtonClick}
+                  disabled={isContacting}
+                >
                   {isContacting ? "연결 중..." : "연락하기"}
                 </Button>
               </div>
-            </DialogFooter>
-          )}
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-      <FindingUpdateFormPopup open={isFindingAddOpen} onOpenChange={setIsFindingAddOpen} findId={pet.id} pet={pet} />
+      <FindingUpdateFormPopup
+        open={isFindingAddOpen}
+        onOpenChange={setIsFindingAddOpen}
+        findId={pet.id}
+        pet={pet}
+      />
     </>
   );
 };
