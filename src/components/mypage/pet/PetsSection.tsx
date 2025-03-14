@@ -61,7 +61,7 @@ export const PetsSection: React.FC<PetsSectionProps> = ({
         <CardHeader className="max-md:px-3 pb-3">
           <CardTitle className="text-lg font-medium">내 반려동물</CardTitle>
           <CardDescription>
-            <p>등록한 실종/발견 게시글을 확인하고 관리하세요</p>
+            <p>등록한 반려동물을 확인하고 관리하세요</p>
             <Button
               className="w-full mt-3"
               variant="outline"
