@@ -5,7 +5,7 @@ import { FindingList } from "@/components/petPost/findingPost/FindingList.tsx";
 
 export function SidebarMainContent() {
   return (
-    <div className="flex-1 overflow-y-auto bg-white md:h-[calc(100vh-120px)]">
+    <div className="flex-1 overflow-y-auto bg-white">
       <SidebarGroup className="p-4">
         {/* 하단 패딩 제거 */}
         <h2 className="text-xl font-bold mb-1">잃어버렸개</h2>
