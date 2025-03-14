@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-} from "@/components/ui/alert-dialog.tsx";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogPortal,
+  DialogOverlay,
+  DialogFooter,
+} from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Pencil, X } from "lucide-react";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { User } from "@/types/user.ts";
@@ -118,97 +118,94 @@ export const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogPortal>
-        <AlertDialogOverlay className="bg-black/50" />
-        <AlertDialogContent className="max-w-[500px] h-5/6 p-6 rounded-xl bg-white shadow-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>프로필 수정</AlertDialogTitle>
-            <AlertDialogDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogPortal>
+        <DialogContent className="max-w-[500px] w-[calc(100%-1rem)] h-5/6 p-6 rounded bg-white">
+          <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+            <DialogTitle className="text-2xl font-bold text-primary">
+              프로필 수정
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
               프로필 정보를 수정할 수 있습니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
 
-          <AlertDialogCancel asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={handleClose}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </AlertDialogCancel>
-
-          <div className="flex-1 overflow-auto">
+          <div className="grid gap-4 flex-1 overflow-auto px-3 md:px-6">
             {/* 프로필 이미지 업로더 */}
-            <div className="flex flex-col items-center space-y-4 mt-4">
+            <div className="relative flex flex-col items-center mx-auto w-40 h-40">
               <input
+                id="myProfile"
                 type="file"
                 ref={fileInputRef}
-                className="hidden"
+                className="sr-only"
                 accept="image/*"
                 onChange={handleFileChange}
               />
-
-              {previewUrl ? (
-                <div className="relative">
-                  <div className="w-40 h-40 rounded-full overflow-hidden">
-                    <img
-                      src={previewUrl}
-                      alt="프로필 이미지"
-                      className="w-full h-full object-cover"
-                    />
+              <label
+                htmlFor="myProfile"
+                className="relative flex shrink-0 w-40 h-40 rounded-full bg-muted hover:shadow-lg cursor-pointer transition-colors"
+              >
+                {previewUrl ? (
+                  <div className="relative">
+                    <div className="w-40 h-40 rounded-full overflow-hidden">
+                      <img
+                        src={previewUrl}
+                        alt="프로필 이미지"
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-0 right-0 w-8 h-8 rounded-full p-0 flex items-center justify-center"
-                    onClick={handleRemoveImage}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
+                ) : (
+                  <>
+                    <span className="flex h-full w-full items-center justify-center rounded-full">
+                      {userData?.nickname?.charAt(0) || "?"}
+                    </span>
+
+                    <span className="absolute bottom-0 left-0 inline-flex justify-center items-center w-8 h-8 border rounded-full bg-white">
+                      <Pencil className="w-4 h-4" />
+                    </span>
+                  </>
+                )}
+              </label>
+
+              {previewUrl && (
                 <Button
                   type="button"
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={handleSelectImageClick}
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-0 right-0 w-8 h-8 rounded-full p-0 flex items-center justify-center"
+                  onClick={handleRemoveImage}
                 >
-                  <ImagePlus className="w-4 h-4" />
-                  프로필 이미지 선택
+                  <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
 
             {/* 닉네임 입력 */}
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nickname" className="text-right">
-                  닉네임
-                </Label>
-                <Input
-                  id="nickname"
-                  value={editedNickname}
-                  onChange={(e) => setEditedNickname(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
+            <div className="flex gap-4 items-center w-full">
+              <Label htmlFor="nickname" className="text-right">
+                닉네임
+              </Label>
+              <Input
+                id="nickname"
+                value={editedNickname}
+                onChange={(e) => setEditedNickname(e.target.value)}
+                className="col-span-3"
+              />
             </div>
           </div>
 
-          {/* 저장/취소 버튼 */}
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={handleClose}>
-              취소
-            </Button>
-            <Button onClick={handleUpdateProfile}>저장</Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialogPortal>
-    </AlertDialog>
+          <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6">
+            {/* 저장/취소 버튼 */}
+            <div className="w-full flex justify-end gap-2">
+              <Button variant="outline" onClick={handleClose}>
+                취소
+              </Button>
+              <Button onClick={handleUpdateProfile}>저장</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
   );
 };
