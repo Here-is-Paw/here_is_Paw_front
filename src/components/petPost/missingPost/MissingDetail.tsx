@@ -204,10 +204,10 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         <DialogContent className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white">
           <DialogHeader className="space-y-2 text-left px-3 md:px-6">
             <DialogTitle className="text-2xl font-bold text-primary">
-              잃어버렸개
+              잃어버렸개 상세정보
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              잃어버렸개 상세정보
+              작성자: {pet.nickname}
             </DialogDescription>
           </DialogHeader>
 

@@ -53,7 +53,7 @@ export function AppSidebarMobile() {
         setActiveSnapPoint={setSnap}
       >
         <DrawerPortal>
-          <DrawerContent className="h-[calc(100vh-80px)] z-10">
+          <DrawerContent className="h-[calc(100%-80px)] z-10">
             <DrawerHeader className="px-3">
               <DrawerTitle>
                 <SideMenu />
@@ -64,8 +64,8 @@ export function AppSidebarMobile() {
               className={clsx(
                 "h-full", // 부모 높이를 채우도록
                 {
-                  "overflow-y-auto h-[calc(100vh-80px)]": snap === 1, // 전체 화면 모드일 때 스크롤 가능
-                  "overflow-y-auto max-h-[100vh-80px]": snap === "200px", // 작은 모드일 때 높이 제한
+                  "overflow-y-auto h-[calc(100%-80px)]": snap === 1, // 전체 화면 모드일 때 스크롤 가능
+                  "overflow-y-auto h-[200px]": snap === "200px", // 작은 모드일 때 높이 제한
                 }
               )}
             >

@@ -41,6 +41,7 @@ export function SidebarMainContent() {
               <a
                 href="https://www.animal.go.kr/front/index.do"
                 className="rounded-lg p-2 min-h-16 bg-green-700 text-white hover:bg-green-800 hover:text-white whitespace-nowrap h-auto self-stretch flex items-center"
+                target="_blank"
               >
                 등록하기
               </a>
