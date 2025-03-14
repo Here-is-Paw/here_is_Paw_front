@@ -144,7 +144,7 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             } else {
                 // 반경 모드 검색
                 console.log("반경 모드 검색:", params);
-                setLastSearchQuery("");
+                setLastSearchQuery(query);
                 setLastSearchCategory("전체");
                 await loadRadiusData(query, category);
             }
@@ -154,6 +154,13 @@ export const PetProvider: React.FC<{ children: ReactNode }> = ({
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        // 검색 모드가 변경되었고 검색어가 있을 때
+        if (lastSearchQuery) {
+            refreshPets(); // 이 함수는 이미 lastSearchQuery를 고려하도록 수정됨
+        }
+    }, [searchMode]);
 
     // 검색어를 이용한 검색 함수 수정
     const searchWithKeyword = async (keyword: string, category: SearchCategory) => {
