@@ -25,7 +25,7 @@ export const SidebarHeader: FC<SidebarHeaderProps> = () => {
 
   return (
     <>
-      <div className="p-4 max-lg:px-2 border-b bg-green-600 text-white">
+      <div className="p-4 max-lg:p-2 border-b bg-green-600 text-white">
         <div
           className={`
           ${isMobile && "flex items-center gap-2 mb-2"}
