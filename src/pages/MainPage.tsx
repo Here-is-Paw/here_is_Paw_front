@@ -10,7 +10,7 @@ export default function MainPage() {
     <div>
       {/* <NavBar buttonStates={buttonStates} toggleButton={toggleButton} /> */}
 
-      <div className={`fixed ${isMobile ? "inset-0 top-[169px]" : "inset-0"}`}>
+      <div className={`fixed ${isMobile ? "inset-0 top-[16opx]" : "inset-0"}`}>
         <NcpMap currentLocation={location} />
       </div>
     </div>

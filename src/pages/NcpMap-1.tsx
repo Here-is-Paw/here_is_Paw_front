@@ -5,6 +5,11 @@ import { usePetContext } from "@/contexts/PetContext.tsx";
 import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx";
 import { Hospital } from "lucide-react";
 import { useButtonState } from "@/contexts/ButtonState";
+import { MissingDetail } from "@/components/petPost/missingPost/MissingDetail";
+import { PetList } from "@/types/mypet";
+import { ChatModalInfo } from "@/hooks/chat/useChatContact";
+import { ChatModal } from "@/components/chat/ChatModal";
+import { FindingDetail } from "@/components/petPost/findingPost/FindingDetail";
 
 interface NcpMapProps {
   currentLocation: {
@@ -31,6 +36,49 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   const { setUserLocation } = useMapLocation();
   const { refreshPets, setSearchMode, findingPets, missingPets } =
     usePetContext();
+
+  const [isMissingOpen, setIsMissingOpen] = useState<boolean>(false);
+  const [isFindingOpen, setIsFindingOpen] = useState<boolean>(false);
+  const [selectedMissingPet, setSelectedMissingPet] = useState<PetList | null>(
+    null
+  );
+  const [selectedFindingPet, setSelectedFindingPet] = useState<PetList | null>(
+    null
+  );
+  // ChatModal 관련 상태 추가
+  const [chatModalInfo, setChatModalInfo] = useState<ChatModalInfo>({
+    isOpen: false,
+    targetUserImageUrl: null,
+    targetUserNickname: null,
+    chatRoomId: null,
+  });
+
+  const DEFAULT_IMAGE_URL =
+    "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
+
+  // ChatModal을 닫는 핸들러
+  const handleChatModalClose = () => {
+    setChatModalInfo({
+      ...chatModalInfo,
+      isOpen: false,
+    });
+  };
+
+  // ChatModalInfo를 받아 상태를 업데이트하는 핸들러
+  const handleChatModalOpen = (info: ChatModalInfo) => {
+    setChatModalInfo(info);
+  };
+
+  // 펫 선택 핸들러 추가
+  const handleMissingPetSelect = (pet: PetList) => {
+    setSelectedMissingPet(pet);
+    setIsMissingOpen(true);
+  };
+
+  const handleFindingPetSelect = (pet: PetList) => {
+    setSelectedFindingPet(pet);
+    setIsFindingOpen(true);
+  };
 
   // 동물보호센터 컨텍스트 추가
   const {
@@ -66,48 +114,60 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     `;
   };
 
+  // React 스타일의 인포윈도우 컴포넌트 함수
   const infoWidowHTML = (
     title: string,
     pet: {
+      id?: string | number; // petId 추가
       breed?: string;
       etc?: string;
       location: string;
       pathUrl: string;
     }
   ): string => {
+    // 제목 스타일 결정
+    const getTitleClass = () => {
+      if (title === "발견했개")
+        return "mb-1 text-base font-bold text-green-600 text-center";
+      if (title === "잃어버렸개")
+        return "mb-1 text-base font-bold text-red-500 text-center";
+      return "";
+    };
+
+    // 상세 보기 버튼을 포함한 HTML
     return `
-    <div class="py-2 px-3 w-56 max-h-52">
-      ${
-        title === "발견했개"
-          ? '<h4 class="mb-1 text-base font-bold text-green-600 text-center">'
-          : title === "잃어버렸개"
-          ? '<h4 class="mb-1 text-base font-bold text-red-500 text-center">'
-          : "<h4>"
-      }
-        ${title}
-      </h4>
+    <div class="py-2 px-3 w-56 max-h-64">
+      <button 
+        id="openDetailModal-${pet.id}"
+        class="w-full p-0 text-left"
+        data-pet-id="${pet.id}"
+      >
+          <h4 class="${getTitleClass()}">
+            ${title}
+          </h4>
 
-      <div class="w-full h-20">
-        <img src="${pet.pathUrl}" class="h-full w-full object-contain" />
-      </div>
+          <div class="w-full h-20">
+            <img src="${pet.pathUrl}" class="h-full w-full object-contain" />
+          </div>
 
-      <div class="mt-2 text-xs text-gray-600">
-        <dl class="flex gap-1">
-          <dt class="font-bold">품종:</dt>
-          <dd class="flex-1 truncate">${pet.breed ? pet.breed : "미상"}</dd>
-        </dl>
-        <dl class="flex gap-1">
-          <dt class="font-bold">특징:</dt>
-          <dd class="flex-1 truncate">${pet.etc ? pet.etc : "없음"}</dd>
-        </dl>
-        <dl class="flex gap-1">
-          <dt class="font-bold">위치:</dt>
-          <dd class="flex-1 truncate">${pet.location}</dd>
-        </dl>
-      </div>
-      
+          <div class="mt-2 text-xs text-gray-600">
+            <dl class="flex gap-1">
+              <dt class="font-bold">품종:</dt>
+              <dd class="flex-1 truncate">${pet.breed ? pet.breed : "미상"}</dd>
+            </dl>
+            <dl class="flex gap-1">
+              <dt class="font-bold">특징:</dt>
+              <dd class="flex-1 truncate">${pet.etc ? pet.etc : "없음"}</dd>
+            </dl>
+            <dl class="flex gap-1">
+              <dt class="font-bold">위치:</dt>
+              <dd class="flex-1 truncate">${pet.location}</dd>
+            </dl>
+          </div>
+        </div>
+      </button>
     </div>
-      `;
+  `;
   };
 
   // Update the createPetMarkers function to show markers when toggle is true
@@ -151,6 +211,23 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             infoWindow.close();
           } else {
             infoWindow.open(map, marker);
+
+            // 인포윈도우가 열린 후 버튼에 이벤트 리스너 추가
+            setTimeout(() => {
+              const button = document.getElementById(
+                `openDetailModal-${pet.id}`
+              );
+              if (button) {
+                button.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  console.log("click");
+                  // 선택된 펫 설정하고 모달 열기
+                  handleMissingPetSelect(pet);
+                  // 인포윈도우 닫기 (선택사항)
+                  infoWindow.close();
+                });
+              }
+            }, 100); // DOM이 업데이트될 시간을 주기 위한 짧은 타임아웃
           }
         });
 
@@ -189,6 +266,22 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             infoWindow.close();
           } else {
             infoWindow.open(map, marker);
+
+            // 인포윈도우가 열린 후 버튼에 이벤트 리스너 추가
+            setTimeout(() => {
+              const button = document.getElementById(
+                `openDetailModal-${pet.id}`
+              );
+              if (button) {
+                button.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  // 선택된 펫 설정하고 모달 열기
+                  handleFindingPetSelect(pet);
+                  // 인포윈도우 닫기 (선택사항)
+                  infoWindow.close();
+                });
+              }
+            }, 100);
           }
         });
 
@@ -510,6 +603,35 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
           현재 반경에서 검색
         </button>
       </div>
+
+      <MissingDetail
+        petId={selectedMissingPet?.id}
+        open={isMissingOpen}
+        onOpenChange={(open) => {
+          setIsMissingOpen(open);
+          if (!open) setSelectedMissingPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+        }}
+        onChatModalOpen={handleChatModalOpen}
+      />
+
+      <FindingDetail
+        petId={selectedFindingPet?.id}
+        open={isFindingOpen}
+        onOpenChange={(open) => {
+          setIsFindingOpen(open);
+          if (!open) setSelectedFindingPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+        }}
+        onChatModalOpen={handleChatModalOpen}
+      />
+
+      <ChatModal
+        isOpen={chatModalInfo.isOpen}
+        onClose={handleChatModalClose}
+        targetUserImageUrl={chatModalInfo.targetUserImageUrl}
+        targetUserNickname={chatModalInfo.targetUserNickname}
+        defaultImageUrl={DEFAULT_IMAGE_URL}
+        chatRoomId={chatModalInfo.chatRoomId}
+      />
     </div>
   );
 };
