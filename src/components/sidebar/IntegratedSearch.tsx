@@ -60,7 +60,7 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
   };
 
   return (
-    <div className="relative mb-4">
+    <div className="relative md:mb-4">
       <div className="flex w-full rounded-lg bg-white overflow-hidden">
         {/* 셀렉트 부분 */}
         <div className="border-r border-gray-200">
@@ -108,7 +108,12 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
       </div>
 
       {searchMode === "반경" && (
-        <div className="mt-1 text-xs text-white">
+        <div
+          className="
+            max-md:fixed max-md:top-[169px] max-md:max-w-[calc(100%-350px)] max-md:backdrop-blur-md max-md:p-1 max-md:rounded
+            mt-1 text-xs text-black md:text-white
+          "
+        >
           지도에서 위치를 클릭하고 검색하면 설정된 반경 내에서 검색합니다.
         </div>
       )}

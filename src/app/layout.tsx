@@ -24,21 +24,21 @@ export default function RootLayout({
     return <div>{children}</div>;
   }
 
-  if (isMobile) {
-    return (
-      <div className="m-content-wrapper">
-        <div>{children}</div>
-        <AppSidebarMobile />
-      </div>
-    );
-  }
-
   return (
-    <div className="content-wrapper flex">
-      <SidebarProvider className="w-auto">
-        <AppSidebar />
-      </SidebarProvider>
-      <div className="flex-1">{children}</div>
-    </div>
+    <>
+      {isMobile ? (
+        <div className="m-content-wrapper">
+          <div>{children}</div>
+          <AppSidebarMobile />
+        </div>
+      ) : (
+        <div className="content-wrapper flex">
+          <SidebarProvider className="w-auto">
+            <AppSidebar />
+          </SidebarProvider>
+          <div className="flex-1">{children}</div>
+        </div>
+      )}
+    </>
   );
 }
