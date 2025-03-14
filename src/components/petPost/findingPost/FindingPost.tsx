@@ -1,25 +1,37 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
 import axios from "axios";
-import { backUrl, aiUrl } from "@/constants";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { useForm } from "react-hook-form";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+
+// UI Components
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
-import { cn } from "@/lib/utils.ts";
-import { format } from "date-fns";
-import { FindingDetailFormData, defaultValues } from "@/types/finding";
+import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
-import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { cn } from "@/lib/utils.ts";
+
+// Context and Constants
+import { backUrl, aiUrl } from "@/constants";
+import { usePetContext } from "@/contexts/PetContext.tsx";
+
+// Type
+import { FindingDetailFormData, defaultValues } from "@/types/finding";
+
+// Map
+import { format } from "date-fns";
 import LocationPicker from "@/components/location/locationPicker.tsx";
 import useGeolocation from "@/hooks/useGeolocation.ts";
+
+// Date
 import { ko } from "date-fns/locale";
-import { usePetContext } from "@/contexts/PetContext.tsx";
+import { CalendarIcon } from "lucide-react";
+
+// File
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { ToastAlert } from "@/components/alert/ToastAlert.tsx";
 
 interface FindingFormPopup {
   open: boolean;
@@ -92,16 +104,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
     form.setValue("location", location.address);
   };
 
-  // 추가 상세 주소 변경 핸들러
-  // const handleAdditionalAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setAdditionalAddressDetails(e.target.value);
-
-  //   // 지도에서 선택한 주소와 사용자가 입력한 상세 주소 결합
-  //   const combinedAddress = locationInfo.address ? `${locationInfo.address} ${e.target.value}`.trim() : e.target.value;
-
-  //   form.setValue("location", combinedAddress);
-  // };
-
   // 팝업이 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
@@ -112,11 +114,9 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         y: location.coordinates.lat,
         address: "서울시 용산구",
       });
-      // setAdditionalAddressDetails("");
 
       // 날짜 초기화
       setDate(undefined);
-      // 혹은 오늘 날짜로 설정하고 싶다면: setDate(new Date());
 
       // form의 lostDate 필드도 초기화
       form.setValue("findDate", "");
@@ -160,7 +160,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
 
   const handleSubmit = async (data: FindingDetailFormData) => {
     if (!data.findDate) {
-      // alert("발견 날짜를 선택해주세요.");
       showToast("warning", "발견 날짜 선택은 필수입니다.", "발견 날짜를 선택해주세요.");
       return;
     }
@@ -174,14 +173,14 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
         formData.append("x", locationInfo.x.toString());
         formData.append("y", locationInfo.y.toString());
       } else {
-        // alert("발견 위치를 지도에서 선택해주세요.");
         showToast("warning", "발견 위치 선택은 필수입니다.", "발견 위치를 지도에서 선택해주세요.");
         return;
       }
 
       // 지도 주소와 상세 주소를 결합
       const combinedAddress = locationInfo.address ? `${locationInfo.address}`.trim() : data.location;
-      console.log(data.findDate);
+
+      // 
       formData.append("location", combinedAddress);
       formData.append("detailAddr", data.detailAddr);
       formData.append("color", data.color || "");
@@ -195,7 +194,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       if (file) {
         formData.append("file", file);
       } else {
-        // alert("반려동물 사진은 필수입니다.");
         showToast("warning", "반려동물 사진은 필수입니다.", "사진 등록 후 다시 시도해주세요.");
         return;
       }
@@ -229,7 +227,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
       }
     } catch (error) {
       console.error("발견신고 등록 오류:", error);
-      // alert("발견신고 등록에 실패했습니다");
       showToast("error", "발견 신고 등록 실패", "발견신고 등록에 실패했습니다.");
     }
   };
@@ -251,7 +248,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
             y: location.coordinates.lat,
             address: "서울시 용산구",
           });
-          // setAdditionalAddressDetails("");
         }
         onOpenChange(newOpen);
       }}
@@ -405,10 +401,6 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                             accept="image/*"
                             className="sr-only"
                             onChange={handleFileChange}
-                            // onChange={(e) => {
-                            //     handleFileChange(e);
-                            //     field.onChange(e.target.files?.[0]);
-                            // }}
                           />
                         </FormControl>
 
@@ -556,9 +548,9 @@ export const FindingFormPopup = ({ open, onOpenChange, onSuccess }: FindingFormP
                     name="etc"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>특이사항</FormLabel>
+                        <FormLabel>발견 상황</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="반려동물에 대한 추가 정보를 입력하세요" className="min-h-[80px]" {...field} />
+                          <Textarea placeholder="반려동물에 대한 정보와 상황을 입력하세요" className="min-h-[80px]" {...field} />
                         </FormControl>
                       </FormItem>
                     )}

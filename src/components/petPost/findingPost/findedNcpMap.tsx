@@ -37,10 +37,6 @@ const GetFindLocationPicker = ({ onLocationSelect, initialLocation }: LocationPi
     loadNaverMaps();
   }, []);
 
-  // useEffect(() => {
-
-  // }, [])
-
   useEffect(() => {
     // 네이버 맵 API가 로드된 후에만 지도 초기화
     if (!naverMapsLoaded || !mapElement.current) return;
