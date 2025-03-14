@@ -66,6 +66,50 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
     `;
   };
 
+  const infoWidowHTML = (
+    title: string,
+    pet: {
+      breed?: string;
+      etc?: string;
+      location: string;
+      pathUrl: string;
+    }
+  ): string => {
+    return `
+    <div class="py-2 px-3 w-56 max-h-52">
+      ${
+        title === "발견했개"
+          ? '<h4 class="mb-1 text-base font-bold text-green-600 text-center">'
+          : title === "잃어버렸개"
+          ? '<h4 class="mb-1 text-base font-bold text-red-500 text-center">'
+          : "<h4>"
+      }
+        ${title}
+      </h4>
+
+      <div class="w-full h-20">
+        <img src="${pet.pathUrl}" class="h-full w-full object-contain" />
+      </div>
+
+      <div class="mt-2 text-xs text-gray-600">
+        <dl class="flex gap-1">
+          <dt class="font-bold">품종:</dt>
+          <dd class="flex-1 truncate">${pet.breed ? pet.breed : "미상"}</dd>
+        </dl>
+        <dl class="flex gap-1">
+          <dt class="font-bold">특징:</dt>
+          <dd class="flex-1 truncate">${pet.etc ? pet.etc : "없음"}</dd>
+        </dl>
+        <dl class="flex gap-1">
+          <dt class="font-bold">위치:</dt>
+          <dd class="flex-1 truncate">${pet.location}</dd>
+        </dl>
+      </div>
+      
+    </div>
+      `;
+  };
+
   // Update the createPetMarkers function to show markers when toggle is true
   const createPetMarkers = () => {
     const map = mapInstance.current;
@@ -92,10 +136,22 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
           },
         });
 
+        // InfoWindow 생성
+        const infoWindow = new window.naver.maps.InfoWindow({
+          content: infoWidowHTML("잃어버렸개", pet),
+          borderWidth: 0,
+          disableAnchor: false, // 앵커 활성화
+          anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
+          anchorSkew: true, // 앵커 기울임 효과 활성화
+          anchorColor: "white", // 앵커 색상
+        });
+
         window.naver.maps.Event.addListener(marker, "click", () => {
-          alert(
-            `[실종]\n품종: ${pet.breed}\n특징: ${pet.etc}\n위치: ${pet.location}\n실종일: ${pet.id}`
-          );
+          if (infoWindow.getMap()) {
+            infoWindow.close();
+          } else {
+            infoWindow.open(map, marker);
+          }
         });
 
         return marker;
@@ -106,41 +162,6 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
     // 발견된 반려동물 마커 (초록색) - buttonStates.found가 true일 때만 표시
     if (!buttonStates.found) {
-      const infoWidowHTML = (pet: {
-        breed?: string;
-        etc?: string;
-        location: string;
-        pathUrl: string;
-      }): string => {
-        return `
-        <div class="py-4 px-2 w-60 h-60">
-          <h4 class="mb-1 text-base">
-            발견했개
-          </h4>
-
-          <div class="w-full h-20">
-            <img src="${pet.pathUrl}" class="h-full w-full object-contain" />
-          </div>
-
-          <div>
-            <dl class="flex gap-1">
-              <dt class="">품종:</dt>
-              <dd class="flex-1 truncate">${pet.breed ? pet.breed : "미상"}</dd>
-            </dl>
-            <dl class="flex gap-1">
-              <dt>특징:</dt>
-              <dd class="flex-1 truncate">${pet.etc ? pet.etc : "없음"}</dd>
-            </dl>
-            <dl class="flex gap-1">
-              <dt>위치:</dt>
-              <dd class="flex-1 truncate">${pet.location}</dd>
-            </dl>
-          </div>
-          
-        </div>
-          `;
-      };
-
       const newFindingMarkers = findingPets.map((pet) => {
         const marker = new window.naver.maps.Marker({
           position: new window.naver.maps.LatLng(pet.y, pet.x),
@@ -154,13 +175,12 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
         // InfoWindow 생성
         const infoWindow = new window.naver.maps.InfoWindow({
-          content: infoWidowHTML(pet),
+          content: infoWidowHTML("발견했개", pet),
           borderWidth: 0,
           disableAnchor: false, // 앵커 활성화
           anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
           anchorSkew: true, // 앵커 기울임 효과 활성화
           anchorColor: "white", // 앵커 색상
-          zIndex: 50,
         });
 
         // 마커 클릭 이벤트 리스너 추가
