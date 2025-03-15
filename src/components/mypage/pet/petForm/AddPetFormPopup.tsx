@@ -8,9 +8,11 @@ import {
   DialogHeader,
   DialogDescription,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog.tsx";
 import { PetForm } from "./PetForm.tsx";
 import { PetFormData, defaultValues } from "@/types/mypet.ts";
+import { Button } from "@/components/ui/button.tsx";
 
 interface AddPetFormPopupProps {
   open: boolean;
@@ -19,10 +21,10 @@ interface AddPetFormPopupProps {
 }
 
 export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
-                                                                  open,
-                                                                  onOpenChange,
-                                                                  onSuccess,
-                                                                }) => {
+  open,
+  onOpenChange,
+  onSuccess,
+}) => {
   // Initialize the form with default values
   const form = useForm<PetFormData>({
     defaultValues,
@@ -48,7 +50,7 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
     if (!data.profileImage) {
       form.setError("profileImage", {
         type: "required",
-        message: "반려동물 이미지는 필수입니다"
+        message: "반려동물 이미지는 필수입니다",
       });
       return;
     }
@@ -99,38 +101,44 @@ export const AddPetFormPopup: React.FC<AddPetFormPopupProps> = ({
   };
 
   return (
-      <Dialog
-          open={open}
-          onOpenChange={(newOpen) => {
-            if (!newOpen) {
-              // 팝업이 닫힐 때 폼 초기화
-              form.reset(defaultValues);
-            }
-            onOpenChange(newOpen);
-          }}
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          // 팝업이 닫힐 때 폼 초기화
+          form.reset(defaultValues);
+        }
+        onOpenChange(newOpen);
+      }}
+    >
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        className="max-w-[500px] w-[calc(100%-1rem)] h-5/6 py-6 px-0 bg-white rounded"
       >
-        <DialogContent
-            onInteractOutside={(e) => e.preventDefault()}
-            className="max-w-[500px] h-5/6 py-6 px-0 bg-white"
-        >
-          <DialogHeader className="space-y-2 text-center px-6">
-            <DialogTitle className="text-2xl font-bold text-primary">
-              반려동물 등록
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              반려동물 정보를 입력해주세요
-            </DialogDescription>
-          </DialogHeader>
+        <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+          <DialogTitle className="text-2xl font-bold text-primary">
+            반려동물 등록
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            반려동물 정보를 입력해주세요
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="flex-1 overflow-auto px-6">
-            <PetForm
-                form={form}
-                onSubmit={handleSubmit}
-                onClose={handleClose}
-            />
+        <div className="flex-1 overflow-auto p-3 md:px-6">
+          <PetForm form={form} onSubmit={handleSubmit} isEditing={false} />
+        </div>
+
+        <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6">
+          <div className="w-full flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={handleClose}>
+              취소
+            </Button>
+            <Button type="submit" onClick={form.handleSubmit(handleSubmit)}>
+              등록하기
+            </Button>
           </div>
-
-        </DialogContent>
-      </Dialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

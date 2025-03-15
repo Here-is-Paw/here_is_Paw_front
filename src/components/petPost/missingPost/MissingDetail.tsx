@@ -34,7 +34,7 @@ export interface ChatModalInfo {
 }
 
 interface MissingDetailProps {
-  petId: number | undefined;
+  petId: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // ChatModal 관련 정보를 상위 컴포넌트로 전달하는 콜백 함수 추가
@@ -141,7 +141,12 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
 
     // 사례금이 0원이면 알림
     if (!pet.reward || pet.reward <= 0) {
-      handleRewardSuccess();
+      const result = confirm("사례금이 0원입니다. 완료 처리하시겠습니까?");
+      if (result) {
+        handleRewardSuccess();
+        alert("완료 되었습니다.");
+      }
+
       return;
     }
 
@@ -163,6 +168,10 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
           if (response.data.statusCode === 200) {
             onOpenChange(false);
             refreshPets();
+
+            if (onSuccess) {
+              onSuccess();
+            }
           }
         })
         .catch((err) => {
@@ -204,10 +213,10 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
         <DialogContent className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white">
           <DialogHeader className="space-y-2 text-left px-3 md:px-6">
             <DialogTitle className="text-2xl font-bold text-primary">
-              잃어버렸개
+              잃어버렸개 상세정보
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              잃어버렸개 상세정보
+              작성자: {pet.nickname}
             </DialogDescription>
           </DialogHeader>
 

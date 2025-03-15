@@ -330,6 +330,7 @@ export function MyPage() {
               onAddPetClick={() => setIsAddPetOpen(true)}
               onDeletePet={handleDeleteClick}
               onUpdatePet={handleEditClick}
+              onMissingReportSuccess={fetchUserPost} // 이 부분 추가
           />
         </SidebarGroup>
 

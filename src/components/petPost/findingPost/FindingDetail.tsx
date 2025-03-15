@@ -244,10 +244,10 @@ export const FindingDetail: React.FC<FindingDetailProps> = ({
         >
           <DialogHeader className="space-y-2 text-left px-3 md:px-6">
             <DialogTitle className="text-2xl font-bold text-primary">
-              발견했개
+              발견했개 상세정보
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              발견했개 상세정보
+              작성자: {pet.nickname}
             </DialogDescription>
           </DialogHeader>
 

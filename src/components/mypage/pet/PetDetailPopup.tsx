@@ -24,11 +24,11 @@ interface PetDetailDialogProps {
 }
 
 export const PetDetailDialog: React.FC<PetDetailDialogProps> = ({
-                                                                  pet,
-                                                                  open,
-                                                                  onOpenChange,
-                                                                  onUpdatePet,
-                                                                }) => {
+  pet,
+  open,
+  onOpenChange,
+  onUpdatePet,
+}) => {
   if (!pet) return null;
 
   // gender 값에 따른 표시 문자열 결정
@@ -70,89 +70,88 @@ export const PetDetailDialog: React.FC<PetDetailDialogProps> = ({
   };
 
   return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent
-            onInteractOutside={(e) => e.preventDefault()}
-            className="max-w-[500px] h-5/6 py-6 px-0 bg-white"
-        >
-          <DialogHeader className="space-y-2 text-center px-6">
-            <DialogTitle className="text-2xl font-bold text-primary">
-              반려동물 상세정보
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {pet.name || "이름 없음"}
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        className="w-[calc(100%-1rem)] max-w-[500px] rounded h-5/6 py-6 px-0 bg-white"
+      >
+        <DialogHeader className="space-y-2 text-left px-3 md:px-6">
+          <DialogTitle className="text-2xl font-bold text-primary">
+            반려동물 상세정보
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            등록한 반려동물 상세정보
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="flex-1 overflow-auto px-6">
-            <div className="flex flex-col items-center mb-6">
-              <Avatar className="h-24 w-24 mb-4">
-                {(pet?.imageUrl || pet?.pathUrl) && (
-                    <AvatarImage
-                        src={pet.imageUrl || pet.pathUrl}
-                        alt={pet.name || "반려동물"}
-                        className="object-cover w-full h-full"
-                    />
-                )}
-                <AvatarFallback>{pet.name?.charAt(0) || "?"}</AvatarFallback>
-              </Avatar>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">품종</p>
-                <p>{pet.breed || "품종 미상"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">나이</p>
-                <p>{pet.age ? `${pet.age}살` : "나이 미상"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">성별</p>
-                <p>{getGenderText(pet.gender)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">색상</p>
-                <p>{pet.color || "정보 없음"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  중성화 여부
-                </p>
-                <p>{getNeutered(pet.neutered)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">등록번호</p>
-                <p>{pet.serialNumber || "정보 없음"}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-sm font-medium text-gray-500">특이사항</p>
-                <p>{pet.etc || "정보 없음"}</p>
-              </div>
-            </div>
+        <div className="flex-1 overflow-auto px-3 md:px-6">
+          <div className="flex flex-col items-center mb-6">
+            <Avatar className="h-40 w-40 mb-4">
+              {(pet?.imageUrl || pet?.pathUrl) && (
+                <AvatarImage
+                  src={pet.imageUrl || pet.pathUrl}
+                  alt={pet.name || "반려동물 이름 없음"}
+                  className="object-cover object-center w-full h-full"
+                />
+              )}
+              <AvatarFallback>{pet.name?.charAt(0) || "?"}</AvatarFallback>
+            </Avatar>
           </div>
 
-          <DialogFooter className="px-6">
-            <div className="flex justify-end gap-2">
-              {onUpdatePet && (
-                  <Button
-                      variant="outline"
-                      className="flex items-center gap-1"
-                      onClick={handleEditClick}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    <span>정보 수정</span>
-                  </Button>
-              )}
+          <div className="grid grid-cols-2 gap-4">
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">이름</dt>
+              <dd>{pet.name || "이름 없음"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">품종</dt>
+              <dd>{pet.breed || "품종 미상"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">나이</dt>
+              <dd>{pet.age ? `${pet.age}살` : "나이 미상"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">성별</dt>
+              <dd>{getGenderText(pet.gender)}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">색상</dt>
+              <dd>{pet.color || "정보 없음"}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">중성화 여부</dt>
+              <dd>{getNeutered(pet.neutered)}</dd>
+            </dl>
+            <dl>
+              <dt className="text-sm font-medium text-gray-500">등록번호</dt>
+              <dd>{pet.serialNumber || "정보 없음"}</dd>
+            </dl>
+            <dl className="col-span-2">
+              <dt className="text-sm font-medium text-gray-500">특이사항</dt>
+              <dd>{pet.etc || "정보 없음"}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <DialogFooter className="flex-row flex-wrap-reverse px-3 md:px-6 gap-2">
+          <div className="w-full flex justify-end gap-1">
+            {onUpdatePet && (
               <Button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
+                variant="outline"
+                className="flex items-center gap-1"
+                onClick={handleEditClick}
               >
-                닫기
+                <Pencil className="h-4 w-4" />
+                <span>정보 수정</span>
               </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            )}
+            <Button type="button" onClick={() => onOpenChange(false)}>
+              닫기
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

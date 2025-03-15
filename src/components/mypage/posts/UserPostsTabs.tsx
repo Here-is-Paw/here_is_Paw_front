@@ -283,22 +283,24 @@ export function UserPostsTabs({
 
       {/* 실종 게시글 상세 보기 모달 */}
       {selectedMissingId && (
-        <MissingDetail
-          petId={selectedMissingId}
-          open={isMissingDetailOpen}
-          onOpenChange={setIsMissingDetailOpen}
-          onChatModalOpen={handleChatModalOpen}
-        />
+          <MissingDetail
+              petId={selectedMissingId}
+              open={isMissingDetailOpen}
+              onOpenChange={setIsMissingDetailOpen}
+              onChatModalOpen={handleChatModalOpen}
+              onSuccess={refreshPosts} // 이 부분 추가
+          />
       )}
 
       {/* 발견 게시글 상세 보기 모달 */}
       {selectedFindingId && (
-        <FindingDetail
-          petId={selectedFindingId}
-          open={isFindingDetailOpen}
-          onOpenChange={setIsFindingDetailOpen}
-          onChatModalOpen={handleChatModalOpen}
-        />
+          <FindingDetail
+              petId={selectedFindingId}
+              open={isFindingDetailOpen}
+              onOpenChange={setIsFindingDetailOpen}
+              onChatModalOpen={handleChatModalOpen}
+              onSuccess={refreshPosts} // 이 부분 추가
+          />
       )}
 
       {/* 실종 게시글 작성 모달 */}

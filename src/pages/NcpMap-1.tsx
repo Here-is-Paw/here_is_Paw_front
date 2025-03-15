@@ -104,12 +104,13 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
 
   const getCareCenterMarkerIcon = () => {
     return `
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="18" cy="18" r="18" fill="#4B5563"/>
-          <svg x="6" y="6" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 2C8.55228 2 9 2.44772 9 3V5H13V3C13 2.44772 13.4477 2 14 2C14.5523 2 15 2.44772 15 3V5H19V3C19 2.44772 19.4477 2 20 2C20.5523 2 21 2.44772 21 3V5H22C22.5523 5 23 5.44772 23 6V20C23 20.5523 22.5523 21 22 21H2C1.44772 21 1 20.5523 1 20V6C1 5.44772 1.44772 5 2 5H3V3C3 2.44772 3.44772 2 4 2C4.55228 2 5 2.44772 5 3V5H9V3C9 2.44772 8.55228 2 8 2Z" fill="#4B5563" stroke="white" stroke-width="1.5"/>
-          <path d="M12 16V10M9 13H15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#ffffff60" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hospital">
+        <path d="M12 6v4"></path>
+        <path d="M14 14h-4"></path>
+        <path d="M14 18h-4"></path>
+        <path d="M14 8h-4"></path>
+        <path d="M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2"></path>
+        <path d="M18 22V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v18"></path>
       </svg>
     `;
   };
@@ -328,31 +329,32 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             // 정보창 생성
             const infoWindow = new window.naver.maps.InfoWindow({
               content: `
-              <div style="padding:15px; min-width:220px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-family:'Noto Sans KR', sans-serif; border:solid 1px #000000;">
-                <h4 style="margin:0 0 12px 0; color:#333; font-size:16px; border-bottom:2px solid #000000; padding-bottom:8px;">
+              <div class="flex flex-col py-2 px-3 w-64 h-40 gap-1">
+                <h4 class="text-base font-bold text-center">
                   ${center.name}
                 </h4>
-                <table style="width:100%; border-collapse:separate; border-spacing:0 8px;">
-                  <tr>
-                    <td style="font-weight:bold; color:#555; width:70px;">주소:</td>
-                    <td style="color:#333;">${center.address}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:bold; color:#555;">전화:</td>
-                    <td style="color:#333;">${center.phoneNumber}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:bold; color:#555;">운영시간:</td>
-                    <td style="color:#333;">${center.operatingHours}</td>
-                  </tr>
-                </table>
+                <hr/>
+                <div class="flex-1 w-full overflow-auto grid gap-1 py-2 break-all text-xs text-gray-600">
+                  <dl class="flex gap-1">
+                    <dt class="font-bold">주소:</dt>
+                    <dd class="flex-1">${center.address}</dd>
+                  </dl>
+                  <dl class="flex gap-1">
+                    <dt class="font-bold">전화:</dt>
+                    <dd class="flex-1">${center.phoneNumber}</dd>
+                  </dl>
+                  <dl class="flex gap-1">
+                    <dt class="font-bold">운영시간:</dt>
+                    <dd class="flex-1">${center.operatingHours}</dd>
+                  </dl>
+                </div>
               </div>
             `,
               borderWidth: 0,
-              disableAnchor: true,
-              backgroundColor: "white",
-              borderColor: "transparent",
-              anchorSize: new window.naver.maps.Size(0, 0),
+              disableAnchor: false, // 앵커 활성화
+              anchorSize: new window.naver.maps.Size(12, 12), // 앵커 크기 설정
+              anchorSkew: true, // 앵커 기울임 효과 활성화
+              anchorColor: "white", // 앵커 색상
             });
 
             // 마커 클릭 이벤트 리스너 추가
@@ -600,12 +602,12 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             ${selectedLocation || "opacity-60"}
           `}
         >
-          현재 반경에서 검색
+          현재 반경에서 조회
         </button>
       </div>
 
       <MissingDetail
-        petId={selectedMissingPet?.id}
+        petId={selectedMissingPet?.id ?? 0}
         open={isMissingOpen}
         onOpenChange={(open) => {
           setIsMissingOpen(open);
