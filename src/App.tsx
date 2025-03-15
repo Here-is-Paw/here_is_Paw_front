@@ -11,6 +11,8 @@ import { MapLocationProvider } from "@/contexts/MapLocationContext.tsx";
 import { PetProvider } from "@/contexts/PetContext.tsx";
 import { CareCenterProvider } from "./contexts/CareCenterContext.tsx";
 import { ButtonStateProvider } from "./contexts/ButtonState.tsx";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+
 
 // RadiusProvider, MapLocationProvider가 PetProvider보다 상위여야함
 // > Pet에서 두개의 전역을 사용하기 때문
@@ -23,6 +25,7 @@ function App() {
             <CareCenterProvider>
               <ChatProvider>
                 <AuthProvider>
+                  <NotificationProvider>
                   <ButtonStateProvider>
                     <SidebarProvider>
                       <RootLayout>
@@ -30,6 +33,7 @@ function App() {
                       </RootLayout>
                     </SidebarProvider>
                   </ButtonStateProvider>
+                  </NotificationProvider>
                 </AuthProvider>
               </ChatProvider>
             </CareCenterProvider>

@@ -14,6 +14,8 @@ import {ChatRoom, OpenChatRoom} from "@/types/chat";
 import {FindingFormPopup} from "@/components/petPost/findingPost/FindingPost.tsx";
 import {NotificationBell} from "@/components/notification/notification";
 import {useIsMobile} from "@/hooks/use-mobile";
+import { useNotification } from "@/contexts/NotificationContext";
+
 
 const DEFAULT_IMAGE_URL =
     "https://i.pinimg.com/736x/22/48/0e/22480e75030c2722a99858b14c0d6e02.jpg";
@@ -24,6 +26,7 @@ export function NavBar() {
   const [isFindingAddOpen, setIsFindingAddOpen] = useState(false);
 
   const {isLoggedIn, logout} = useAuth();
+  const { addNewNotification, fetchNotifications } = useNotification();
 
   const [isResistModalOpen, setIsResistModalOpen] = useState(false);
 
@@ -41,71 +44,78 @@ export function NavBar() {
   const [notiSseConnected, setNotiSseConnected] = useState(false);
   const notiSseRef = useRef<EventSource | null>(null);
 
-  // 알림 SSE 연결을 위한 useEffect 추가
+  // 채팅용 SSE 상태 추가
+  const [chatSseConnected, setChatSseConnected] = useState(false);
+  const chatSseRef = useRef<EventSource | null>(null);
+
+  // NavBar.tsx의 알림 SSE 연결 useEffect 수정
   useEffect(() => {
-    if (isLoggedIn) {
-      // 기존 연결 정리
+    // 로그인되지 않은 상태면 아무것도 하지 않음
+    if (!isLoggedIn) return;
+
+    // 이미 연결이 존재하면 새로 연결하지 않음
+    if (notiSseRef.current) return;
+
+    // 로컬 스토리지에서 기존 연결 ID 가져오기 또는 새로 생성
+    let connectionId = localStorage.getItem('sseConnectionId');
+    if (!connectionId) {
+      connectionId = crypto.randomUUID(); // 또는 다른 방식으로 UUID 생성
+      localStorage.setItem('sseConnectionId', connectionId);
+    }
+
+    console.log("SSE 연결 시도", connectionId);
+    console.log(localStorage.getItem('sseConnectionId'));
+    const eventSource = new EventSource(`${backUrl}/api/v1/sse/connect?connectionId=${connectionId}`, {
+      withCredentials: true,
+    });
+    notiSseRef.current = eventSource;
+
+    // 연결 성공 이벤트
+    eventSource.addEventListener("connect", (event) => {
+      console.log("알림 SSE 연결 성공:", event);
+      setNotiSseConnected(true);
+      // 컨텍스트의 fetchNotifications 함수 호출
+      fetchNotifications().catch(error => {
+        console.error("알림 데이터 가져오기 실패:", error);
+      });
+    });
+
+    // 알림 이벤트 수신
+    eventSource.addEventListener("noti", (event) => {
+      try {
+        const newNoti = JSON.parse(event.data);
+        console.log("새 알림 수신:", newNoti);
+
+        // 알림 컨텍스트를 통해 알림 추가
+        addNewNotification(newNoti);
+      } catch (error) {
+        console.error("알림 데이터 파싱 오류:", error);
+      }
+    });
+
+    // 에러 처리
+    eventSource.onerror = (error) => {
+      console.error("알림 SSE 연결 오류:", error);
       if (notiSseRef.current) {
         notiSseRef.current.close();
         notiSseRef.current = null;
       }
+      setNotiSseConnected(false);
 
-      const connectNotiSSE = async () => {
-        try {
-          // 알림 SSE 연결
-          const eventSource = new EventSource(`${backUrl}/api/v1/sse/connect`, {
-            withCredentials: true,
-          });
-          notiSseRef.current = eventSource;
+      // 에러 발생 시 연결 ID를 제거하여 다음 연결 시 새로운 ID 사용
+      // localStorage.removeItem('sseConnectionId'); // 이 라인은 필요에 따라 주석 해제
+    };
 
-          // 연결 성공 이벤트
-          eventSource.addEventListener("connect", (event) => {
-            console.log("알림 SSE 연결 성공:", event);
-            setNotiSseConnected(true);
-          });
-
-          // 알림 이벤트 수신
-          eventSource.addEventListener("noti", (event) => {
-            try {
-              const newNoti = JSON.parse(event.data);
-              console.log("새 알림 수신:", newNoti);
-
-              // NotificationBell 컴포넌트로 알림 데이터 전달을 위한 커스텀 이벤트 발생
-              window.dispatchEvent(
-                  new CustomEvent("new_notification", {
-                    detail: {notification: newNoti}
-                  })
-              );
-            } catch (error) {
-              console.error("알림 데이터 파싱 오류:", error);
-            }
-          });
-
-          // 에러 처리
-          eventSource.onerror = (error) => {
-            console.error("알림 SSE 연결 오류:", error);
-            eventSource?.close();
-            setNotiSseConnected(false);
-
-            // 재연결 시도
-            setTimeout(connectNotiSSE, 5000);
-          };
-        } catch (error) {
-          console.error("알림 SSE 연결 실패:", error);
-        }
-      };
-
-      connectNotiSSE();
-
-      // 컴포넌트 언마운트 시 SSE 연결 종료
-      return () => {
-        if (notiSseRef.current) {
-          notiSseRef.current.close();
-          notiSseRef.current = null;
-        }
-      };
-    }
-  }, [isLoggedIn, backUrl]);
+    // 컴포넌트 언마운트 시 SSE 연결 종료
+    return () => {
+      if (notiSseRef.current) {
+        console.log("SSE 연결 정리");
+        notiSseRef.current.close();
+        notiSseRef.current = null;
+        setNotiSseConnected(false);
+      }
+    };
+  }, [isLoggedIn]); // 의존성 배열을 isLoggedIn만 포함하도록 변경
 
   // 마지막 메시지 시간으로 채팅방 정렬 함수
   const sortChatRoomsByLastMessageTime = (rooms: ChatRoom[]) => {
@@ -186,20 +196,20 @@ export function NavBar() {
   useEffect(() => {
     if (isLoggedIn && loginUserId) {
       // 기존 연결 정리
-      if (sseRef.current) {
-        sseRef.current.close();
-        sseRef.current = null;
+      if (chatSseRef.current) {
+        chatSseRef.current.close();
+        chatSseRef.current = null;
       }
 
       // SSE 연결 설정 함수
       const setupSSEConnection = () => {
         try {
           // SSE 연결 설정
-          const sseUrl = `${backUrl}/api/v1/sse/connect?userId=${loginUserId}`;
+          const sseUrl = `${backUrl}/api/v1/chat/rooms/sse/connect?userId=${loginUserId}`;
           const eventSource = new EventSource(sseUrl, {
             withCredentials: true,
           });
-          sseRef.current = eventSource;
+          chatSseRef.current = eventSource;
 
           // 연결 성공 핸들러
           eventSource.onopen = () => {
@@ -269,13 +279,13 @@ export function NavBar() {
         ) {
           // SSE 연결 상태 확인
           const isConnected =
-              sseRef.current && sseRef.current.readyState === EventSource.OPEN;
+              chatSseRef.current && chatSseRef.current.readyState === EventSource.OPEN;
           // 연결이 끊어진 경우 재연결
           if (!isConnected) {
             // 기존 연결 정리
-            if (sseRef.current) {
-              sseRef.current.close();
-              sseRef.current = null;
+            if (chatSseRef.current) {
+              chatSseRef.current.close();
+              chatSseRef.current = null;
             }
             // 연결 재설정
             setupSSEConnection();
@@ -380,9 +390,9 @@ export function NavBar() {
 
       // 컴포넌트 언마운트 시 정리
       return () => {
-        if (sseRef.current) {
-          sseRef.current.close();
-          sseRef.current = null;
+        if (chatSseRef.current) {
+          chatSseRef.current.close();
+          chatSseRef.current = null;
         }
 
         // 이벤트 리스너 제거
