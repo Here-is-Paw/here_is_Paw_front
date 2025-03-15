@@ -143,10 +143,10 @@ export const MissingDetail: React.FC<MissingDetailProps> = ({
     if (!pet.reward || pet.reward <= 0) {
       const result = confirm("사례금이 0원입니다. 완료 처리하시겠습니까?");
       if (result) {
+        handleRewardSuccess();
         alert("완료 되었습니다.");
       }
 
-      handleRewardSuccess();
       return;
     }
 
