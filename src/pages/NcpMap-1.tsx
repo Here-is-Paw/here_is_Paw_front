@@ -602,7 +602,7 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
             ${selectedLocation || "opacity-60"}
           `}
         >
-          현재 반경에서 검색
+          현재 반경에서 조회
         </button>
       </div>
 

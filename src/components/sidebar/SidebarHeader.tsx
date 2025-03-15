@@ -52,13 +52,13 @@ export const SidebarHeader: FC<SidebarHeaderProps> = () => {
               value="전체"
               className="text-white hover:bg-green-500 data-[state=active]:shadow-none data-[state=active]:bg-green-700 data-[state=active]:text-white"
             >
-              전체 검색
+              전체 조회
             </TabsTrigger>
             <TabsTrigger
               value="반경"
               className="text-white hover:bg-green-500 data-[state=active]:shadow-none data-[state=active]:bg-green-700 data-[state=active]:text-white"
             >
-              반경 검색
+              반경 조회
             </TabsTrigger>
           </TabsList>
         </Tabs>
