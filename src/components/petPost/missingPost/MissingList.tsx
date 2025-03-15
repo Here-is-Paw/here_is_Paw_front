@@ -198,17 +198,15 @@ export function MissingList() {
                 )}
 
                 {/* 모달은 한 번만 렌더링 */}
-                {selectedPet && selectedPet.id && (
-                    <MissingDetail
-                        petId={selectedPet.id}
-                        open={isOpen}
-                        onOpenChange={(open) => {
-                          setIsOpen(open);
-                          if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
-                        }}
-                        onChatModalOpen={handleChatModalOpen}
-                    />
-                )}
+                <MissingDetail
+                  petId={selectedPet?.id}
+                  open={isOpen}
+                  onOpenChange={(open) => {
+                    setIsOpen(open);
+                    if (!open) setSelectedPet(null); // 모달이 닫힐 때 선택된 펫 초기화
+                  }}
+                  onChatModalOpen={handleChatModalOpen}
+                />
 
                 {/* ChatModal - Dialog 외부에서 관리 */}
                 <ChatModal
