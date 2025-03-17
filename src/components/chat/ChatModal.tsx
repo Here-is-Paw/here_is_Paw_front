@@ -83,6 +83,14 @@ export function ChatModal({
   const [size, setSize] = useState({ width: 400, height: 500 });
   const resizeRef = useRef<{ x: number; y: number } | null>(null);
 
+  useEffect(() => {
+    if (isVisible && inputRef.current && !isSending) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isVisible]);
+
   // 상대방 정보 상태 추가
   const [otherUserInfo, setOtherUserInfo] = useState<{
     nickname: string;
@@ -709,6 +717,8 @@ export function ChatModal({
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
             disabled={isSending || !chatRoomId}
             ref={inputRef}
+            onFocus={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
           <button
             className={`ml-2 ${
