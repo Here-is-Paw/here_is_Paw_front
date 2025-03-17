@@ -8,6 +8,7 @@ import * as StompJs from "@stomp/stompjs";
 import { Avatar } from "@/components/ui/avatar";
 import { chatEventBus } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext.tsx";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatMessage {
   id?: number;
@@ -56,6 +57,7 @@ export function ChatModal({
   initialMessages = [],
   chatRoom,
 }: ChatModalProps) {
+  const isMobile = useIsMobile();
   const { addChatRoom, removeChatRoom, refreshChatRooms } = useChatContext();
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] =
@@ -555,21 +557,38 @@ export function ChatModal({
 
   return createPortal(
     <div
-      className="fixed z-[150] max-w-full"
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        transition: isDragging || isResizing ? "none" : "all 0.1s ease",
-        cursor: isDragging ? "grabbing" : "auto",
-      }}
+      className="fixed z-[150] w-full max-w-[380px]"
+      style={
+        !isMobile
+          ? {
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              transition: isDragging || isResizing ? "none" : "all 0.1s ease",
+              cursor: isDragging ? "grabbing" : "auto",
+            }
+          : {
+              left: `50%`,
+              top: `50%`,
+              transform: `translate(-50%, -50%)`,
+              transition: isDragging || isResizing ? "none" : "all 0.1s ease",
+              cursor: isDragging ? "grabbing" : "auto",
+            }
+      }
     >
       <div
-        className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative"
-        style={{
-          width: `${size.width}px`,
-          height: `${size.height}px`,
-          border: "1px solid #e5e7eb",
-        }}
+        className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative w-full max-w-[380px]"
+        style={
+          !isMobile
+            ? {
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                border: "1px solid #e5e7eb",
+              }
+            : {
+                height: `${size.height}px`,
+                border: "1px solid #e5e7eb",
+              }
+        }
       >
         {/* 리사이징 핸들 - 왼쪽 상단으로 이동 */}
         <div
@@ -707,7 +726,7 @@ export function ChatModal({
         </div>
 
         {/* 메시지 입력 */}
-        <div className="p-3 border-t flex items-center bg-white">
+        <div className="p-3 border-t flex items-center gap-2 bg-white">
           <input
             type="text"
             className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50"
@@ -721,7 +740,7 @@ export function ChatModal({
             onClick={(e) => e.stopPropagation()}
           />
           <button
-            className={`ml-2 ${
+            className={`${
               isSending || !chatRoomId
                 ? "bg-gray-400"
                 : "bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
