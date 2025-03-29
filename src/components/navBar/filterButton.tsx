@@ -12,7 +12,7 @@ export function FilterButton() {
   const getVisibilityText = (isHidden: boolean) => (isHidden ? "숨김" : "표시");
 
   return (
-    <div className="flex flex-wrap items-center gap-1 flex-auto justify-end">
+    <div className="flex flex-wrap items-center gap-1 flex-auto justify-end max-md:flex-col max-md:items-end">
       <Button
         variant="ghost"
         className={`gap-2 ${

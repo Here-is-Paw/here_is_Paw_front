@@ -20,10 +20,10 @@ export const SideMenu: FC<SideMenuProps> = () => {
               filter as "전체" | "잃어버렸개" | "발견했개" | "My"
             );
           }}
-          className={`px-1 rounded-lg text-sm font-medium focus:outline-none shadow-none ${
+          className={`px-1 rounded-lg text-sm font-medium hover:text-white focus:outline-none hover:outline-none shadow-none ${
             activeFilter === filter
               ? "bg-green-700 text-white"
-              : "bg-green-600 text-white hover:bg-green-500 focus:outline-none hover:outline-none"
+              : "bg-white text-black md:bg-green-600 md:text-white hover:bg-green-500 "
           } ${
             filter === "전체" || filter === "My" ? "col-span-2" : "col-span-4"
           }`}

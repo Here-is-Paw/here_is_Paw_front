@@ -63,8 +63,8 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
   };
 
   return (
-    <div className="relative md:mb-4">
-      <div className="flex w-full rounded-lg bg-white overflow-hidden">
+    <div className="relative mb-4">
+      <div className="flex w-full border rounded-lg bg-white overflow-hidden">
         {/* 셀렉트 부분 */}
         <div className="border-r border-gray-200">
           <Select value={searchCategory} onValueChange={setSearchCategory}>
@@ -80,7 +80,7 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
         </div>
 
         {/* 검색창 부분 */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative text-base">
           <input
             type="text"
             placeholder={
@@ -111,7 +111,7 @@ export const IntegratedSearch: FC<IntegratedSearchProps> = ({
       </div>
 
       {searchMode === "반경" && (
-        <p className="mt-1 text-xs text-white">
+        <p className="mt-1 text-xs md:text-white">
           지도에서 위치를 클릭하고 검색하면 설정된 반경 내에서 검색합니다.
         </p>
       )}

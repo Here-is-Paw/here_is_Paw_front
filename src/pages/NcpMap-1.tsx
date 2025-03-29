@@ -3,13 +3,15 @@ import { useRadius } from "@/contexts/RadiusContext.tsx";
 import { useMapLocation } from "@/contexts/MapLocationContext.tsx";
 import { usePetContext } from "@/contexts/PetContext.tsx";
 import { useCareCenterContext } from "@/contexts/CareCenterContext.tsx";
-import { Hospital } from "lucide-react";
+import { Hospital, RefreshCcw } from "lucide-react";
 import { useButtonState } from "@/contexts/ButtonState";
 import { MissingDetail } from "@/components/petPost/missingPost/MissingDetail";
 import { PetList } from "@/types/mypet";
 import { ChatModalInfo } from "@/hooks/chat/useChatContact";
 import { ChatModal } from "@/components/chat/ChatModal";
 import { FindingDetail } from "@/components/petPost/findingPost/FindingDetail";
+import { FilterButton } from "@/components/navBar/filterButton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NcpMapProps {
   currentLocation: {
@@ -21,6 +23,8 @@ interface NcpMapProps {
 }
 
 const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
+  const isMobile = useIsMobile();
+
   // Get buttonStates from context
   const { buttonStates } = useButtonState();
 
@@ -585,24 +589,32 @@ const NcpMap = ({ currentLocation, onLocationSelect }: NcpMapProps) => {
   }, [careCenters, buttonStates.hospital]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div className="relative w-full h-full">
       <div
         id="map"
         ref={mapElement}
-        style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
+        className="!absolute !left-0 !top-0 !right-0 !bottom-0"
       />
 
+      {isMobile && (
+        <div className="absolute top-3 right-1">
+          <FilterButton />
+        </div>
+      )}
+
       {/* 검색 버튼 */}
-      <div className="absolute bottom-32 max-md:right-1/2 max-md:translate-x-1/2 md:bottom-5 right-4">
+      <div className="absolute max-md:top-3 max-md:left-1 md:bottom-5 md:right-4">
         <button
           onClick={handleSearchClick}
           disabled={!selectedLocation}
           className={`
+            max-[300px]:w-auto max-[300px]:px-2
             bg-green-600 bg-opacity-95 text-white p-2 px-6 rounded-3xl shadow-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center text-sm w-[11.25rem]
             ${selectedLocation || "opacity-60"}
           `}
         >
-          현재 반경에서 조회
+          <RefreshCcw className="w-4 h-4 mr-1 max-[300px]:mr-0" />
+          <span className="max-[300px]:hidden">현재 반경에서 조회</span>
         </button>
       </div>
 
